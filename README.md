@@ -39,11 +39,13 @@ lib/
 │   ├── api/
 │   ├── dao/
 │   ├── model/
-│   └── repository/
+│   ├── repository/
+│   └── ...
 ├── pages/           # UI pages
 │   ├── discussion/
 │   ├── post_detail/
-│   └── settings/
+│   ├── settings/
+│   └── ...
 ├── widgets/         # Reusable UI components
 ├── utils/           # Utilities (network / HTML / cache, etc.)
 └── main.dart        # Application entry point
@@ -151,12 +153,13 @@ flutter build linux --release
 * Flutter Documentation: [https://docs.flutter.dev/](https://docs.flutter.dev/)
 * Dart Language: [https://dart.dev/](https://dart.dev/)
 * Dio: [https://pub.dev/packages/dio](https://pub.dev/packages/dio)
+* BiliYou: [https://github.com/lucinhu/bili_you](https://github.com/lucinhu/bili_you)
 
 ---
 
 ## 📄 License
 
-This project is intended for learning and research purposes. Please define a license according to your needs.
+This project is under GNU GENERAL PUBLIC LICENSE V2.
 
 ---
 

@@ -66,7 +66,6 @@ class _UserPageState extends State<UserPage>
                 color: Theme.of(context).highlightColor,
               ),
 
-              /// TODO: 投稿列表
               // _UserPostList(controller: controller),
             ],
           );
@@ -129,13 +128,11 @@ class _UserHeader extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
-                // 等级 / 经验（以后加也安全）
                 // Obx(() => Text("LV${controller.level.value}")),
               ],
             ),
           ),
 
-          /// 登录按钮（可选）
           // IconButton(
           //   icon: const Icon(Icons.login),
           //   onPressed: () {},
@@ -160,9 +157,9 @@ class _UserStats extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _StatItem(title: "动态", value: "0", color: textColor, onTap: () {}),
-          _StatItem(title: "关注", value: "0", color: textColor, onTap: () {}),
-          _StatItem(title: "粉丝", value: "0", color: textColor, onTap: () {}),
+          _StatItem(title: "Placeholder", value: "0", color: textColor, onTap: () {}),
+          _StatItem(title: "Placeholder", value: "0", color: textColor, onTap: () {}),
+          _StatItem(title: "Placeholder", value: "0", color: textColor, onTap: () {}),
         ],
       ),
     );
