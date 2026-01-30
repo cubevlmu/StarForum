@@ -1,0 +1,37 @@
+/*
+ * @Author: cubevlmu khfahqp@gmail.com
+ * @LastEditors: cubevlmu khfahqp@gmail.com
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ */
+
+import 'package:drift/drift.dart';
+import 'package:forum/data/db/app_database.dart';
+import 'package:forum/data/db/tables/discussion_excerpt_cache.dart';
+
+part 'excerpt_dao.g.dart';
+
+@DriftAccessor(tables: [DbDiscussionExcerptCache])
+class ExcerptDao extends DatabaseAccessor<AppDatabase> with _$ExcerptDaoMixin {
+  ExcerptDao(super.db);
+
+  Stream<List<DbDiscussionExcerptCacheData>> watchAll() {
+    return select(dbDiscussionExcerptCache).watch();
+  }
+
+  Future<DbDiscussionExcerptCacheData?> get(String discussionId) => (select(
+    dbDiscussionExcerptCache,
+  )..where((t) => t.discussionId.equals(discussionId))).getSingleOrNull();
+
+  Future<void> upsert({
+    required String discussionId,
+    required String excerpt,
+    required DateTime sourceUpdatedAt,
+  }) => into(dbDiscussionExcerptCache).insertOnConflictUpdate(
+    DbDiscussionExcerptCacheCompanion(
+      discussionId: Value(discussionId),
+      excerpt: Value(excerpt),
+      sourceUpdatedAt: Value(sourceUpdatedAt),
+      generatedAt: Value(DateTime.now()),
+    ),
+  );
+}
