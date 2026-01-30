@@ -7,8 +7,11 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/data/model/notifications.dart';
 import 'package:forum/pages/notification/controller.dart';
+import 'package:forum/pages/post_detail/view.dart';
+import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/html_utils.dart';
 import 'package:forum/widgets/avatar.dart';
 
@@ -20,10 +23,7 @@ import 'package:forum/widgets/avatar.dart';
 
     case "levelUpdated":
       final real = info.subject as LevelSubject;
-      return (
-        "等级达成 ${real.level.name}",
-        "等级高于 ${real.level.minExpRequired}",
-      );
+      return ("等级达成 ${real.level.name}", "等级高于 ${real.level.minExpRequired}");
 
     case "postMentioned":
       final real = info.subject as PostSubject;
@@ -49,7 +49,7 @@ import 'package:forum/widgets/avatar.dart';
       return (
         "收到 ${info.fromUser?.displayName} 的警告",
         "记 ${real.warning.strikes} 分："
-        "${htmlToPlainText(real.warning.publicComment ?? "")}",
+            "${htmlToPlainText(real.warning.publicComment ?? "")}",
       );
 
     default:
@@ -62,51 +62,42 @@ class NotifyCard extends StatelessWidget {
   final NotificationsInfo item;
   final NotificationPageController controller;
 
-  const NotifyCard({
-    super.key,
-    required this.item,
-    required this.controller,
-  });
+  const NotifyCard({super.key, required this.item, required this.controller});
 
   @override
   Widget build(BuildContext context) {
     final (title, desc) = buildMsg(item);
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () {
-        if (item.contentType == "postLiked" ||
-            item.contentType == "postMentioned") {
-          // TODO: 跳转帖子详情
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (_) => PostPage(item: xxx),
-          //   ),
-          // );
-        }
-      },
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// 头像
-              AvatarWidget(
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// 头像
+            GestureDetector(
+              child: AvatarWidget(
                 avatarUrl: item.fromUser?.avatarUrl ?? "",
                 radius: 22,
                 placeholder: item.fromUser?.displayName[0] ?? "U",
               ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => UserPage(userId: item.fromUser?.id ?? -1),
+                  ),
+                );
+              },
+            ),
 
-              const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-              /// 右侧内容
-              Expanded(
+            /// 右侧内容
+            Expanded(
+              child: GestureDetector(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -131,9 +122,7 @@ class NotifyCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: item.isRead
-                                  ? Colors.grey
-                                  : Colors.white,
+                              color: item.isRead ? Colors.grey : Colors.white,
                             ),
                           ),
                         ),
@@ -171,10 +160,7 @@ class NotifyCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                        const Text(
-                          " · ",
-                          style: TextStyle(color: Colors.grey),
-                        ),
+                        const Text(" · ", style: TextStyle(color: Colors.grey)),
                         Text(
                           _formatTime(item.createdAt),
                           style: const TextStyle(
@@ -186,21 +172,34 @@ class NotifyCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                onTap: () {
+                  if (item.contentType == "postLiked" ||
+                      item.contentType == "postMentioned") {
+                    // final s = item.subject as PostSubject;
+                    // s.post.id
+                    // // TODO: 跳转帖子详情
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (_) => PostPage(item: DiscussionItem(id: id, title: title, excerpt: excerpt, lastPostedAt: lastPostedAt, userId: userId)),
+                    //   ),
+                    // );
+                  }
+                },
               ),
+            ),
 
-              /// 已读按钮
-              IconButton(
-                icon: const Icon(Icons.check_outlined),
-                color: Colors.grey,
-                onPressed: item.isRead
-                    ? null
-                    : () async {
-                        if(await controller.checkAsRead(item.id)) {
-                        }
-                      },
-              ),
-            ],
-          ),
+            /// 已读按钮
+            IconButton(
+              icon: const Icon(Icons.check_outlined),
+              color: Colors.grey,
+              onPressed: item.isRead
+                  ? null
+                  : () async {
+                      if (await controller.checkAsRead(item.id)) {}
+                    },
+            ),
+          ],
         ),
       ),
     );

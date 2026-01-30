@@ -5,10 +5,12 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/login/view.dart';
 import 'package:forum/pages/account/controller.dart';
 import 'package:forum/pages/settings/settings_page.dart';
 import 'package:forum/pages/user/view.dart';
+import 'package:forum/utils/snackbar_utils.dart';
+import 'package:forum/widgets/shared_dialog.dart';
+import 'package:forum/widgets/shared_notice.dart';
 import 'package:get/get.dart';
 
 class AccountPage extends StatefulWidget {
@@ -39,6 +41,28 @@ class _AccountPageState extends State<AccountPage> {
       appBar: AppBar(
         title: const Text("用户"),
         actions: [
+          Obx(() {
+            if (!controller.isLogOut.value) {
+              return IconButton(
+                onPressed: () {
+                  SharedDialog.showDialog2(
+                    context,
+                    "取消",
+                    () => Navigator.pop(context, 'Cancel'),
+                    "确认",
+                    () {
+                      final r = controller.repo.logout();
+                      SnackbarUtils.showMessage(r ? "登出成功!" : "登出失败!");
+                      Navigator.pop(context, 'OK');
+                    },
+                  );
+                },
+                icon: Icon(Icons.logout_outlined),
+              );
+            }
+            return const SizedBox();
+          }),
+          const SizedBox(width: 10),
           IconButton(
             onPressed: () {
               Navigator.push(
@@ -51,28 +75,12 @@ class _AccountPageState extends State<AccountPage> {
           const SizedBox(width: 10),
         ],
       ),
-      body: Column(
-        children: [
-          MaterialButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => LoginPage()),
-              );
-            },
-            child: Text("登录页面"),
-          ),
-          MaterialButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => UserPage(userId: 0)),
-              );
-            },
-            child: Text("用户页面"),
-          ),
-        ],
-      ),
+      body: Obx(() {
+        if (controller.isLogOut.value) {
+          return SharedNotice.onNotLogin(context, "你还没有登录", "请登录你的账户来查看个人信息");
+        }
+        return UserPage(userId: controller.getTrueId(), isAccountPage: true);
+      }),
     );
   }
 }

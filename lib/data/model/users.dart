@@ -16,7 +16,9 @@ class UserInfo {
   int commentCount;
   String lastSeenAt;
   String email;
+  String bio;
   Groups? groups;
+  ExpInfo? expInfo;
 
   UserInfo(
     this.id,
@@ -29,6 +31,7 @@ class UserInfo {
     this.lastSeenAt,
     this.email,
     this.groups,
+    this.bio,
   );
 
   factory UserInfo.formJson(String data) {
@@ -37,7 +40,9 @@ class UserInfo {
 
   factory UserInfo.formBaseData(BaseData data) {
     Map m = data.attributes;
-    return UserInfo(
+    final ifo = ExpInfo.formBaseData(data);
+
+    final u = UserInfo(
       data.id,
       m["username"],
       m["displayName"],
@@ -48,7 +53,12 @@ class UserInfo {
       m["lastSeenAt"] ?? "",
       m["email"] ?? "",
       m["groups"],
+      m["bio"] ?? "",
     );
+    if (ifo != ExpInfo.empty) {
+      u.expInfo = ifo;
+    }
+    return u;
   }
 
   static UserInfo deletedUser = UserInfo(
@@ -62,6 +72,7 @@ class UserInfo {
     "",
     "",
     null,
+    "",
   );
 
   static UserInfo guestUser = UserInfo(
@@ -75,5 +86,35 @@ class UserInfo {
     "",
     "",
     null,
+    "",
   );
+}
+
+class ExpInfo {
+  final String expLevel; // "expLevel": "锁链",
+  final int expTotal; // "expTotal": 95,
+  final int expPercent; // "expPercent": 45,
+  final String expNext; //  "expNext": "铁",
+  final int expNextNeed; //   "expNextNeed": 55,
+
+  ExpInfo(
+    this.expLevel,
+    this.expTotal,
+    this.expPercent,
+    this.expNext,
+    this.expNextNeed,
+  );
+
+  factory ExpInfo.formBaseData(BaseData data) {
+    Map m = data.attributes;
+    return ExpInfo(
+      m["expLevel"] ?? "",
+      m["expTotal"] ?? 0,
+      m["expPercent"] ?? 0,
+      m["expNext"] ?? "",
+      m["expNextNeed"] ?? 0,
+    );
+  }
+
+  static ExpInfo empty = ExpInfo("", 0, 0, "", 0);
 }

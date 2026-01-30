@@ -77,27 +77,18 @@ class Api {
   }
 
   static Future<DiscussionInfo?> getDiscussionById(String id) async {
-    return getDiscussionByUrl("/discussions/$id");
-  }
-
-  static Future<DiscussionInfo?> getDiscussionByUrl(String url) async {
     try {
-      var d = DiscussionInfo.formJson((await _utils.get(url)).data);
+      var d = DiscussionInfo.formJson(
+        (await _utils.get(
+          "${ApiConstants.apiBase}/api/discussions/$id?include=user,firstPost",
+        )).toString(),
+      );
       log("[Api] getDiscussionById Status:ok");
       return d;
     } catch (e) {
       log("[Api] getDiscussionById Error:$e");
       return null;
     }
-  }
-
-  static Future<DiscussionInfo?> getDiscussionWithNearNumber(
-    String id,
-    int number,
-  ) {
-    String url =
-        "${ApiConstants.apiBase}/api/discussions/$id?page[near]=$number";
-    return getDiscussionByUrl(url);
   }
 
   static Future<PagedDiscussions?> getDiscussionList(
@@ -272,7 +263,10 @@ class Api {
     }
   }
 
-  static Future<PostInfo?> createPost(String discussionId, String post) async {
+  static Future<(PostInfo?, bool)> createPost(
+    String discussionId,
+    String post,
+  ) async {
     var m = {
       "data": {
         "type": "posts",
@@ -293,14 +287,24 @@ class Api {
             "{}",
       );
       log("[Api] createPost Status:ok");
-      return data;
+      return (data, true);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+
+      if (status == 401) {
+        log("[Api] Invoking create post api with error : token expired.");
+        return (null, false);
+      } else {
+        log("[Api] Invoking create post api with error : network error.");
+        return (null, true);
+      }
     } catch (e) {
-      log("[Api] createPost Error:$e");
-      return null;
+      log("[Api] Invoking create post api with error : ", error: e);
+      return (null, true);
     }
   }
 
-  static Future<PostInfo?> replyToPost({
+  static Future<(PostInfo?, bool)> replyToPost({
     required String discussionId,
     required int replyPostId,
     required String replyUsername,
@@ -310,7 +314,7 @@ class Api {
     return createPost(discussionId, fullContent);
   }
 
-  static Future<PostInfo?> likePost(String id, bool isLiked) async {
+  static Future<(PostInfo?, bool)> likePost(String id, bool isLiked) async {
     var m = {
       "data": {
         "type": "posts",
@@ -325,11 +329,21 @@ class Api {
           data: m,
         )).toString(),
       );
-      log("[Api] likePost Status:ok");
-      return data;
+      log("[Api] Invoking like post api with status:ok");
+      return (data, true);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+
+      if (status == 401) {
+        log("[Api] Invoking like post api with error : token expired.");
+        return (null, false);
+      } else {
+        log("[Api] Invoking like post api with error : network error.");
+        return (null, true);
+      }
     } catch (e) {
-      log("[Api] likePost Error:$e");
-      return null;
+      log("[Api] Invoking like post api with error : ", error: e);
+      return (null, true);
     }
   }
 
@@ -373,21 +387,24 @@ class Api {
   static Future<bool> isTokenValid() async {
     try {
       await _utils.get("${ApiConstants.apiBase}/api/users/me");
-      // 某些版本可能直接 200
+      // Tips: older version maybe allow this method.
       return true;
     } on DioException catch (e) {
       final status = e.response?.statusCode;
 
-      if (status == 405) {
-        // 🎯 Flarum 特有：token 有效
+      // Hack: 405/404 method not found but token valid.
+      if (status == 405 || status == 404) {
         return true;
       }
-
-      if (status == 401 || status == 403 || status == 404) {
+      // Tips: token is invalid or expired may return with those code.
+      if (status == 401 || status == 403) {
         return false;
       }
 
       rethrow;
+    } catch (e) {
+      log("[Api] Network error with :", error: e);
+      return false;
     }
   }
 
@@ -412,8 +429,8 @@ class Api {
         log("[Api] Notification fetch api with error : network error.");
         return (null, true);
       }
-    } catch(e) {
-        log("[Api] Notification fetch api with error : ", error: e);
+    } catch (e) {
+      log("[Api] Notification fetch api with error : ", error: e);
       return (null, true);
     }
   }
@@ -487,6 +504,44 @@ class Api {
     } catch (e) {
       log("[Api] clearAllNotification Error:$e");
       return false;
+    }
+  }
+
+  static Future<Posts?> getPostsByAuthor({
+    required String username,
+    int offset = 0,
+    int limit = 20,
+    bool onlyComment = true,
+  }) async {
+    final params = <String, String>{
+      'filter[author]': username,
+      'page[offset]': offset.toString(),
+      'page[limit]': limit.toString(),
+      'sort': '-createdAt',
+      'include': 'user,discussion',
+    };
+
+    if (onlyComment) {
+      params['filter[type]'] = 'comment';
+    }
+
+    final uri = Uri.parse(
+      "${ApiConstants.apiBase}/api/posts",
+    ).replace(queryParameters: params);
+
+    try {
+      final resp = await _utils.get(uri.toString());
+      final data = Posts.formJson(resp.toString());
+
+      log(
+        "[Api] getPostsByAuthor Status:ok "
+        "(user=$username offset=$offset size=${data.posts.length})",
+      );
+
+      return data;
+    } catch (e) {
+      log("[Api] getPostsByAuthor Error:$e");
+      return null;
     }
   }
 

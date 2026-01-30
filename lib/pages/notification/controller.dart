@@ -13,6 +13,7 @@ import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/notifications.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
+import 'package:forum/utils/snackbar_utils.dart';
 import 'package:get/get.dart';
 
 class NotificationPageController extends GetxController {
@@ -26,6 +27,7 @@ class NotificationPageController extends GetxController {
   String? nextUrl;
   bool loading = false;
   bool isFirstSync = true;
+  final RxBool isInvoking = false.obs;
 
   void animateToTop() {
     scrollController.animateTo(
@@ -35,19 +37,18 @@ class NotificationPageController extends GetxController {
     );
   }
 
+  RxBool isLogin = false.obs;
+
   ScrollController scrollController = ScrollController();
   EasyRefreshController refreshController = EasyRefreshController(
     controlFinishLoad: true,
     controlFinishRefresh: true,
   );
 
-  void showMessage(String msg) {
-    if (isFirstSync) {
-      return;
-    }
-    if (Get.overlayContext != null) {
-      Get.rawSnackbar(message: msg);
-    }
+  @override
+  void onInit() {
+    isLogin.value = repo.isLogin();
+    super.onInit();
   }
 
   @override
@@ -66,8 +67,14 @@ class NotificationPageController extends GetxController {
 
       if (!repo.isLogin()) {
         log("[NotifyPage] refresh failed, user not login.");
-        showMessage("用户未登录");
+        if (!isFirstSync) {
+          SnackbarUtils.showMessage("用户未登录");
+        }
         refreshController.finishRefresh(IndicatorResult.fail);
+
+        if (isFirstSync) {
+          isFirstSync = false;
+        }
         return;
       }
       final (r, rs) = await Api.getNotification();
@@ -77,13 +84,23 @@ class NotificationPageController extends GetxController {
           "[NotifyPage] Notification api return 401 for token expired error.",
         );
         repo.logout();
-        showMessage("登录状态过期，请重新登录");
+        if (!isFirstSync) {
+          SnackbarUtils.showMessage("登录状态过期，请重新登录");
+        }
         refreshController.finishLoad(IndicatorResult.fail);
+
+        if (isFirstSync) {
+          isFirstSync = false;
+        }
         return;
       }
 
       if (r == null) {
         refreshController.finishRefresh(IndicatorResult.fail);
+
+        if (isFirstSync) {
+          isFirstSync = false;
+        }
         return;
       }
 
@@ -92,7 +109,7 @@ class NotificationPageController extends GetxController {
 
       refreshController.finishRefresh();
       refreshController.resetFooter();
-      
+
       if (isFirstSync) {
         isFirstSync = false;
       }
@@ -126,7 +143,7 @@ class NotificationPageController extends GetxController {
           "[NotifyPage] Notification api return 401 for token expired error.",
         );
         repo.logout();
-        showMessage("登录状态过期，请重新登录");
+        SnackbarUtils.showMessage("登录状态过期，请重新登录");
         refreshController.finishLoad(IndicatorResult.fail);
         return;
       }
@@ -157,11 +174,11 @@ class NotificationPageController extends GetxController {
       final r = await Api.setNotificationIsRead(id.toString());
       if (r == null) {
         log("[NotifyPage] Failed to check as read for $id");
-        showMessage("标记已读失败！");
+        SnackbarUtils.showMessage("标记已读失败！");
         return false;
       }
 
-      showMessage("标记已读成功！");
+      SnackbarUtils.showMessage("标记已读成功！");
       final item = items.firstWhere((i) {
         return i.id == id;
       });
@@ -179,6 +196,9 @@ class NotificationPageController extends GetxController {
   }
 
   void readAll() async {
+    if (isInvoking.value) return;
+    isInvoking.value = true;
+
     try {
       final r = await Api.readAllNotification();
       if (!r) {
@@ -190,10 +210,15 @@ class NotificationPageController extends GetxController {
       await onRefresh();
     } catch (e) {
       log("[NotifyPage] Failed to make all read with error:", error: e);
+    } finally {
+      isInvoking.value = false;
     }
   }
 
   void clearAll() async {
+    if (isInvoking.value) return;
+    isInvoking.value = true;
+
     try {
       final r = await Api.clearAllNotification();
       if (!r) {
@@ -212,6 +237,8 @@ class NotificationPageController extends GetxController {
         "[NotifyPage] Failed to clear all notifications with error:",
         error: e,
       );
+    } finally {
+      isInvoking.value = false;
     }
   }
 }

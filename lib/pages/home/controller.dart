@@ -12,6 +12,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
 import 'package:forum/utils/cache_utils.dart';
+import 'package:forum/utils/snackbar_utils.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 
@@ -38,12 +39,15 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
 
-    log("首页初始化 开始检测用户登录");
+    log("[HomePage] Setting up user repo, checking user login status");
     _restoreLoginUser();
   }
 
   Future<void> _restoreLoginUser() async {
     if (!await userRepo.setup()) {
+      log("[HomePage] User login is expired.");
+      SnackbarUtils.showMessage("用户登录状态过期!请重新登录");
+      userRepo.logout();
       return;
     }
     if (userRepo.user == null) {
@@ -51,6 +55,6 @@ class HomeController extends GetxController {
     }
 
     avatarUrl.value = userRepo.user!.avatarUrl;
-    log("取得用户信息 用户名称:${userRepo.user!.displayName} 头像地址:${avatarUrl.value}");
+    log("[HomePage] Fetched user info, nickname :${userRepo.user!.displayName} avatar url:${avatarUrl.value}");
   }
 }

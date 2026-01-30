@@ -14,13 +14,16 @@ import 'package:forum/utils/storage_utils.dart';
 import 'package:get/get.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
+/// Enable functions designed for StarFish Forum.
+const bool isStarFourmForATC = true;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageUtils.ensureInitialized();
-  // MediaKit.ensureInitialized();
+  
   setupInjector();
   runApp(const MyApp());
-  //状态栏、导航栏沉浸
+  
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(
@@ -43,7 +46,6 @@ class MyApp extends StatelessWidget {
             await HttpUtils().init();
             await StorageUtils.ensureInitialized();
           },
-          // navigatorObservers: [BiliVideoPage.routeObserver],
           useInheritedMediaQuery: true,
           themeMode: SettingsUtil.currentThemeMode,
           theme: ThemeData(

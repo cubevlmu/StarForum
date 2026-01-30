@@ -9,7 +9,8 @@ import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
 import 'package:forum/pages/login/view.dart';
 import 'package:forum/pages/settings/settings_page.dart';
-import 'package:get/get.dart';
+import 'package:forum/utils/snackbar_utils.dart';
+import 'package:forum/widgets/shared_dialog.dart';
 
 class UserDialogWidget extends StatelessWidget {
   const UserDialogWidget({super.key});
@@ -66,28 +67,16 @@ class UserDialogWidget extends StatelessWidget {
               onTap: () {
                 final repo = getIt<UserRepo>();
 
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) => AlertDialog(
-                    title: const Text('登出'),
-                    content: const Text('要登出账户嘛'),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, 'Cancel'),
-                        child: const Text('取消'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          final r = repo.logout();
-                          Get.showSnackbar(
-                            GetSnackBar(message: r ? "登出成功!" : "登出失败!"),
-                          );
-                          Navigator.pop(context, 'OK');
-                        },
-                        child: const Text('确认'),
-                      ),
-                    ],
-                  ),
+                SharedDialog.showDialog2(
+                  context,
+                  "取消",
+                  () => Navigator.pop(context, 'Cancel'),
+                  "确认",
+                  () {
+                    final r = repo.logout();
+                    SnackbarUtils.showMessage(r ? "登出成功!" : "登出失败!");
+                    Navigator.pop(context, 'OK');
+                  },
                 );
               },
             ),

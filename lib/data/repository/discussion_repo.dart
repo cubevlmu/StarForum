@@ -64,6 +64,7 @@ class DiscussionRepository {
           lastPostedAt: d.lastPostedAt ?? d.createdAt,
           commentCount: d.commentCount,
           likeCount: d.likeCount,
+          userId: d.posterId,
         );
       }).toList();
     });
@@ -109,6 +110,7 @@ class DiscussionRepository {
             ),
             lastPostNumber: d.lastPostNumber,
             likeCount: Value(d.firstPost?.likes ?? 0),
+            posterId: d.user?.id ?? -1
           );
         }).toList(),
       );
@@ -128,7 +130,9 @@ class DiscussionRepository {
       pageCount++;
 
       if (pageCount >= maxPage) {
-        log('[DiscussionRepo] syncDiscussionList stopped: reach maxPage=$maxPage');
+        log(
+          '[DiscussionRepo] syncDiscussionList stopped: reach maxPage=$maxPage',
+        );
         return;
       }
     }

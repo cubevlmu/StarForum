@@ -13,6 +13,7 @@ import 'package:forum/pages/search/view.dart';
 import 'package:forum/pages/theme_list/controller.dart';
 import 'package:forum/pages/theme_list/view.dart';
 import 'package:forum/widgets/avatar.dart';
+import 'package:forum/widgets/shared_notice.dart';
 import 'package:get/get.dart';
 
 class HomePage extends StatefulWidget {
@@ -87,9 +88,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               case 1:
                 Get.find<ThemeListController>().animateToTop();
                 break;
-              case 2:
-                // Get.find<PopularVideoController>().animateToTop();
-                break;
               default:
             }
           },
@@ -104,10 +102,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               return postListPage;
             case '主题':
               return themeListPage;
-            // case '测试':
-            //   return themeListPage;
             default:
-              return const Center(child: Text("该功能暂无"));
+              return SharedNotice.onWorkInProgress(context);
           }
         }).toList(),
       ),

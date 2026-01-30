@@ -28,48 +28,46 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   void dispose() {
-    // controller.onClose();
-    // controller.onDelete();
     Get.delete<SearchPageController>();
     super.dispose();
   }
 
   Widget _defaultHintView() {
-    List<Widget> list = [];
-    bool showSearchHistory = SettingsUtil.getValue(
+    final showSearchHistory = SettingsUtil.getValue(
       SettingsStorageKeys.showSearchHistory,
       defaultValue: true,
     );
-    if (showSearchHistory) {
-      list.addAll([
-        Padding(
-          padding: const EdgeInsets.all(10),
-          child: SizedBox(
-            height: 40,
-            child: Row(
-              children: [
-                const Text("历史", style: TextStyle(fontWeight: FontWeight.bold)),
-                const Spacer(),
-                IconButton(
-                  onPressed: controller.clearAllSearchedWords,
-                  icon: const Icon(Icons.delete_rounded),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.only(left: 10, right: 10),
-          child: Obx(
-            () => Wrap(
-              spacing: 8,
-              children: controller.historySearchedWords.value,
-            ),
-          ),
-        ),
-      ]);
+
+    if (!showSearchHistory) {
+      return const Center(child: Text("开始搜索吧 👀"));
     }
-    return ListView(children: list);
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      children: [
+        Row(
+          children: [
+            const Text(
+              "搜索历史",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            IconButton(
+              onPressed: controller.clearAllSearchedWords,
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Obx(
+          () => Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: controller.historySearchedWords.value,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _searchHintView() {
@@ -104,7 +102,6 @@ class _SearchPageState extends State<SearchPage> {
       shape: UnderlineInputBorder(
         borderSide: BorderSide(color: Theme.of(context).dividerColor),
       ),
-      // titleSpacing: 0,
       title: Row(
         children: [
           Expanded(
@@ -159,15 +156,9 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<SearchPageController>(
-      init: SearchPageController(),
-      id: "search",
-      builder: (_) {
-        return Scaffold(
-          appBar: _appBar(context),
-          body: SafeArea(child: _buildView()),
-        );
-      },
+    return Scaffold(
+      appBar: _appBar(context),
+      body: SafeArea(child: _buildView()),
     );
   }
 }

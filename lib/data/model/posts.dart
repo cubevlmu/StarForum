@@ -1,10 +1,12 @@
+import 'package:forum/data/model/discussions.dart';
+
 import 'base.dart';
 import 'users.dart';
 
 class PostInfo {
   final int id;
   String createdAt;
-  final String contentHtml;
+  String contentHtml;
   String editedAt;
   final int userId;
   final int editedUser;
@@ -69,8 +71,9 @@ class PostInfo {
 
 class Posts {
   final Map<int, PostInfo> posts;
+  final Map<int, DiscussionInfo> discussions;
   final Map<int, UserInfo> users;
-  Posts(this.posts, this.users);
+  Posts(this.posts, this.users, this.discussions);
 
   factory Posts.formJson(String data) {
     return Posts.formBaseList(BaseListBean.formJson(data));
@@ -79,6 +82,7 @@ class Posts {
   factory Posts.formBaseList(BaseListBean baseBean) {
     Map<int, PostInfo> posts = {};
     Map<int, UserInfo> users = {};
+    Map<int, DiscussionInfo> diss = {};
     for (var e in baseBean.data.list) {
       if (e.type == "posts") {
         var p = PostInfo.formBaseData(e);
@@ -95,8 +99,12 @@ class Posts {
           var p = PostInfo.formBaseData(e);
           posts.addAll({p.id: p});
           break;
+        case "discussions":
+          var d = DiscussionInfo.formMaoAndId(e.attributes, e.id);
+          diss.addAll({e.id: d});
+          break;
       }
     });
-    return Posts(posts, users);
+    return Posts(posts, users, diss);
   }
 }

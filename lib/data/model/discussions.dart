@@ -47,12 +47,12 @@ class DiscussionInfo {
       id.toString(),
       m["title"],
       m["slug"],
-      m["commentCount"],
-      m["participantCount"],
-      m["views"],
-      m["createdAt"],
-      m["lastPostedAt"],
-      m["lastPostNumber"],
+      m["commentCount"] ?? 0,
+      m["participantCount"] ?? 0,
+      m["views"] ?? 0,
+      m["createdAt"] ?? "",
+      m["lastPostedAt"] ?? "",
+      m["lastPostNumber"] ?? 0,
       0,
       null,
       null,
@@ -65,8 +65,7 @@ class DiscussionInfo {
   }
 
   static bool isInitDiscussion(DiscussionInfo discussionInfo) {
-    return discussionInfo.firstPost != null ||
-        discussionInfo.posts == null;
+    return discussionInfo.firstPost != null || discussionInfo.posts == null;
   }
 
   factory DiscussionInfo.formJson(String j) {
@@ -97,8 +96,15 @@ class DiscussionInfo {
           break;
       }
     });
-    for (var data in (base.data.relationships?["posts"]["data"] as List)) {
-      postsId.add(int.parse(data["id"]));
+    if (base.data.relationships?.containsKey("posts") ?? false) {
+      for (var data in (base.data.relationships?["posts"]["data"] as List)) {
+        postsId.add(int.parse(data["id"]));
+      }
+    }
+    if (base.data.relationships?.containsKey("firstPost") ?? false) {
+      postsId.add(
+        int.parse(base.data.relationships!["firstPost"]["data"]["id"] ?? "-1"),
+      );
     }
 
     for (var id in postsId) {
@@ -112,7 +118,7 @@ class DiscussionInfo {
     d.postsIdList = postsId;
     d.users = users;
     d.tags = tags;
-    d.firstPostId = postsId[0];
+    d.firstPostId = postsId.isEmpty ? -1 : postsId[0];
     return d;
   }
 }
@@ -191,8 +197,5 @@ class PagedDiscussions {
   final Discussions data;
   final String? nextUrl;
 
-  PagedDiscussions({
-    required this.data,
-    required this.nextUrl,
-  });
+  PagedDiscussions({required this.data, required this.nextUrl});
 }

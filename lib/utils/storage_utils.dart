@@ -32,22 +32,19 @@ class UserStorageKeys {
 }
 
 class SettingsStorageKeys {
-  ///主题
+  /// Theme settings.
   static const String themeMode = "themeMode";
   static const String biliTheme = "biliTheme";
 
-  ///自动更新
+  /// Auto update from github repo's release.
   static const String autoCheckUpdate = "autoCheckUpdate";
 
-  ///显示搜索默认词
-  static const String showSearchDefualtWord = "showSearchDefualtWord";
-
-  ///显示搜索历史
+  /// Show search history.
   static const String showSearchHistory = "showSearchHistory";
+  
+  /// Enabled functions for StarFish Forum.
+  static const String appForATC = "appForATC";
 
-  ///显示热词
-  static const String showHotSearch = "showHotSearch";
-
-  ///字体大小缩放
+  /// Text scaling.
   static const String textScaleFactor = 'textScaleFactor';
 }

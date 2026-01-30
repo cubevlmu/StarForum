@@ -1,4 +1,4 @@
-# Forum
+# StarForum
 
 A cross-platform **Flutter** forum client application, targeting **Android, iOS, and Desktop (Windows / macOS / Linux)**.
 

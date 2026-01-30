@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:forum/pages/notification/controller.dart';
 import 'package:forum/pages/notification/widgets/notify_card.dart';
 import 'package:forum/pages/settings/settings_page.dart';
+import 'package:forum/widgets/shared_notice.dart';
 import 'package:forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
@@ -39,65 +40,117 @@ class _NotificationPageState extends State<NotificationPage> {
     super.dispose();
   }
 
+  Widget _buildView(BuildContext context) {
+    final items = controller.items;
+
+    return SimpleEasyRefresher(
+      easyRefreshController: controller.refreshController,
+      onRefresh: controller.onRefresh,
+      onLoad: controller.onLoad,
+      childBuilder: (context, physics) {
+        return CustomScrollView(
+          controller: controller.scrollController,
+          physics: physics,
+          slivers: [
+            if (items.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _onEmpty(context),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final item = items[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: NotifyCard(item: item, controller: controller),
+                  );
+                }, childCount: items.length),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _onEmpty(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("📭", style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
+            Text(
+              "暂无通知",
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "这里会显示回复、提及和系统消息",
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("消息通知"),
-        actions: [
-          IconButton(
-            onPressed: () {
-              controller.readAll();
-            },
-            icon: Icon(Icons.checklist_outlined),
-          ),
-          const SizedBox(width: 10),
-          IconButton(
-            onPressed: () {
-              controller.clearAll();
-            },
-            icon: Icon(Icons.delete),
-          ),
-          const SizedBox(width: 10),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => SettingsPage()),
-              );
-            },
-            icon: Icon(Icons.settings_outlined),
-          ),
-          const SizedBox(width: 10),
-        ],
-      ),
-      body: SimpleEasyRefresher(
-        easyRefreshController: controller.refreshController,
-        onRefresh: controller.onRefresh,
-        onLoad: controller.onLoad,
-        childBuilder: (context, physics) => Obx(() {
-          return ListView.builder(
-            addAutomaticKeepAlives: false,
-            addRepaintBoundaries: false,
-            controller: controller.scrollController,
-            physics: physics,
-            padding: EdgeInsets.zero,
-            itemCount: controller.items.length,
-            itemBuilder: (context, index) {
-              final item = controller.items[index];
+    return Obx(() {
+      final isLogin = controller.isLogin.value;
 
-              return Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsetsGeometry.only(left: 16, right: 16),
-                    child: NotifyCard(item: item, controller: controller),
-                  ),
-                ],
-              );
-            },
-          );
-        }),
-      ),
+      return Scaffold(
+        appBar: _buildAppBar(context),
+        body: isLogin ? _buildView(context) : SharedNotice.onNotLogin(context, "你还没有登录", "登录后即可查看消息通知"),
+      );
+    });
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      title: const Text("通知"),
+      actions: [
+        if (controller.isLogin.value)
+          IconButton(
+            onPressed: controller.isInvoking.value ? null : controller.readAll,
+            icon: const Icon(Icons.checklist_outlined),
+          ),
+        const SizedBox(width: 10),
+        if (controller.isLogin.value)
+          IconButton(
+            onPressed: controller.isInvoking.value ? null : controller.clearAll,
+            icon: const Icon(Icons.delete),
+          ),
+        const SizedBox(width: 10),
+        IconButton(
+          onPressed: controller.isInvoking.value
+              ? null
+              : () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => SettingsPage()),
+                  );
+                },
+          icon: const Icon(Icons.settings_outlined),
+        ),
+        const SizedBox(width: 10),
+      ],
+      bottom: controller.isInvoking.value
+          ? const PreferredSize(
+              preferredSize: Size.fromHeight(2),
+              child: LinearProgressIndicator(),
+            )
+          : null,
     );
   }
 }

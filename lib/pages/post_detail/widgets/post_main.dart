@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/pages/post_detail/controller.dart';
+import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/string_util.dart';
 import 'package:forum/widgets/avatar.dart';
 import 'package:forum/widgets/content_view.dart';
@@ -45,11 +46,14 @@ class UserBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Navigator.of(context).push(GetPageRoute());
-        //   page: () => UserSpacePage(
-        //       key: ValueKey('UserSpacePage:${controller.videoInfo.ownerMid}'),
-        //       mid: controller.videoInfo.ownerMid),
-        // ));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => UserPage(
+              key: ValueKey("UserPage:${item.userId}"),
+              userId: item.userId,
+            ),
+          ),
+        );
       },
       child: Row(
         children: [
@@ -127,13 +131,6 @@ class IntroductionText extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Padding(
-            //   padding: const EdgeInsets.only(top: 5, bottom: 5),
-            //   child: Text(
-            //     item.discussion.title,
-            //     style: const TextStyle(fontSize: 16),
-            //   ),
-            // ),
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Obx(() => ContentView(content: model.content.value)),

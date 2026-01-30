@@ -12,18 +12,6 @@ import 'package:get_it/get_it.dart';
 final getIt = GetIt.instance;
 
 void setupInjector() {
-  // Database
-  // getIt.registerLazySingleton<AppDatabase>(() => AppDatabase());
-
-  // Dao
-  // getIt.registerLazySingleton<DiscussionsDao>(() => DiscussionsDao(getIt<AppDatabase>()));
-
-  // Api
-  // getIt.registerLazySingleton<SyncApi>(() => SyncApi());
-
-  // Repository（这一行必须存在）
-  // getIt.registerLazySingleton<DiscussionsRepository>(() => DiscussionsRepository(getIt<SyncApi>(), getIt<DiscussionsDao>()));
-
   getIt.registerSingleton<AppDatabase>(AppDatabase());
 
   getIt.registerLazySingleton(
@@ -33,7 +21,7 @@ void setupInjector() {
       getIt<AppDatabase>().excerptDao,
     ),
   );
-  // getIt.registerLazySingleton<DiscussionDetailRepository>(() => DiscussionDetailRepository());
+  
   getIt.registerLazySingleton<UserRepo>(() => UserRepo());
 
 }

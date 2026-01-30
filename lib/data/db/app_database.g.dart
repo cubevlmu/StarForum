@@ -139,6 +139,17 @@ class $DbDiscussionsTable extends DbDiscussions
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _posterIdMeta = const VerificationMeta(
+    'posterId',
+  );
+  @override
+  late final GeneratedColumn<int> posterId = GeneratedColumn<int>(
+    'poster_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -153,6 +164,7 @@ class $DbDiscussionsTable extends DbDiscussions
     createdAt,
     lastPostedAt,
     lastPostNumber,
+    posterId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -264,6 +276,14 @@ class $DbDiscussionsTable extends DbDiscussions
     } else if (isInserting) {
       context.missing(_lastPostNumberMeta);
     }
+    if (data.containsKey('poster_id')) {
+      context.handle(
+        _posterIdMeta,
+        posterId.isAcceptableOrUnknown(data['poster_id']!, _posterIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_posterIdMeta);
+    }
     return context;
   }
 
@@ -321,6 +341,10 @@ class $DbDiscussionsTable extends DbDiscussions
         DriftSqlType.int,
         data['${effectivePrefix}last_post_number'],
       )!,
+      posterId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}poster_id'],
+      )!,
     );
   }
 
@@ -345,6 +369,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
   final DateTime createdAt;
   final DateTime? lastPostedAt;
   final int lastPostNumber;
+  final int posterId;
   const DbDiscussion({
     required this.id,
     required this.title,
@@ -358,6 +383,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
     required this.createdAt,
     this.lastPostedAt,
     required this.lastPostNumber,
+    required this.posterId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -376,6 +402,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
       map['last_posted_at'] = Variable<DateTime>(lastPostedAt);
     }
     map['last_post_number'] = Variable<int>(lastPostNumber);
+    map['poster_id'] = Variable<int>(posterId);
     return map;
   }
 
@@ -395,6 +422,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
           ? const Value.absent()
           : Value(lastPostedAt),
       lastPostNumber: Value(lastPostNumber),
+      posterId: Value(posterId),
     );
   }
 
@@ -416,6 +444,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       lastPostedAt: serializer.fromJson<DateTime?>(json['lastPostedAt']),
       lastPostNumber: serializer.fromJson<int>(json['lastPostNumber']),
+      posterId: serializer.fromJson<int>(json['posterId']),
     );
   }
   @override
@@ -434,6 +463,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'lastPostedAt': serializer.toJson<DateTime?>(lastPostedAt),
       'lastPostNumber': serializer.toJson<int>(lastPostNumber),
+      'posterId': serializer.toJson<int>(posterId),
     };
   }
 
@@ -450,6 +480,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
     DateTime? createdAt,
     Value<DateTime?> lastPostedAt = const Value.absent(),
     int? lastPostNumber,
+    int? posterId,
   }) => DbDiscussion(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -463,6 +494,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
     createdAt: createdAt ?? this.createdAt,
     lastPostedAt: lastPostedAt.present ? lastPostedAt.value : this.lastPostedAt,
     lastPostNumber: lastPostNumber ?? this.lastPostNumber,
+    posterId: posterId ?? this.posterId,
   );
   DbDiscussion copyWithCompanion(DbDiscussionsCompanion data) {
     return DbDiscussion(
@@ -490,6 +522,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
       lastPostNumber: data.lastPostNumber.present
           ? data.lastPostNumber.value
           : this.lastPostNumber,
+      posterId: data.posterId.present ? data.posterId.value : this.posterId,
     );
   }
 
@@ -507,7 +540,8 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
           ..write('authorAvatar: $authorAvatar, ')
           ..write('createdAt: $createdAt, ')
           ..write('lastPostedAt: $lastPostedAt, ')
-          ..write('lastPostNumber: $lastPostNumber')
+          ..write('lastPostNumber: $lastPostNumber, ')
+          ..write('posterId: $posterId')
           ..write(')'))
         .toString();
   }
@@ -526,6 +560,7 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
     createdAt,
     lastPostedAt,
     lastPostNumber,
+    posterId,
   );
   @override
   bool operator ==(Object other) =>
@@ -542,7 +577,8 @@ class DbDiscussion extends DataClass implements Insertable<DbDiscussion> {
           other.authorAvatar == this.authorAvatar &&
           other.createdAt == this.createdAt &&
           other.lastPostedAt == this.lastPostedAt &&
-          other.lastPostNumber == this.lastPostNumber);
+          other.lastPostNumber == this.lastPostNumber &&
+          other.posterId == this.posterId);
 }
 
 class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
@@ -558,6 +594,7 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
   final Value<DateTime> createdAt;
   final Value<DateTime?> lastPostedAt;
   final Value<int> lastPostNumber;
+  final Value<int> posterId;
   final Value<int> rowid;
   const DbDiscussionsCompanion({
     this.id = const Value.absent(),
@@ -572,6 +609,7 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
     this.createdAt = const Value.absent(),
     this.lastPostedAt = const Value.absent(),
     this.lastPostNumber = const Value.absent(),
+    this.posterId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DbDiscussionsCompanion.insert({
@@ -587,6 +625,7 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
     required DateTime createdAt,
     this.lastPostedAt = const Value.absent(),
     required int lastPostNumber,
+    required int posterId,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -594,7 +633,8 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
        commentCount = Value(commentCount),
        participantCount = Value(participantCount),
        createdAt = Value(createdAt),
-       lastPostNumber = Value(lastPostNumber);
+       lastPostNumber = Value(lastPostNumber),
+       posterId = Value(posterId);
   static Insertable<DbDiscussion> custom({
     Expression<String>? id,
     Expression<String>? title,
@@ -608,6 +648,7 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? lastPostedAt,
     Expression<int>? lastPostNumber,
+    Expression<int>? posterId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -623,6 +664,7 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
       if (createdAt != null) 'created_at': createdAt,
       if (lastPostedAt != null) 'last_posted_at': lastPostedAt,
       if (lastPostNumber != null) 'last_post_number': lastPostNumber,
+      if (posterId != null) 'poster_id': posterId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -640,6 +682,7 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
     Value<DateTime>? createdAt,
     Value<DateTime?>? lastPostedAt,
     Value<int>? lastPostNumber,
+    Value<int>? posterId,
     Value<int>? rowid,
   }) {
     return DbDiscussionsCompanion(
@@ -655,6 +698,7 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
       createdAt: createdAt ?? this.createdAt,
       lastPostedAt: lastPostedAt ?? this.lastPostedAt,
       lastPostNumber: lastPostNumber ?? this.lastPostNumber,
+      posterId: posterId ?? this.posterId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -698,6 +742,9 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
     if (lastPostNumber.present) {
       map['last_post_number'] = Variable<int>(lastPostNumber.value);
     }
+    if (posterId.present) {
+      map['poster_id'] = Variable<int>(posterId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -719,6 +766,7 @@ class DbDiscussionsCompanion extends UpdateCompanion<DbDiscussion> {
           ..write('createdAt: $createdAt, ')
           ..write('lastPostedAt: $lastPostedAt, ')
           ..write('lastPostNumber: $lastPostNumber, ')
+          ..write('posterId: $posterId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1447,6 +1495,7 @@ typedef $$DbDiscussionsTableCreateCompanionBuilder =
       required DateTime createdAt,
       Value<DateTime?> lastPostedAt,
       required int lastPostNumber,
+      required int posterId,
       Value<int> rowid,
     });
 typedef $$DbDiscussionsTableUpdateCompanionBuilder =
@@ -1463,6 +1512,7 @@ typedef $$DbDiscussionsTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<DateTime?> lastPostedAt,
       Value<int> lastPostNumber,
+      Value<int> posterId,
       Value<int> rowid,
     });
 
@@ -1532,6 +1582,11 @@ class $$DbDiscussionsTableFilterComposer
 
   ColumnFilters<int> get lastPostNumber => $composableBuilder(
     column: $table.lastPostNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get posterId => $composableBuilder(
+    column: $table.posterId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1604,6 +1659,11 @@ class $$DbDiscussionsTableOrderingComposer
     column: $table.lastPostNumber,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get posterId => $composableBuilder(
+    column: $table.posterId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DbDiscussionsTableAnnotationComposer
@@ -1662,6 +1722,9 @@ class $$DbDiscussionsTableAnnotationComposer
     column: $table.lastPostNumber,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get posterId =>
+      $composableBuilder(column: $table.posterId, builder: (column) => column);
 }
 
 class $$DbDiscussionsTableTableManager
@@ -1707,6 +1770,7 @@ class $$DbDiscussionsTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> lastPostedAt = const Value.absent(),
                 Value<int> lastPostNumber = const Value.absent(),
+                Value<int> posterId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DbDiscussionsCompanion(
                 id: id,
@@ -1721,6 +1785,7 @@ class $$DbDiscussionsTableTableManager
                 createdAt: createdAt,
                 lastPostedAt: lastPostedAt,
                 lastPostNumber: lastPostNumber,
+                posterId: posterId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1737,6 +1802,7 @@ class $$DbDiscussionsTableTableManager
                 required DateTime createdAt,
                 Value<DateTime?> lastPostedAt = const Value.absent(),
                 required int lastPostNumber,
+                required int posterId,
                 Value<int> rowid = const Value.absent(),
               }) => DbDiscussionsCompanion.insert(
                 id: id,
@@ -1751,6 +1817,7 @@ class $$DbDiscussionsTableTableManager
                 createdAt: createdAt,
                 lastPostedAt: lastPostedAt,
                 lastPostNumber: lastPostNumber,
+                posterId: posterId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

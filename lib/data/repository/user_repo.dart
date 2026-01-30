@@ -9,7 +9,9 @@ import 'dart:developer';
 import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/users.dart';
 import 'package:forum/data/auth/auth_storage.dart';
+import 'package:forum/pages/account/controller.dart';
 import 'package:forum/pages/home/controller.dart';
+import 'package:forum/pages/notification/controller.dart';
 import 'package:forum/utils/http_utils.dart';
 import 'package:get/get.dart';
 
@@ -20,6 +22,10 @@ class UserRepo {
   void _onLoginStateChange() {
     final homeC = Get.find<HomeController>();
     homeC.avatarUrl.value = user?.avatarUrl ?? "";
+    final notiC = Get.find<NotificationPageController>();
+    notiC.isLogin.value = isLogin();
+    final accoC = Get.find<AccountPageController>();
+    accoC.isLogOut.value = !isLogin();
   }
 
   Future<bool> setup() async {

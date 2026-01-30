@@ -4,19 +4,24 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:forum/data/repository/user_repo.dart';
+import 'package:get/get.dart';
+
+import '../../di/injector.dart';
 
 class AccountPageController extends GetxController {
   AccountPageController();
-  int currentPage = 1;
+  final repo = getIt<UserRepo>();
 
-  Future<bool> loadVideoItemWidgtLists() async {
-    return true;
+  RxBool isLogOut = true.obs;
+
+  int getTrueId() {
+    if (!repo.isLogin()) return -2;
+    if (repo.user == null) {
+      return -1;
+    }
+    return repo.user!.id;
   }
 
-  Future<void> onLoad() async {
-  }
-
-  Future<void> onRefresh() async {
-  }
+  void onLogOut() {}
 }

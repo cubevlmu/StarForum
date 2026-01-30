@@ -9,8 +9,12 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/posts.dart';
+import 'package:forum/data/repository/user_repo.dart';
+import 'package:forum/di/injector.dart';
 import 'package:forum/pages/post_detail/controller.dart';
 import 'package:forum/pages/post_detail/reply_util.dart';
+import 'package:forum/pages/user/view.dart';
+import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/utils/string_util.dart';
 import 'package:forum/widgets/avatar.dart';
 import 'package:forum/widgets/content_view.dart';
@@ -18,8 +22,13 @@ import 'package:forum/widgets/icon_text_button.dart';
 import 'package:get/get.dart';
 
 class PostItemWidget extends StatefulWidget {
-  const PostItemWidget({super.key, required this.reply});
+  const PostItemWidget({
+    super.key,
+    required this.reply,
+    this.isUserPage = false,
+  });
   final PostInfo reply;
+  final bool isUserPage;
 
   @override
   State<PostItemWidget> createState() => _PostItemWidgetState();
@@ -41,14 +50,14 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                     avatarUrl: widget.reply.user?.avatarUrl ?? "",
                     radius: 45 / 2,
                     onPressed: () {
-                      // Get.to(() => UserSpacePage(
-                      //     key: ValueKey("UserSpacePage:${reply.member.mid}"),
-                      //     mid: reply.member.mid));
-                      Navigator.of(context).push(GetPageRoute());
-                      // page: () => UserSpacePage(
-                      //     key: ValueKey(
-                      //         "UserSpacePage:${widget.reply.member.mid}"),
-                      //     mid: widget.reply.member.mid)));
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => UserPage(
+                            key: ValueKey("UserPage:${widget.reply.userId}"),
+                            userId: widget.reply.userId,
+                          ),
+                        ),
+                      );
                     },
                     cacheWidthHeight: 200,
                   ),
@@ -64,16 +73,18 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                       padding: const EdgeInsets.only(left: 10),
                       child: GestureDetector(
                         onTap: () {
-                          // Get.to(() => UserSpacePage(
-                          //     key:
-                          //         ValueKey("UserSpacePage:${reply.member.mid}"),
-                          //     mid: reply.member.mid));
-                          Navigator.of(context).push(GetPageRoute());
-                          // page: () => UserSpacePage(
-                          //     key: ValueKey(
-                          //         "UserSpacePage:${widget.reply.member.mid}"),
-                          //     mid: widget.reply.member.mid)));
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => UserPage(
+                                key: ValueKey(
+                                  "UserPage:${widget.reply.userId}",
+                                ),
+                                userId: widget.reply.userId,
+                              ),
+                            ),
+                          );
                         },
+
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -105,10 +116,6 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                                     ),
                                   ),
                                 ),
-                                // Text(widget.reply.location,
-                                //     style: TextStyle(
-                                //         color: Theme.of(context).hintColor,
-                                //         fontSize: 12))
                               ],
                             ),
                           ],
@@ -121,9 +128,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                         right: 10,
                         left: 10,
                       ),
-                      child:
-                          //评论内容
-                          ContentView(content: widget.reply.contentHtml),
+                      child: ContentView(content: widget.reply.contentHtml),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(
@@ -138,7 +143,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                               return ThumUpButton(
                                 likeNum: widget.reply.likes,
                                 selected: false,
-                                onPressed: () async {
+                                onPressed: widget.isUserPage ? null : () async {
                                   final r = await addLikeToPost(widget.reply);
                                   if (r != null) {
                                     widget.reply.likes = r.likes;
@@ -148,13 +153,14 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                               );
                             },
                           ),
-                          AddReplyButton(
-                            postItem: widget.reply,
-                            updateWidget: () {
-                              // widget.reply.++;
-                              setState(() => ());
-                            },
-                          ),
+                          if (!widget.isUserPage)
+                            AddReplyButton(
+                              postItem: widget.reply,
+                              updateWidget: () {
+                                // widget.reply.++;
+                                setState(() => ());
+                              },
+                            ),
                         ],
                       ),
                     ),
@@ -207,7 +213,6 @@ class ThumUpButton extends StatelessWidget {
   }
 }
 
-///回复评论按钮
 class AddReplyButton extends StatelessWidget {
   const AddReplyButton({
     super.key,
@@ -240,15 +245,27 @@ class AddReplyButton extends StatelessWidget {
 }
 
 Future<PostInfo?> addLikeToPost(PostInfo item) async {
+  final repo = getIt<UserRepo>();
+  if (!repo.isLogin()) {
+    SnackbarUtils.showMessage("请先登录!");
+    return null;
+  }
+
   try {
-    final r = await Api.likePost(item.id.toString(), true);
-    if (r == null) {
-      log("[PostItem] failed to like post with empty response");
-      Get.rawSnackbar(title: "点赞失败", message: "可能是网络错误");
+    final (r, rs) = await Api.likePost(item.id.toString(), true);
+    if (!rs) {
+      repo.logout();
+      SnackbarUtils.showMessage("登录过期!");
       return null;
     }
 
-    Get.rawSnackbar(message: r.likes < item.likes ? "取消点赞成功!" : "点赞成功!");
+    if (r == null) {
+      log("[PostItem] failed to like post with empty response");
+      SnackbarUtils.showMessageWithTitle("点赞失败", "可能是网络错误");
+      return null;
+    }
+
+    SnackbarUtils.showMessage(r.likes < item.likes ? "取消点赞成功!" : "点赞成功!");
     return r;
   } catch (e) {
     log("[PostItem] failed to like post with id :${item.id}");

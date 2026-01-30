@@ -17,12 +17,20 @@ class LoginController extends GetxController {
   String account = "";
   String password = "";
   final repo = getIt<UserRepo>();
+  bool isLoading = false;
+
+  void _setLoading(bool value) {
+    isLoading = value;
+    update(["password_login"]);
+  }
 
   void startLogin() async {
     if (account.isEmpty || password.isEmpty) {
       Get.rawSnackbar(title: "登录", message: "账号或密码不能为空");
       return;
     }
+
+    _setLoading(true);
 
     try {
       final r = await repo.login(account, password);
@@ -37,7 +45,7 @@ class LoginController extends GetxController {
         Get.rawSnackbar(title: "登录", message: "获取用户信息错误");
         return;
       }
-      
+
       /// 4️⃣ 登录成功
       Get.rawSnackbar(title: "登录", message: "成功! 用户:${repo.user?.displayName}");
 
@@ -48,6 +56,8 @@ class LoginController extends GetxController {
     } catch (e, st) {
       log("登录失败", error: e, stackTrace: st);
       Get.rawSnackbar(title: "登录", message: "网络错误或账号密码错误");
+    } finally {
+      _setLoading(false);
     }
   }
 
@@ -66,5 +76,4 @@ class LoginController extends GetxController {
     super.onReady();
     _initData();
   }
-
 }

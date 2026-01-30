@@ -41,35 +41,35 @@ class StringUtil {
   ///据今大于等于1分钟且小于1小时的转换为:n分钟前
   ///距今大于等于1小时且小于24小时的转换为:n小时前
   static String timeStampToAgoDate(int timeStamp) {
-    var dateNow = DateTime.now();
-    Duration delta = Duration(
-      milliseconds: dateNow.millisecondsSinceEpoch - timeStamp * 1000,
-    );
-    var inMinutes = delta.inMinutes;
-    //小于1分钟
-    if (inMinutes == 0) {
+    final now = DateTime.now();
+    final date = DateTime.fromMillisecondsSinceEpoch(timeStamp * 1000);
+
+    // 未来时间
+    if (date.isAfter(now)) {
       return "刚刚";
     }
-    //大于等于1分钟小于1小时
-    if (inMinutes >= 1 && inMinutes < 60) {
-      return "$inMinutes分钟前";
+
+    final delta = now.difference(date);
+
+    if (delta.inMinutes < 1) {
+      return "刚刚";
     }
 
-    var inHours = delta.inHours;
-    //大于等于1小时小于1天
-    if (inHours >= 1 && inHours < 24) {
-      return "$inHours小时前";
+    if (delta.inMinutes < 60) {
+      return "${delta.inMinutes}分钟前";
     }
-    var dateT = DateTime.fromMillisecondsSinceEpoch(timeStamp * 1000);
-    //大于等于1天,本年内
-    if (inHours >= 24 && (dateNow.year == dateT.year)) {
-      return "${dateT.month.toString().padLeft(2, '0')}-${dateT.day.toString().padLeft(2, '0')}";
+
+    if (delta.inHours < 24) {
+      return "${delta.inHours}小时前";
     }
-    //本年前
-    if (dateNow.year > dateT.year) {
-      return "${dateT.year}-${dateT.month.toString().padLeft(2, '0')}-${dateT.day.toString().padLeft(2, '0')}";
+
+    // 超过一天
+    if (now.year == date.year) {
+      return "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
     }
-    throw '时间戳转换日期错误';
+
+    // 非本年
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
   }
 
   //时间戳转日期(年-月-日)

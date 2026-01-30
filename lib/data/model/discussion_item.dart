@@ -16,6 +16,7 @@ class DiscussionItem {
 
   final int likeCount;
   final int commentCount;
+  final int userId;
 
   DiscussionItem({
     required this.id,
@@ -26,6 +27,7 @@ class DiscussionItem {
     this.authorName = "",
     this.viewCount = 0,
     this.likeCount = -1,
-    this.commentCount = -1
+    this.commentCount = -1,
+    required this.userId,
   });
 }

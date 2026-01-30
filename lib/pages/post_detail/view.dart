@@ -46,38 +46,87 @@ class _PostPageState extends State<PostPage>
     super.dispose();
   }
 
-  // 主视图
+  // Main view
   Widget _buildView(PostPageController controller) {
     controller.updateWidget = () => setState(() => ());
+
+    final bool hasReply =
+        controller.replyItems.isNotEmpty || controller.newReplyItems.isNotEmpty;
+
     return SimpleEasyRefresher(
-      childBuilder: (context, physics) => ListView.builder(
-        addAutomaticKeepAlives: false,
-        addRepaintBoundaries: false,
-        controller: controller.scrollController,
-        physics: physics,
-        padding: const EdgeInsets.all(0),
-        itemCount: controller.replyItems.length + controller.newReplyItems.length + 2,
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return PostMainWidget(content: widget.item);
-          } else if (index == 1) {
-            //在首个元素前放置排列方式切换控件
-            return Column(
-              children: [SortReplyItemWidget(replyController: controller)],
-            );
-          } else {
-            if (index < controller.newReplyItems.length + 2) {
-              final item = controller.newReplyItems[index - 2];
-              return PostItemWidget(reply: item);
-            }
-            final item = controller.replyItems[index - 2 - controller.newReplyItems.length];
-            return PostItemWidget(reply: item);
-          }
-        },
-      ),
       onLoad: controller.onReplyLoad,
       onRefresh: controller.onReplyRefresh,
       easyRefreshController: controller.refreshController,
+      childBuilder: (context, physics) {
+        return CustomScrollView(
+          controller: controller.scrollController,
+          physics: physics,
+          slivers: [
+            /// Main post (first post)
+            SliverToBoxAdapter(child: PostMainWidget(content: widget.item)),
+
+            /// Order button
+            SliverToBoxAdapter(
+              child: SortReplyItemWidget(replyController: controller),
+            ),
+
+            /// Check if no reply
+            if (!hasReply)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _onEmptyReply(context),
+              )
+            else ...[
+              /// New reply
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final item = controller.newReplyItems[index];
+                  return PostItemWidget(reply: item);
+                }, childCount: controller.newReplyItems.length),
+              ),
+
+              /// Old reply
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final item = controller.replyItems[index];
+                  return PostItemWidget(reply: item);
+                }, childCount: controller.replyItems.length),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  // Empty reply view
+  Widget _onEmptyReply(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("💬", style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
+            Text(
+              "还没有回复",
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "成为第一个发表评论的人吧",
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
     );
   }
 

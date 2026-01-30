@@ -24,6 +24,7 @@ class DbDiscussions extends Table {
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get lastPostedAt => dateTime().nullable()();
   IntColumn get lastPostNumber => integer()();
+  IntColumn get posterId => integer()();
 
   @override
   Set<Column> get primaryKey => {id};
