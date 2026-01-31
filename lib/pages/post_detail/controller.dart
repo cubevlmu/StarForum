@@ -4,28 +4,28 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'dart:developer';
-
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:forum/data/api/api.dart';
+import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/data/model/posts.dart';
 import 'package:forum/data/repository/discussion_repo.dart';
 import 'package:forum/di/injector.dart';
 import 'package:forum/pages/post_detail/reply_util.dart';
+import 'package:forum/utils/log_util.dart';
+import 'package:forum/utils/snackbar_utils.dart';
 import 'package:get/get.dart';
 
 enum ReplySort { like, time }
 
 class PostPageController extends GetxController {
-  PostPageController({required this.postId, required});
+  PostPageController({required this.discussion, required});
 
-  final String postId;
+  final DiscussionItem discussion;
 
-  /// ===== 状态 =====
   final RxInt replyCount = 0.obs;
   final RxString sortTypeText = "按热度".obs;
-  final RxString content = "".obs;
+  final RxString content = "<p>加载中...</p>".obs;
 
   final List<PostInfo> replyItems = [];
   final List<PostInfo> newReplyItems = [];
@@ -36,25 +36,41 @@ class PostPageController extends GetxController {
   );
   final repo = getIt<DiscussionRepository>();
   final ScrollController scrollController = ScrollController();
+  late PostInfo _firstPost;
 
   @override
   void onInit() async {
-    content.value = await repo.getCachedFirstPostContent(postId) ?? "<p>[Error:03]</p>";
+    try {
+      final r = await Api.getFirstPost(discussion.id);
+      if (r == null) {
+        LogUtil.error(
+          "[PostDetail] Failed to fetch post content (content is null).",
+        );
+        content.value = "<p>内容无法获取到...可能是网络问题</p>";
+        SnackbarUtils.showMessage("无法获取到贴文内容");
+        return;
+      }
+      _firstPost = r;
+      content.value = r.contentHtml;
+    } catch (e, s) {
+      LogUtil.errorE(
+        "[PostDetail] Failed to fetch post content with error.",
+        e,
+        s,
+      );
+    }
     super.onInit();
   }
 
-  /// ===== 分页 =====
-  static const int _pageSize = 20;
+  static const int _pageSize = 10;
   int _offset = 1;
   bool _hasMore = true;
   bool _loading = false;
 
-  /// ===== 排序 =====
   ReplySort _replySort = ReplySort.like;
 
   Function()? updateWidget;
 
-  /// ================= 排序切换 =================
   void toggleSort() {
     if (_replySort == ReplySort.like) {
       _replySort = ReplySort.time;
@@ -66,7 +82,6 @@ class PostPageController extends GetxController {
     onReplyRefresh();
   }
 
-  /// ================= 刷新 =================
   Future<void> onReplyRefresh() async {
     if (_loading) return;
 
@@ -81,12 +96,18 @@ class PostPageController extends GetxController {
       ok ? IndicatorResult.success : IndicatorResult.fail,
     );
 
+    refreshController.finishLoad(
+      _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
+    );
+
     updateWidget?.call();
   }
 
-  /// ================= 加载更多 =================
   Future<void> onReplyLoad() async {
-    if (_loading) return;
+    if (_loading) {
+      refreshController.finishLoad(IndicatorResult.fail);
+      return;
+    }
 
     if (!_hasMore) {
       refreshController.finishLoad(IndicatorResult.noMore);
@@ -95,32 +116,30 @@ class PostPageController extends GetxController {
 
     final ok = await _loadReplies();
 
-    if (!ok) {
-      refreshController.finishLoad(IndicatorResult.fail);
-      return;
-    }
-
     refreshController.finishLoad(
-      _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
+      ok
+          ? (_hasMore ? IndicatorResult.success : IndicatorResult.noMore)
+          : IndicatorResult.fail,
     );
 
     updateWidget?.call();
   }
 
-  /// ================= 核心加载逻辑 =================
   Future<bool> _loadReplies({bool reset = false}) async {
     try {
       _loading = true;
 
       final Posts? r = await Api.getPosts(
-        discussionId: postId,
+        discussionId: discussion.id,
         offset: _offset,
         limit: _pageSize,
         sort: _replySort == ReplySort.like ? PostSort.number : PostSort.time,
       );
 
       if (r == null) {
-        log("[PostDetailPage] Response data is empty, maybe no more posts in this discussion");
+        LogUtil.error(
+          "[PostDetailPage] Response data is empty, maybe no more posts in this discussion",
+        );
         return false;
       }
 
@@ -138,7 +157,6 @@ class PostPageController extends GetxController {
         return true;
       }
 
-      // 去重（防 API 返回重叠）
       final existingIds = replyItems.map((e) => e.id).toSet();
       final filtered = list.where((e) => !existingIds.contains(e.id)).toList();
 
@@ -147,28 +165,26 @@ class PostPageController extends GetxController {
 
       _offset += list.length;
 
-      // 少于 pageSize 说明没了
       if (list.length < _pageSize) {
         _hasMore = false;
       }
 
       return true;
-    } catch (e) {
-      log("加载评论失败: $e");
+    } catch (e, s) {
+      LogUtil.errorE("[PostPage] Failed to load replies.", e, s);
       return false;
     } finally {
       _loading = false;
     }
   }
 
-  /// ================= 发表评论 =================
   Future<void> showAddReplySheet() async {
-    // 你原来的逻辑可以直接搬进来
     await ReplyUtil.showAddReplySheet(
-        discussionId: postId,
-        newReplyItems: newReplyItems,
-        updateWidget: updateWidget,
-        scrollController: scrollController);
+      discussionId: discussion.id,
+      newReplyItems: newReplyItems,
+      updateWidget: updateWidget,
+      scrollController: scrollController,
+    );
   }
 
   @override
@@ -178,5 +194,7 @@ class PostPageController extends GetxController {
     super.onClose();
   }
 
-  String getId() { return postId; }
+  String getId() {
+    return discussion.id;
+  }
 }

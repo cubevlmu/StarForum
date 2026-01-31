@@ -6,6 +6,7 @@
 
 import 'package:forum/data/db/app_database.dart';
 import 'package:forum/data/repository/discussion_repo.dart';
+import 'package:forum/data/repository/tag_repo.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:get_it/get_it.dart';
 
@@ -23,5 +24,6 @@ void setupInjector() {
   );
   
   getIt.registerLazySingleton<UserRepo>(() => UserRepo());
+  getIt.registerLazySingleton<TagRepo>(() => TagRepo());
 
 }

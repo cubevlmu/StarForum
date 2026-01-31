@@ -11,7 +11,9 @@ import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/pages/post_detail/controller.dart';
 import 'package:forum/pages/post_detail/widgets/post_item.dart';
 import 'package:forum/pages/post_detail/widgets/post_main.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/string_util.dart';
+import 'package:forum/widgets/shared_notice.dart';
 import 'package:forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
@@ -32,7 +34,7 @@ class _PostPageState extends State<PostPage>
 
   @override
   void initState() {
-    controller = Get.put(PostPageController(postId: widget.item.id));
+    controller = Get.put(PostPageController(discussion: widget.item));
     super.initState();
   }
 
@@ -40,8 +42,8 @@ class _PostPageState extends State<PostPage>
   void dispose() {
     try {
       Get.delete<PostPageController>();
-    } catch (ex) {
-      log("[PostDetailPage] failed to dispose controller ${ex.toString()}");
+    } catch (e, s) {
+      LogUtil.errorE("[PostDetailPage] failed to dispose controller", e, s);
     }
     super.dispose();
   }
@@ -74,7 +76,12 @@ class _PostPageState extends State<PostPage>
             if (!hasReply)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _onEmptyReply(context),
+                child: SharedNotice.buildNoticeView(
+                  context,
+                  "💬",
+                  "还没有回复",
+                  "成为第一个发表评论的人吧",
+                ),
               )
             else ...[
               /// New reply
@@ -96,37 +103,6 @@ class _PostPageState extends State<PostPage>
           ],
         );
       },
-    );
-  }
-
-  // Empty reply view
-  Widget _onEmptyReply(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("💬", style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 16),
-            Text(
-              "还没有回复",
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "成为第一个发表评论的人吧",
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
     );
   }
 

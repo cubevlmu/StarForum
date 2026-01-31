@@ -4,14 +4,14 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forum/data/repository/tag_repo.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
 import 'package:forum/pages/main/view.dart';
 import 'package:forum/utils/http_utils.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/setting_util.dart';
 import 'package:forum/utils/storage_utils.dart';
 import 'package:get/get.dart';
@@ -25,6 +25,20 @@ void main() async {
   await StorageUtils.ensureInitialized();
 
   setupInjector();
+  await LogUtil.init();
+
+  await HttpUtils().init();
+  await StorageUtils.ensureInitialized();
+
+  final repo = getIt<UserRepo>();
+  LogUtil.info("[Main] Begin to setup user service.");
+  await repo.setup();
+  LogUtil.info("[Main] End setup user service.");
+  
+  LogUtil.info("[Main] Begin sync tags.");
+  final tag = getIt<TagRepo>();
+  await tag.syncTags();
+  LogUtil.info("[Main] End sync tags.");
 
   runApp(const MyApp());
 
@@ -46,16 +60,7 @@ class MyApp extends StatelessWidget {
     return DynamicColorBuilder(
       builder: ((lightDynamic, darkDynamic) {
         return GetMaterialApp(
-          onInit: () async {
-            await HttpUtils().init();
-            await StorageUtils.ensureInitialized();
-
-            final repo = getIt<UserRepo>();
-            if (!await repo.setup()) {
-              log("[Main] User login is expired.");
-              repo.logout();
-            }
-          },
+          onInit: () async {},
           useInheritedMediaQuery: true,
           themeMode: SettingsUtil.currentThemeMode,
           theme: ThemeData(

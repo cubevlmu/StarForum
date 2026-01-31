@@ -7,7 +7,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:forum/data/model/discussion_item.dart';
+import 'package:forum/pages/post_detail/view.dart';
 import 'package:forum/pages/user/view.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/storage_utils.dart';
 import 'package:forum/pages/settings/widgets/settings_label.dart';
 import 'package:forum/pages/settings/widgets/settings_switch_tile.dart';
@@ -26,25 +29,32 @@ class DevSettingPage extends StatelessWidget {
       appBar: AppBar(title: const Text("开发者菜单")),
       body: ListView(
         children: [
-          const SettingsLabel(text: '页面'),
+          const SettingsLabel(text: 'Dev'),
           ListTile(
-            title: const Text("前往页面"),
+            title: const Text("Navigate to"),
             onTap: () {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
                   scrollable: true,
-                  title: const Text("页面选择"),
+                  title: const Text("Page select"),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text("取消"),
+                      child: const Text("cancel"),
                     ),
                   ],
                   contentPadding: EdgeInsets.zero,
                   content: Column(children: _buildDevPages(context)),
                 ),
               );
+            },
+          ),
+          const Divider(height: 1, thickness: 0.5),
+          ListTile(
+            title: Text("Share logs"),
+            onTap: () {
+              LogUtil.shareLog(day: DateTime.now());
             },
           ),
         ],
@@ -67,11 +77,31 @@ class DevSettingPage extends StatelessWidget {
             (i) {
               Navigator.of(
                 context,
-              ).push(GetPageRoute(page: () => UserPage(userId: i,)));
+              ).push(GetPageRoute(page: () => UserPage(userId: i)));
             },
           ),
         },
       ),
+      const Divider(height: 1, thickness: 0.5),
+      ListTile(
+        title: const Text("DiscussionPage"),
+        onTap: () => {
+          Navigator.of(context).push(
+            GetPageRoute(
+              page: () => PostPage(
+                item: DiscussionItem(
+                  id: "0",
+                  title: "TEMP",
+                  excerpt: "<h1>TEMP</h1>",
+                  lastPostedAt: DateTime.utc(1980),
+                  userId: 0,
+                ),
+              ),
+            ),
+          ),
+        },
+      ),
+      const Divider(height: 1, thickness: 0.5),
     ];
   }
 }

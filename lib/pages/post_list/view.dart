@@ -79,7 +79,9 @@ class _PostListPageState extends State<PostListPage> {
             ? EdgeInsetsGeometry.only(bottom: 20)
             : EdgeInsetsGeometry.only(bottom: 80),
         child: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () {
+            
+          },
           child: Icon(Icons.add_outlined),
         ),
       ),

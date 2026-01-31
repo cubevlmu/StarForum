@@ -48,7 +48,15 @@ class _UserPageState extends State<UserPage>
     return Column(
       children: [
         _buildUserInfo(context),
-        SharedNotice.buildNoticeView(context, "🧐", "这里还没有任何帖子", "下拉刷新试试看"),
+
+        Expanded(
+          child: SharedNotice.buildNoticeView(
+            context,
+            "🧐",
+            "这里还没有任何帖子",
+            "下拉刷新试试看",
+          ),
+        ),
       ],
     );
   }
@@ -180,12 +188,7 @@ class _UserPageState extends State<UserPage>
         "很抱歉,我们找不到这个账户",
       );
     } else if (widget.userId == -2) {
-      return SharedNotice.buildNoticeView(
-        context,
-        "🔒",
-        "账号未登录",
-        "请登录您的账户来查看账户信息",
-      );
+      return SharedNotice.onNotLogin(context, "账号未登录", "请登录您的账号来查看");
     }
 
     return Scaffold(appBar: _buildAppBar(context), body: _buildBody(context));
@@ -249,14 +252,22 @@ class _UserIdentityCard extends StatelessWidget {
             children: [
               /// Avatar
               ClipOval(
-                child: CachedNetworkImage(
-                  width: 64,
-                  height: 64,
-                  imageUrl: controller.info?.avatarUrl ?? "",
-                  cacheManager: controller.cacheManager,
-                  placeholder: () =>
-                      Text((controller.info?.displayName ?? "U")[0]),
-                ),
+                child: (controller.info?.avatarUrl ?? "").isEmpty
+                    ? SizedBox(
+                        width: 64,
+                        height: 64,
+                        child: Center(
+                          child: Icon(Icons.person_outline_rounded),
+                        ),
+                      )
+                    : CachedNetworkImage(
+                        width: 64,
+                        height: 64,
+                        imageUrl: controller.info?.avatarUrl ?? "",
+                        cacheManager: controller.cacheManager,
+                        placeholder: () =>
+                            Text((controller.info?.displayName ?? "U")[0]),
+                      ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -264,7 +275,7 @@ class _UserIdentityCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      controller.info?.displayName ?? "未登录",
+                      controller.info?.displayName ?? "加载中...",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.start,

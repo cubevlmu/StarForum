@@ -34,22 +34,28 @@ class AvatarWidget extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             ClipOval(
-              child: avatarUrl.isEmpty ? CircleAvatar(child: Text(placeholder[0])) : CachedNetworkImage(
-                fit: BoxFit.cover,
-                cacheWidth:
-                    cacheWidthHeight ??
-                    (MediaQuery.of(context).devicePixelRatio * radius * 2)
-                        .toInt(),
-                cacheHeight:
-                    cacheWidthHeight ??
-                    (MediaQuery.of(context).devicePixelRatio * radius * 2)
-                        .toInt(),
-                placeholder: () => Container(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                ),
-                imageUrl: avatarUrl,
-                cacheManager: CacheUtils.avatarCacheManager,
-              ),
+              child: avatarUrl.isEmpty
+                  ? CircleAvatar(
+                      child: placeholder.isEmpty
+                          ? Center(child: Icon(Icons.person_outline_rounded))
+                          : Text(placeholder[0]),
+                    )
+                  : CachedNetworkImage(
+                      fit: BoxFit.cover,
+                      cacheWidth:
+                          cacheWidthHeight ??
+                          (MediaQuery.of(context).devicePixelRatio * radius * 2)
+                              .toInt(),
+                      cacheHeight:
+                          cacheWidthHeight ??
+                          (MediaQuery.of(context).devicePixelRatio * radius * 2)
+                              .toInt(),
+                      placeholder: () => Container(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                      ),
+                      imageUrl: avatarUrl,
+                      cacheManager: CacheUtils.avatarCacheManager,
+                    ),
             ),
           ],
         ),

@@ -42,7 +42,7 @@ class _AccountPageState extends State<AccountPage> {
         title: const Text("用户"),
         actions: [
           Obx(() {
-            if (!controller.isLogOut.value) {
+            if (controller.isLogin.value) {
               return IconButton(
                 onPressed: () {
                   SharedDialog.showDialog2(
@@ -52,9 +52,9 @@ class _AccountPageState extends State<AccountPage> {
                     "取消",
                     () => Navigator.pop(context, 'Cancel'),
                     "确认",
-                    () {
-                      final r = controller.repo.logout();
-                      SnackbarUtils.showMessage(r ? "登出成功!" : "登出失败!");
+                    () async {
+                      await controller.repo.logout();
+                      SnackbarUtils.showMessage("登出成功!");
                       Navigator.pop(context, 'OK');
                     },
                   );
@@ -78,10 +78,11 @@ class _AccountPageState extends State<AccountPage> {
         ],
       ),
       body: Obx(() {
-        if (controller.isLogOut.value) {
+        if (!controller.isLogin.value) {
           return SharedNotice.onNotLogin(context, "你还没有登录", "请登录你的账户来查看个人信息");
+        } else {
+          return UserPage(userId: controller.getTrueId(), isAccountPage: true);
         }
-        return UserPage(userId: controller.getTrueId(), isAccountPage: true);
       }),
     );
   }

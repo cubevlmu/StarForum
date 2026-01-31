@@ -12,6 +12,7 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/data/auth/auth_storage.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:path_provider/path_provider.dart';
 
 class HttpUtils {
@@ -104,8 +105,8 @@ class HttpUtils {
     )).isEmpty) {
       try {
         await dio.get(ApiConstants.apiBase);
-      } catch (e) {
-        log("utils/my_dio, ${e.toString()}");
+      } catch (e, s) {
+        LogUtil.errorE("utils/my_dio", e, s);
       }
     }
   }

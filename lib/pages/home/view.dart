@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:forum/pages/home/controller.dart';
 import 'package:forum/pages/home/widgets/user_dialog.dart';
+import 'package:forum/pages/login/view.dart';
 import 'package:forum/pages/post_list/controller.dart';
 import 'package:forum/pages/post_list/view.dart';
 import 'package:forum/pages/search/view.dart';
@@ -36,9 +37,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     controller = Get.put(HomeController());
     tabsList = controller.tabsList;
     controller.tabController = TabController(
-        length: tabsList.length,
-        vsync: this,
-        initialIndex: controller.tabInitIndex);
+      length: tabsList.length,
+      vsync: this,
+      initialIndex: controller.tabInitIndex,
+    );
     super.initState();
   }
 
@@ -60,14 +62,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           const SizedBox(width: 10),
           Obx(() {
             return AvatarWidget(
-              avatarUrl: controller.avatarUrl.value,
+              avatarUrl: controller.isLogin.value
+                  ? controller.avatarUrl.value
+                  : "",
               radius: 18,
+              placeholder: "",
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
-                  isScrollControlled: true, // 重要：允许全屏高度
+                  isScrollControlled: true,
                   builder: (context) {
-                    return UserDialogWidget();
+                    return UserDialogWidget(controller: controller);
                   },
                 );
               },
@@ -93,7 +98,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           },
         ),
       ),
-      // body: 
+      // body:
       body: TabBarView(
         controller: controller.tabController,
         children: tabsList.map((e) {

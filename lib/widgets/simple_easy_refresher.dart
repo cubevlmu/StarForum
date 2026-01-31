@@ -9,6 +9,7 @@ import 'dart:developer';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
+import 'package:forum/utils/log_util.dart';
 
 class SimpleEasyRefresher extends StatefulWidget {
   const SimpleEasyRefresher({
@@ -40,16 +41,16 @@ class _SimpleEasyRefresherState extends State<SimpleEasyRefresher> {
         await widget.onLoad?.call();
         try {
           setState(() {});
-        } catch (e) {
-          log("[Refresher] Exception happend on setState: ${e.toString()}");
+        } catch (e, s) {
+          LogUtil.errorE("[Refresher] Exception happend on setState", e, s);
         }
       },
       onRefresh: () async {
         await widget.onRefresh?.call();
         try {
           setState(() {});
-        } catch (e) {
-          log("[Refresher] Exception happend on setState: ${e.toString()}");
+        } catch (e, s) {
+          LogUtil.errorE("[Refresher] Exception happend on setState:", e, s);
         }
       },
       header: ClassicHeader(

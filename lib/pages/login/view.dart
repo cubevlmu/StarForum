@@ -27,7 +27,7 @@ class LoginPage extends GetView<LoginController> {
                 controller.account = value;
               },
               decoration: InputDecoration(
-                labelText: "账号",
+                labelText: "邮箱或用户名",
                 border: outlineInputBorder,
               ),
             ),
@@ -62,7 +62,7 @@ class LoginPage extends GetView<LoginController> {
           canPop: !controller.isLoading,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text("密码登录"),
+              title: const Text("账户登录"),
               bottom: controller.isLoading
                   ? const PreferredSize(
                       preferredSize: Size.fromHeight(2),

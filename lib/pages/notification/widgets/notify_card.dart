@@ -4,15 +4,13 @@
  * Copyright (c) 2026 by FlybirdGames
  */
 
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/data/model/notifications.dart';
 import 'package:forum/pages/notification/controller.dart';
 import 'package:forum/pages/post_detail/view.dart';
 import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/html_utils.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/widgets/avatar.dart';
 
 (String, String) buildMsg(NotificationsInfo info) {
@@ -53,7 +51,7 @@ import 'package:forum/widgets/avatar.dart';
       );
 
     default:
-      log("[NotifyCard] Unsupported type: ${info.contentType}");
+      LogUtil.error("[NotifyCard] Unsupported type: ${info.contentType}");
       return ("不支持的通知", "请前往网页版查看");
   }
 }

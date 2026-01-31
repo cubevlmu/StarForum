@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/discussions.dart';
 import 'package:forum/main.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:get/get.dart';
 
 class SearchResultController extends GetxController
@@ -66,7 +67,7 @@ class SearchResultController extends GetxController
       );
 
       if (data == null) {
-        log("[SearchResult] empty response");
+        LogUtil.error("[SearchResult] empty response");
         return false;
       }
 
@@ -85,8 +86,8 @@ class SearchResultController extends GetxController
       }
 
       return true;
-    } catch (e) {
-      log("[SearchResult] load error: $e");
+    } catch (e, s) {
+      LogUtil.errorE("[SearchResult] load error", e, s);
       return false;
     } finally {
       isSearching.value = false;

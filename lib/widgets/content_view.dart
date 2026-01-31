@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/cache_utils.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/widgets/cached_network_image.dart';
 import 'package:forum/widgets/image_view.dart';
@@ -148,7 +149,7 @@ class ContentView extends StatelessWidget {
           case "a":
             // PATCH FIX:
             if (n.firstChild != null) {
-              log(n.firstChild.toString());
+              LogUtil.debug(n.firstChild.toString());
             }
 
             switch (n.parent?.className ?? "") {
@@ -274,7 +275,7 @@ class ContentView extends StatelessWidget {
                   ),
                 );
                 if (n.parent!.className != "") {
-                  log("UnimplementedUrlClass:${n.parent!.className}");
+                  LogUtil.debug("UnimplementedUrlClass:${n.parent!.className}");
                 }
                 break;
             }
@@ -329,7 +330,7 @@ class ContentView extends StatelessWidget {
             );
             break;
           default:
-            log("UnimplementedNode:${n.parent?.localName}");
+            LogUtil.debug("UnimplementedNode:${n.parent?.localName}");
             span.add(
               WidgetSpan(
                 child: Text(
@@ -609,10 +610,10 @@ class ContentView extends StatelessWidget {
           SnackbarUtils.showMessage("功能开发中");
           break;
       }
-    } catch (e) {
-      log(
+    } catch (e, s) {
+      LogUtil.errorE(
         "[ContentView] Failed to process or open link with link : $s and type: $type and error:",
-        error: e,
+        e, s
       );
       SnackbarUtils.showMessage("链接打开失败");
     }

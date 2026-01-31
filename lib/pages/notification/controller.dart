@@ -5,7 +5,6 @@
  */
 
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/data/model/notifications.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/snackbar_utils.dart';
 import 'package:get/get.dart';
 
@@ -29,6 +29,9 @@ class NotificationPageController extends GetxController {
   bool loading = false;
   bool isFirstSync = true;
   final RxBool isInvoking = false.obs;
+
+  bool _loading = false;
+  bool _hasMore = true;
 
   void animateToTop() {
     scrollController.animateTo(
@@ -61,32 +64,46 @@ class NotificationPageController extends GetxController {
   }
 
   Future<void> onRefresh() async {
+    if (_loading) {
+      refreshController.finishRefresh(IndicatorResult.fail);
+      refreshController.finishLoad(IndicatorResult.fail);
+      return;
+    }
+
     try {
-      loading = true;
+      _loading = true;
+
       items.clear();
       nextUrl = null;
+      _hasMore = true;
 
       if (!repo.isLogin) {
-        log("[NotifyPage] refresh failed, user not login.");
+        LogUtil.error("[NotifyPage] refresh failed, user not login.");
         if (!isFirstSync) {
           SnackbarUtils.showMessage("用户未登录");
         }
         refreshController.finishRefresh(IndicatorResult.fail);
+        refreshController.finishLoad(IndicatorResult.fail);
 
         if (isFirstSync) {
           isFirstSync = false;
         }
         return;
       }
+
       final (r, rs) = await Api.getNotification();
 
       if (!rs) {
-        log(
-          "[NotifyPage] Notification api return 401 for token expired error.",
-        );
-        repo.logout();
         if (!isFirstSync) {
+          LogUtil.error(
+            "[NotifyPage] Notification api return 401 for token expired error.",
+          );
+          repo.logout();
           SnackbarUtils.showMessage("登录状态过期，请重新登录");
+        } else {
+          LogUtil.debug(
+            "[NotifyPage] Notification api return 401 but in firstSync.",
+          );
         }
         refreshController.finishLoad(IndicatorResult.fail);
 
@@ -98,6 +115,7 @@ class NotificationPageController extends GetxController {
 
       if (r == null) {
         refreshController.finishRefresh(IndicatorResult.fail);
+        refreshController.finishLoad(IndicatorResult.fail);
 
         if (isFirstSync) {
           isFirstSync = false;
@@ -107,40 +125,51 @@ class NotificationPageController extends GetxController {
 
       items.addAll(r.list);
       nextUrl = r.links.next;
+      _hasMore = nextUrl != null;
 
-      refreshController.finishRefresh();
-      refreshController.resetFooter();
-
+      refreshController.finishRefresh(IndicatorResult.success);
+      refreshController.finishLoad(
+        _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
+      );
       if (isFirstSync) {
         isFirstSync = false;
       }
-    } catch (e) {
-      log("[NotifyPage] refresh failed", error: e);
+    } catch (e, s) {
+      LogUtil.errorE("[NotifyPage] refresh failed", e, s);
       refreshController.finishRefresh(IndicatorResult.fail);
+      refreshController.finishLoad(IndicatorResult.fail);
     } finally {
-      loading = false;
+      _loading = false;
     }
   }
 
   Future<void> onLoad() async {
-    if (loading) return;
-
-    if (nextUrl == null) {
-      refreshController.finishLoad(IndicatorResult.noMore);
+    if (_loading) {
+      refreshController.finishLoad(IndicatorResult.fail);
       return;
     }
-    if (nextUrl!.isEmpty) {
+
+    if (!_hasMore || nextUrl == null || nextUrl!.isEmpty) {
       refreshController.finishLoad(IndicatorResult.noMore);
       return;
     }
 
     try {
-      loading = true;
+      _loading = true;
+
+      if (!repo.isLogin) {
+        LogUtil.error("[NotifyPage] refresh failed, user not login.");
+        SnackbarUtils.showMessage("用户未登录");
+        refreshController.finishRefresh(IndicatorResult.fail);
+        refreshController.finishLoad(IndicatorResult.fail);
+
+        return;
+      }
 
       final (r, rs) = await Api.getNotification(url: nextUrl);
 
       if (!rs) {
-        log(
+        LogUtil.error(
           "[NotifyPage] Notification api return 401 for token expired error.",
         );
         repo.logout();
@@ -156,17 +185,16 @@ class NotificationPageController extends GetxController {
 
       items.addAll(r.list);
       nextUrl = r.links.next;
+      _hasMore = nextUrl != null;
 
-      if (nextUrl == null) {
-        refreshController.finishLoad(IndicatorResult.noMore);
-      } else {
-        refreshController.finishLoad();
-      }
-    } catch (e) {
-      log("[NotifyPage] load failed", error: e);
+      refreshController.finishLoad(
+        _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
+      );
+    } catch (e, s) {
+      LogUtil.errorE("[NotifyPage] load failed", e, s);
       refreshController.finishLoad(IndicatorResult.fail);
     } finally {
-      loading = false;
+      _loading = false;
     }
   }
 
@@ -174,7 +202,7 @@ class NotificationPageController extends GetxController {
     try {
       final r = await Api.setNotificationIsRead(id.toString());
       if (r == null) {
-        log("[NotifyPage] Failed to check as read for $id");
+        LogUtil.error("[NotifyPage] Failed to check as read for $id");
         SnackbarUtils.showMessage("标记已读失败！");
         return false;
       }
@@ -189,8 +217,12 @@ class NotificationPageController extends GetxController {
       items.insert(idx, item);
 
       return true;
-    } catch (e) {
-      log("[NotifyPage] Failed to check as read for $id with error.", error: e);
+    } catch (e, s) {
+      LogUtil.errorE(
+        "[NotifyPage] Failed to check as read for $id with error.",
+        e,
+        s,
+      );
       Get.rawSnackbar(message: "标记已读失败！");
       return false;
     }
@@ -209,8 +241,8 @@ class NotificationPageController extends GetxController {
 
       Get.rawSnackbar(message: "标记已读成功！");
       await onRefresh();
-    } catch (e) {
-      log("[NotifyPage] Failed to make all read with error:", error: e);
+    } catch (e, s) {
+      LogUtil.errorE("[NotifyPage] Failed to make all read with error:", e, s);
     } finally {
       isInvoking.value = false;
     }
@@ -224,7 +256,7 @@ class NotificationPageController extends GetxController {
       final r = await Api.clearAllNotification();
       if (!r) {
         Get.rawSnackbar(message: "清理全部消息失败");
-        log("[NotifyPage] Failed to clear all notifications");
+        LogUtil.error("[NotifyPage] Failed to clear all notifications");
         return;
       }
 
@@ -232,11 +264,12 @@ class NotificationPageController extends GetxController {
       nextUrl = null;
       loading = false;
       Get.rawSnackbar(message: "清理全部消息成功!");
-      log("[NotifyPage] Cleared.");
-    } catch (e) {
-      log(
+      LogUtil.debug("[NotifyPage] Cleared.");
+    } catch (e, s) {
+      LogUtil.errorE(
         "[NotifyPage] Failed to clear all notifications with error:",
-        error: e,
+        e,
+        s,
       );
     } finally {
       isInvoking.value = false;
@@ -252,7 +285,9 @@ class NotificationPageController extends GetxController {
     try {
       final r = await Api.getDiscussionById(discussion.toString());
       if (r == null) {
-        log("[NotifyPage] Failed to get discussion detail by discussion id : $discussion");
+        LogUtil.error(
+          "[NotifyPage] Failed to get discussion detail by discussion id : $discussion",
+        );
         SnackbarUtils.showMessage("获取帖子信息失败");
         return null;
       }
@@ -270,10 +305,11 @@ class NotificationPageController extends GetxController {
         commentCount: r.commentCount,
         userId: r.users?.keys.first ?? 0,
       );
-    } catch (e) {
-      log(
+    } catch (e, s) {
+      LogUtil.errorE(
         "[UserPage] Failed to fetch discussion information with id: $discussion with error:",
-        error: e,
+        e,
+        s,
       );
       return null;
     } finally {

@@ -24,6 +24,17 @@ class AboutPage extends StatelessWidget {
         children: [
           ListTile(
             title: const Text("版本"),
+            onTap: () {
+              tapTimes += 1;
+              if (tapTimes == 5) {
+                tapTimes = 0;
+                Navigator.push(
+                  context,
+                  GetPageRoute(page: () => DevSettingPage()),
+                );
+                return;
+              }
+            },
             subtitle: Text("1.0.0"),
             trailing: TextButton(
               child: const Text("检查更新"),
@@ -37,15 +48,6 @@ class AboutPage extends StatelessWidget {
             title: const Text("作者"),
             subtitle: const Text("cubevlmu @ flybird studio"),
             onTap: () {
-              tapTimes += 1;
-              if (tapTimes == 5) {
-                tapTimes = 0;
-                Navigator.push(
-                  context,
-                  GetPageRoute(page: () => DevSettingPage()),
-                );
-                return;
-              }
               launchUrlString(authorUrl);
             },
             onLongPress: () {
@@ -67,6 +69,7 @@ class AboutPage extends StatelessWidget {
               Get.rawSnackbar(message: '已复制$projectUrl到剪切板');
             },
           ),
+          const Divider(height: 1, thickness: 0.5),
           ListTile(
             title: const Text("许可"),
             onTap: () => Navigator.push(

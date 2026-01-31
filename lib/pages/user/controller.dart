@@ -4,8 +4,6 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'dart:developer';
-
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -18,6 +16,7 @@ import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
 import 'package:forum/utils/cache_utils.dart';
 import 'package:forum/utils/html_utils.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/utils/string_util.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
@@ -51,28 +50,32 @@ class UserPageController extends GetxController {
     try {
       final r = await Api.getUserInfoByNameOrId(userId.toString());
       if (r == null) {
-        log(
+        LogUtil.error(
           "[UserPage] Get user information with empty response, userId $userId",
         );
         return;
       }
 
       info = r;
-      _loadUserPosts();
-    } catch (e) {
-      log("[UserPage] Get user information failed with error: ", error: e);
+    } catch (e, s) {
+      LogUtil.errorE(
+        "[UserPage] Get user information failed with error: ",
+        e,
+        s,
+      );
     }
   }
 
   Future<bool> _loadUserPosts() async {
     if (!_hasMore) return true;
+    if (_isSyncing) return false;
     _isSyncing = true;
 
     if (info == null) {
       await loadUserData();
     }
     if (info == null) {
-      log("[UserPage] User info is not prepared.");
+      LogUtil.warn("[UserPage] User info is not prepared.");
       return false;
     }
 
@@ -84,7 +87,7 @@ class UserPageController extends GetxController {
       );
 
       if (data == null) {
-        log("[UserPage] empty response");
+        LogUtil.warn("[UserPage] empty response");
         return false;
       }
 
@@ -98,7 +101,8 @@ class UserPageController extends GetxController {
       for (var i in list) {
         i.user = info;
         final t = htmlToPlainText(i.contentHtml);
-        i.contentHtml = "<p>${t.substring(0, t.length > 70 ? 70 : t.length)}...</p>";
+        i.contentHtml =
+            "<p>${t.substring(0, t.length > 70 ? 70 : t.length)}...</p>";
       }
       items.addAll(list);
       dissItems.addAll(data.discussions);
@@ -109,8 +113,8 @@ class UserPageController extends GetxController {
       }
 
       return true;
-    } catch (e) {
-      log("[UserPage] load error: $e");
+    } catch (e, s) {
+      LogUtil.errorE("[UserPage] load error", e, s);
       return false;
     } finally {
       _isSyncing = false;
@@ -164,8 +168,8 @@ class UserPageController extends GetxController {
     try {
       final date = DateTime.parse(info?.lastSeenAt ?? "");
       return StringUtil.timeStampToAgoDate(date.millisecondsSinceEpoch ~/ 1000);
-    } catch (e) {
-      log("[UserPage] Failed to parse last seen at time");
+    } catch (e, s) {
+      LogUtil.errorE("[UserPage] Failed to parse last seen at time", e, s);
       return "";
     }
   }
@@ -177,8 +181,8 @@ class UserPageController extends GetxController {
     try {
       final date = DateTime.parse(info?.joinTime ?? "");
       return StringUtil.timeStampToAgoDate(date.millisecondsSinceEpoch ~/ 1000);
-    } catch (e) {
-      log("[UserPage] Failed to parse last seen at time");
+    } catch (e, s) {
+      LogUtil.errorE("[UserPage] Failed to parse last seen at time", e, s);
       return "";
     }
   }
@@ -189,7 +193,6 @@ class UserPageController extends GetxController {
     }
     final expIfo = info!.expInfo!;
 
-    // 锁链 · 90 / 150 XP
     return "${expIfo.expLevel} · ${expIfo.expTotal} / ${expIfo.expTotal + expIfo.expNextNeed}";
   }
 
@@ -210,7 +213,7 @@ class UserPageController extends GetxController {
   }
 
   Future<DiscussionItem?> naviToDisPage(int discussion) async {
-    if(isLoading.value) {
+    if (isLoading.value) {
       return null;
     }
     isLoading.value = true;
@@ -233,12 +236,13 @@ class UserPageController extends GetxController {
         viewCount: r.views,
         likeCount: r.firstPost?.likes ?? 0,
         commentCount: r.commentCount,
-        userId: r.users?.keys.first ?? 0
+        userId: r.users?.keys.first ?? 0,
       );
-    } catch (e) {
-      log(
+    } catch (e, s) {
+      LogUtil.errorE(
         "[UserPage] Failed to fetch discussion information with id: $discussion with error:",
-        error: e,
+        e,
+        s,
       );
       return null;
     } finally {

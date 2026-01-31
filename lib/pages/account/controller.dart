@@ -12,15 +12,17 @@ import '../../di/injector.dart';
 class AccountPageController extends GetxController {
   AccountPageController();
   final repo = getIt<UserRepo>();
+  final RxBool isLogin = false.obs;
 
-  RxBool isLogOut = true.obs;
+  @override
+  void onInit() {
+    isLogin.value = repo.isLogin;
+    super.onInit();
+  }
 
   int getTrueId() {
     if (!repo.isLogin) return -2;
-    if (repo.user == null) {
-      return -1;
-    }
-    return repo.user!.id;
+    return repo.userId;
   }
 
   void onLogOut() {}

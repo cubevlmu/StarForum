@@ -4,14 +4,13 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'dart:developer';
-
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
 import 'package:forum/utils/cache_utils.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/snackbar_utils.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
@@ -32,35 +31,37 @@ class HomeController extends GetxController {
     controlFinishLoad: true,
   );
 
-  RxString avatarUrl = "".obs;
+  final RxString avatarUrl = "".obs;
+  final RxBool isLogin = false.obs;
   final userRepo = getIt<UserRepo>();
 
   @override
   void onInit() {
     super.onInit();
 
-    log("[HomePage] Setting up user repo, checking user login status");
+    LogUtil.info("[HomePage] Setting up user repo, checking user login status");
     _restoreLoginUser();
   }
 
   Future<void> _restoreLoginUser() async {
-    if (!await userRepo.setup()) {
-      log("[HomePage] User repo init failed.");
-      SnackbarUtils.showMessage("用户服务初始化失败");
-      return;
-    }
+    await userRepo.setup();
 
-    final state = userRepo.loginState;
+    final state = userRepo.state;
     switch (state) {
-      case UserRepoState.kUnknown:
-        log("[HomePage] User repo init failed.");
+      case .unknown:
+        LogUtil.error("[HomePage] User repo init failed.");
         SnackbarUtils.showMessage("用户服务初始化失败");
         return;
-      case UserRepoState.kNotLogin:
-      case UserRepoState.kLogined:
+      case .loggedIn:
+        isLogin.value = true;
         break;
-      case UserRepoState.kExpired:
-        log("[HomePage] User login is expired.");
+      case .notLogin:
+        isLogin.value = false;
+        break;
+      case .checkingToken:
+        break;
+      case .expired:
+        LogUtil.error("[HomePage] User login is expired.");
         SnackbarUtils.showMessage("用户登录状态过期!请重新登录");
         userRepo.logout();
         return;
@@ -70,7 +71,7 @@ class HomeController extends GetxController {
     }
 
     avatarUrl.value = userRepo.user!.avatarUrl;
-    log(
+    LogUtil.info(
       "[HomePage] Fetched user info, nickname :${userRepo.user!.displayName} avatar url:${avatarUrl.value}",
     );
   }

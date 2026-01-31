@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:forum/data/api/api_constants.dart';
+import 'package:forum/data/api/api_guard.dart';
 import 'package:forum/data/model/notifications.dart';
 import 'package:forum/utils/http_utils.dart';
+import 'package:forum/utils/log_util.dart';
 import '../model/discussions.dart';
 import '../model/fourm_info.dart';
 import '../model/login_result.dart';
@@ -19,76 +20,44 @@ enum PostSort {
 
 class Api {
   static final HttpUtils _utils = HttpUtils();
-  static Map<int, TagInfo>? _allTags;
-  static Tags? _tags;
-  
-  static Future<ForumInfo?> checkUrl(String url) async {
-    try {
-      var info = ForumInfo.formJson((await Dio().get(url)).data);
-      log("[Api] checkUrl Status:ok");
-      return info;
-    } catch (e) {
-      log("[Api] checkUrl Error:$e");
-      return null;
-    }
+
+  static Future<ForumInfo?> getForumInfo(String url) async {
+    return ApiGuard.run(
+      name: "getForumInfo",
+      method: "GET",
+      call: () async {
+        return ForumInfo.formJson((await Dio().get(url)).toString());
+      },
+      fallback: null,
+    );
   }
 
   static Future<Tags?> getTags() async {
-    if (_tags != null) {
-      return _tags;
-    }
-    _allTags = {};
-    try {
-      var t = TagInfo.getListFormJson(
-        (await _utils.get(ApiConstants.tags)).data,
-      );
-      _tags = t;
-      t.tags.forEach((_, tag) {
-        final children = tag.children;
-        if (children != null) {
-          children.forEach((id, t) {
-            _allTags?.addAll({t.id: t});
-          });
-        }
-        _allTags?.addAll({tag.id: tag});
-      });
-      t.miniTags.forEach((id, tag) {
-        _allTags?.addAll({tag.id: tag});
-      });
-      log("[Api] getTags Status:ok");
-      return t;
-    } catch (e) {
-      log("[Api] getTags Error:$e");
-      return null;
-    }
-  }
-
-  static TagInfo? getTagById(int id) {
-    return _allTags?[id];
-  }
-
-  static TagInfo? getTagBySlug(String slug) {
-    for (var t in _allTags!.values.toList()) {
-      if (t.slug == slug) {
-        return t;
-      }
-    }
-    return null;
+    return ApiGuard.run(
+      name: "getTags",
+      method: "GET",
+      call: () async {
+        return TagInfo.getListFormJson(
+          (await _utils.get(ApiConstants.tags)).toString(),
+        );
+      },
+      fallback: null,
+    );
   }
 
   static Future<DiscussionInfo?> getDiscussionById(String id) async {
-    try {
-      var d = DiscussionInfo.formJson(
-        (await _utils.get(
-          "${ApiConstants.apiBase}/api/discussions/$id?include=user,firstPost",
-        )).toString(),
-      );
-      log("[Api] getDiscussionById Status:ok");
-      return d;
-    } catch (e) {
-      log("[Api] getDiscussionById Error:$e");
-      return null;
-    }
+    return ApiGuard.run(
+      name: "getDiscussionById",
+      method: "GET",
+      call: () async {
+        return DiscussionInfo.formJson(
+          (await _utils.get(
+            "${ApiConstants.apiBase}/api/discussions/$id?include=user,firstPost",
+          )).toString(),
+        );
+      },
+      fallback: null,
+    );
   }
 
   static Future<PagedDiscussions?> getDiscussionList(
@@ -108,20 +77,23 @@ class Api {
       params['filter[q]'] = 'tag:${Uri.encodeComponent(tagSlug)}';
     }
 
-    final uri = Uri.parse(
-      "${ApiConstants.apiBase}/api/discussions",
-    ).replace(queryParameters: params);
+    return ApiGuard.run(
+      name: "getDiscussionList",
+      method: "GET",
+      call: () async {
+        final uri = Uri.parse(
+          "${ApiConstants.apiBase}/api/discussions",
+        ).replace(queryParameters: params);
+        final resp = await _utils.get(uri.toString());
+        final data = Discussions.formJson(resp.toString());
 
-    try {
-      final resp = await _utils.get(uri.toString());
-      final data = Discussions.formJson(resp.toString());
-
-      log("[Api] On getDiscussionPage response");
-      return PagedDiscussions(data: data, nextUrl: resp.data['links']?['next']);
-    } catch (e) {
-      log('[Api] getDiscussionPage error: $e');
-      return null;
-    }
+        return PagedDiscussions(
+          data: data,
+          nextUrl: resp.data['links']?['next'],
+        );
+      },
+      fallback: null,
+    );
   }
 
   static Future<Discussions?> searchDiscuss({
@@ -141,7 +113,14 @@ class Api {
         "&page[offset]=$offset"
         "&page[limit]=$limit";
 
-    return getDiscussionListByUrl(url);
+    return ApiGuard.run(
+      name: "searchDiscuss",
+      method: "GET",
+      call: () async {
+        return Discussions.formJson((await _utils.get(url)).toString());
+      },
+      fallback: null,
+    );
   }
 
   static Future<PostInfo?> getFirstPost(String discussionId) async {
@@ -151,28 +130,18 @@ class Api {
         "&sort=number"
         "&page[limit]=1";
 
-    try {
-      var data = Posts.formJson((await _utils.get(url)).data);
-      final posts = data.posts;
-      if (posts.isEmpty) return null;
+    return ApiGuard.run(
+      name: "getFirstPost",
+      method: "GET",
+      call: () async {
+        var data = Posts.formJson((await _utils.get(url)).toString());
+        final posts = data.posts;
+        if (posts.isEmpty) return null;
 
-      // 第一个一定是 firstPost
-      return posts.entries.first.value;
-    } catch (e) {
-      log("[Api] getFirstPost Error: $e");
-      return null;
-    }
-  }
-
-  static Future<Discussions?> getDiscussionListByUrl(String url) async {
-    try {
-      var data = Discussions.formJson((await _utils.get(url)).toString());
-      log("[Api] getDiscussionListByUrl Status:ok");
-      return data;
-    } catch (e) {
-      log("[Api] getDiscussionListByUrl Error:$e");
-      return null;
-    }
+        return posts.entries.first.value;
+      },
+      fallback: null,
+    );
   }
 
   static Future<DiscussionInfo?> createDiscussion(
@@ -195,22 +164,22 @@ class Api {
       },
     };
 
-    try {
-      var r = await _utils.post(
-        "${ApiConstants.apiBase}/api/discussions",
-        data: m,
-      );
-      if (r?.statusCode == 201) {
-        log("[Api] createDiscussion Status:ok");
-        return DiscussionInfo.formJson(r?.data);
-      } else {
-        log("[Api] createDiscussion Status:${r?.statusCode}");
-        return null;
-      }
-    } catch (e) {
-      log("[Api] createDiscussion Error:$e");
-      return null;
-    }
+    return ApiGuard.run(
+      name: "createDiscussion",
+      method: "POST",
+      call: () async {
+        var r = await _utils.post(
+          "${ApiConstants.apiBase}/api/discussions",
+          data: m,
+        );
+        if (r?.statusCode == 201) {
+          return DiscussionInfo.formJson(r?.data);
+        } else {
+          return null;
+        }
+      },
+      fallback: null,
+    );
   }
 
   static Future<Posts?> getPosts({
@@ -231,36 +200,40 @@ class Api {
         "&page[offset]=$offset"
         "&page[limit]=$limit&include=user";
 
-    try {
-      final data = Posts.formJson((await _utils.get(url)).toString());
-
-      log(
-        "[Api] getPosts Status:ok "
-        "(discussion=$discussionId offset=$offset size=${data.posts.length})",
-      );
-
-      // Posts.posts 是 Map<String, PostInfo>
-      return data;
-    } catch (e) {
-      log("[Api] getPosts Error:$e");
-      return null;
-    }
+    return ApiGuard.run(
+      name: "getPosts",
+      method: "GET",
+      call: () async {
+        return Posts.formJson((await _utils.get(url)).toString());
+      },
+      fallback: null,
+    );
   }
 
   static Future<Posts?> getPostsById(List<int> l) async {
-    var url = "${ApiConstants.apiBase}/api/posts?filter[id]=";
-    for (var id in l) {
-      url += "$id,";
-    }
-    url = url.substring(0, url.length - 1);
-    try {
-      var data = Posts.formJson((await _utils.get(url)).toString());
-      log("[Api] getPostsById Status:ok");
-      return data;
-    } catch (e) {
-      log("[Api] getPostsById Error:$e");
-      return null;
-    }
+    var url = "${ApiConstants.apiBase}/api/posts?filter[id]=${l.join(",")}";
+
+    return ApiGuard.run(
+      name: "getPostsById",
+      method: "GET",
+      call: () async {
+        return Posts.formJson((await _utils.get(url)).toString());
+      },
+      fallback: null,
+    );
+  }
+
+  static Future<Posts?> getPost(String id) async {
+    var url = "${ApiConstants.apiBase}/api/posts?filter[id]=$id";
+
+    return ApiGuard.run(
+      name: "getPostsById",
+      method: "GET",
+      call: () async {
+        return Posts.formJson((await _utils.get(url)).toString());
+      },
+      fallback: null,
+    );
   }
 
   static Future<(PostInfo?, bool)> createPost(
@@ -278,30 +251,21 @@ class Api {
         },
       },
     };
-    try {
-      var data = PostInfo.formJson(
-        (await _utils.post(
-              "${ApiConstants.apiBase}/api/posts",
-              data: m,
-            ))?.toString() ??
-            "{}",
-      );
-      log("[Api] createPost Status:ok");
-      return (data, true);
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
 
-      if (status == 401) {
-        log("[Api] Invoking create post api with error : token expired.");
-        return (null, false);
-      } else {
-        log("[Api] Invoking create post api with error : network error.");
-        return (null, true);
-      }
-    } catch (e) {
-      log("[Api] Invoking create post api with error : ", error: e);
-      return (null, true);
-    }
+    return ApiGuard.runWithToken(
+      name: "createPost",
+      method: "POST",
+      call: () async {
+        return PostInfo.formJson(
+          (await _utils.post(
+                "${ApiConstants.apiBase}/api/posts",
+                data: m,
+              ))?.toString() ??
+              "{}",
+        );
+      },
+      fallback: null,
+    );
   }
 
   static Future<(PostInfo?, bool)> replyToPost({
@@ -322,53 +286,44 @@ class Api {
         "attributes": {"isLiked": isLiked},
       },
     };
-    try {
-      var data = PostInfo.formJson(
-        (await _utils.patch(
-          "${ApiConstants.apiBase}/api/posts/$id",
-          data: m,
-        )).toString(),
-      );
-      log("[Api] Invoking like post api with status:ok");
-      return (data, true);
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
 
-      if (status == 401) {
-        log("[Api] Invoking like post api with error : token expired.");
-        return (null, false);
-      } else {
-        log("[Api] Invoking like post api with error : network error.");
-        return (null, true);
-      }
-    } catch (e) {
-      log("[Api] Invoking like post api with error : ", error: e);
-      return (null, true);
-    }
+    return ApiGuard.runWithToken(
+      name: "likePost",
+      method: "POST",
+      call: () async {
+        return PostInfo.formJson(
+          (await _utils.patch(
+            "${ApiConstants.apiBase}/api/posts/$id",
+            data: m,
+          )).toString(),
+        );
+      },
+      fallback: null,
+    );
   }
 
   static Future<bool> setLastReadPostNumber(String postId, int number) async {
-    try {
-      var r = await _utils.patch(
-        "${ApiConstants.apiBase}/api/discussions/$postId",
-        data: {
-          "data": {
-            "type": "discussions",
-            "id": postId,
-            "attributes": {"lastReadPostNumber": number},
+    return ApiGuard.run(
+      name: "setLastReadPostNumber",
+      method: "PATCH",
+      call: () async {
+        var r = await _utils.patch(
+          "${ApiConstants.apiBase}/api/discussions/$postId",
+          data: {
+            "data": {
+              "type": "discussions",
+              "id": postId,
+              "attributes": {"lastReadPostNumber": number},
+            },
           },
-        },
-      );
-      if (r.statusCode == 200) {
-        log("[Api] setLastReadPostNumber Status:ok");
-        return true;
-      }
-      log("[Api] setLastReadPostNumber Status:${r.statusCode}");
-      return false;
-    } catch (e) {
-      log("[Api] setLastReadPostNumber Error:$e");
-      return false;
-    }
+        );
+        if (r.statusCode == 200) {
+          return true;
+        }
+        return false;
+      },
+      fallback: false,
+    );
   }
 
   static Future<UserInfo?> getLoggedInUserInfo(LoginResult data) async {
@@ -386,24 +341,18 @@ class Api {
 
   static Future<bool> isTokenValid() async {
     try {
-      await _utils.get("${ApiConstants.apiBase}/api/users/me");
-      // Tips: older version maybe allow this method.
+      await _utils.get("${ApiConstants.apiBase}/api/users?page[limit]=1");
       return true;
     } on DioException catch (e) {
       final status = e.response?.statusCode;
 
-      // Hack: 405/404 method not found but token valid.
-      if (status == 405 || status == 404) {
-        return true;
-      }
-      // Tips: token is invalid or expired may return with those code.
-      if (status == 401 || status == 403) {
+      if (status == 401 || status == 403 || status == 404) {
         return false;
       }
 
       rethrow;
-    } catch (e) {
-      log("[Api] Network error with :", error: e);
+    } catch (e, s) {
+      LogUtil.errorE("[API] Network error with :", e, s);
       return false;
     }
   }
@@ -414,38 +363,26 @@ class Api {
     final reqUrl =
         url ?? "${ApiConstants.apiBase}/api/notifications?page[limit]=20";
 
-    try {
-      final resp = await _utils.get(reqUrl);
-      final data = NotificationInfoList.formJson(resp.toString());
-      log("[Api] getNotification Status:ok url=$reqUrl");
-      return (data, true);
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
-
-      if (status == 401) {
-        log("[Api] Notification fetch api with error : token expired.");
-        return (null, false);
-      } else {
-        log("[Api] Notification fetch api with error : network error.");
-        return (null, true);
-      }
-    } catch (e) {
-      log("[Api] Notification fetch api with error : ", error: e);
-      return (null, true);
-    }
+    return ApiGuard.runWithToken(
+      name: "getNotification",
+      method: "GET",
+      call: () async {
+        return NotificationInfoList.formJson(
+          (await _utils.get(reqUrl)).toString(),
+        );
+      },
+      fallback: null,
+    );
   }
 
   static Future<NotificationInfoList?> getNotificationByUrl(String url) async {
-    try {
-      var data = NotificationInfoList.formJson(
-        (await _utils.get(url)).toString(),
-      );
-      log("[Api] getNotificationByUrl Status:ok");
-      return data;
-    } catch (e) {
-      log("[Api] getNotificationByUrl Error:$e");
-      return null;
-    }
+    return ApiGuard.run(
+      name: "getNotificationByUrl",
+      method: "GET",
+      call: () async =>
+          NotificationInfoList.formJson((await _utils.get(url)).toString()),
+      fallback: null,
+    );
   }
 
   static Future<NotificationsInfo?> setNotificationIsRead(String id) async {
@@ -456,126 +393,117 @@ class Api {
         "attributes": {"isRead": true},
       },
     };
-    try {
-      var data = NotificationsInfo.formJson(
+    return ApiGuard.run(
+      name: "setNotificationIsRead",
+      method: "PATCH",
+      call: () async => NotificationsInfo.formJson(
         (await _utils.patch(
           "${ApiConstants.apiBase}/api/notifications/$id",
           data: m,
         )).toString(),
-      );
-      log("[Api] setNotificationIsRead Error:ok");
-      return data;
-    } catch (e) {
-      log("[Api] setNotificationIsRead Error:$e");
-      return null;
-    }
+      ),
+      fallback: null,
+    );
   }
 
   static Future<bool> readAllNotification() async {
-    try {
-      var r = await _utils.post(
-        "${ApiConstants.apiBase}/api/notifications/read",
-      );
-      if (r?.statusCode == 204) {
-        log("[Api] readAllNotification Status:ok");
-        return true;
-      }
-      log("[Api] readAllNotification Status:${r?.statusCode}");
-      return false;
-    } catch (e) {
-      log("[Api] readAllNotification Error:$e");
-      return false;
-    }
+    return ApiGuard.run(
+      name: "readAllNotification",
+      method: "GET",
+      call: () async {
+        var r = await _utils.post(
+          "${ApiConstants.apiBase}/api/notifications/read",
+        );
+        if (r?.statusCode == 204) {
+          return true;
+        }
+        return false;
+      },
+      fallback: false,
+    );
   }
 
   static Future<bool> clearAllNotification() async {
-    try {
-      final r = await _utils.delete(
-        "${ApiConstants.apiBase}/api/notifications",
-      );
+    return ApiGuard.run(
+      name: "clearAllNotification",
+      method: "GET",
+      call: () async {
+        final r = await _utils.delete(
+          "${ApiConstants.apiBase}/api/notifications",
+        );
 
-      if (r.statusCode == 204) {
-        log("[Api] clearAllNotification Status:ok");
-        return true;
-      }
+        if (r.statusCode == 204) {
+          return true;
+        }
 
-      log("[Api] clearAllNotification Status:${r.statusCode}");
-      return false;
-    } catch (e) {
-      log("[Api] clearAllNotification Error:$e");
-      return false;
-    }
+        return false;
+      },
+      fallback: false,
+    );
   }
 
   static Future<Posts?> getPostsByAuthor({
     required String username,
     int offset = 0,
     int limit = 20,
-    bool onlyComment = true,
   }) async {
-    final params = <String, String>{
-      'filter[author]': username,
-      'page[offset]': offset.toString(),
-      'page[limit]': limit.toString(),
-      'sort': '-createdAt',
-      'include': 'user,discussion',
-    };
+    return ApiGuard.run(
+      name: "getPostsByAuthor",
+      method: "GET",
+      call: () async {
+        final params = <String, String>{
+          'filter[author]': username,
+          'page[offset]': offset.toString(),
+          'page[limit]': limit.toString(),
+          'sort': '-createdAt',
+          'include': 'user,discussion',
+          'filter[type]': 'comment',
+        };
 
-    if (onlyComment) {
-      params['filter[type]'] = 'comment';
-    }
+        final uri = Uri.parse(
+          "${ApiConstants.apiBase}/api/posts",
+        ).replace(queryParameters: params);
 
-    final uri = Uri.parse(
-      "${ApiConstants.apiBase}/api/posts",
-    ).replace(queryParameters: params);
+        final resp = await _utils.get(uri.toString());
+        final data = Posts.formJson(resp.toString());
 
-    try {
-      final resp = await _utils.get(uri.toString());
-      final data = Posts.formJson(resp.toString());
-
-      log(
-        "[Api] getPostsByAuthor Status:ok "
-        "(user=$username offset=$offset size=${data.posts.length})",
-      );
-
-      return data;
-    } catch (e) {
-      log("[Api] getPostsByAuthor Error:$e");
-      return null;
-    }
+        return data;
+      },
+      fallback: null,
+      extra: "(user=$username offset=$offset)",
+    );
   }
 
   static Future<UserInfo?> getUserByUrl(String url) async {
-    try {
-      var data = UserInfo.formJson((await _utils.get(url)).toString());
-      log("[Api] getUserByUrl Status:ok");
-      return data;
-    } catch (e) {
-      log("[Api] getUserByUrl Error:$e");
-      return null;
-    }
+    return ApiGuard.run(
+      name: "getUserByUrl",
+      method: "GET",
+      call: () async => UserInfo.formJson((await _utils.get(url)).toString()),
+      fallback: null,
+    );
   }
 
   static Future<LoginResult?> login(String username, String password) async {
-    Response<dynamic>? result;
-    try {
-      result = (await _utils.post(
-        "${ApiConstants.apiBase}/api/token",
-        data: {"identification": username, "password": password},
-      ));
-      var d = result?.data;
-      LoginResult? data;
-      if (d is Map) {
-        data = LoginResult.formMap(d);
-      } else {
-        data = LoginResult.formMap(json.decode(d));
-      }
+    return ApiGuard.run(
+      name: "login",
+      method: "POST",
+      call: () async {
+        Response<dynamic>? result;
+        result = (await _utils.post(
+          "${ApiConstants.apiBase}/api/token",
+          data: {"identification": username, "password": password},
+        ));
+        var d = result?.data;
+        LoginResult? data;
+        if (d is Map) {
+          data = LoginResult.formMap(d);
+        } else {
+          data = LoginResult.formMap(json.decode(d));
+        }
 
-      log("[Api] login Status:ok");
-      return data;
-    } catch (e) {
-      log("[Api] login Error:$e");
-      return null;
-    }
+        return data;
+      },
+      fallback: null,
+    );
   }
 }

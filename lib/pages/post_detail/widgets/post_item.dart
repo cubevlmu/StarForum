@@ -14,6 +14,7 @@ import 'package:forum/di/injector.dart';
 import 'package:forum/pages/post_detail/controller.dart';
 import 'package:forum/pages/post_detail/reply_util.dart';
 import 'package:forum/pages/user/view.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/utils/string_util.dart';
 import 'package:forum/widgets/avatar.dart';
@@ -134,7 +135,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                     ),
                     Padding(
                       padding: const EdgeInsets.only(
-                        top: 0,
+                        top: 5,
                         bottom: 0,
                         left: 5,
                       ),
@@ -145,13 +146,17 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                               return ThumUpButton(
                                 likeNum: widget.reply.likes,
                                 selected: false,
-                                onPressed: widget.isUserPage ? null : () async {
-                                  final r = await addLikeToPost(widget.reply);
-                                  if (r != null) {
-                                    widget.reply.likes = r.likes;
-                                    setState(() {});
-                                  }
-                                },
+                                onPressed: widget.isUserPage
+                                    ? null
+                                    : () async {
+                                        final r = await addLikeToPost(
+                                          widget.reply,
+                                        );
+                                        if (r != null) {
+                                          widget.reply.likes = r.likes;
+                                          setState(() {});
+                                        }
+                                      },
                               );
                             },
                           ),
@@ -159,7 +164,6 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                             AddReplyButton(
                               postItem: widget.reply,
                               updateWidget: () {
-                                // widget.reply.++;
                                 setState(() => ());
                               },
                             ),
@@ -232,7 +236,7 @@ class AddReplyButton extends StatelessWidget {
         ReplyUtil.showAddReplySheet2(
           discussionId: controller.getId(),
           pi: postItem,
-          newReplyItems: controller.replyItems,
+          newReplyItems: controller.newReplyItems,
           updateWidget: updateWidget,
           scrollController: null,
         );
@@ -262,15 +266,15 @@ Future<PostInfo?> addLikeToPost(PostInfo item) async {
     }
 
     if (r == null) {
-      log("[PostItem] failed to like post with empty response");
+      LogUtil.error("[PostItem] failed to like post with empty response");
       SnackbarUtils.showMessageWithTitle("点赞失败", "可能是网络错误");
       return null;
     }
 
     SnackbarUtils.showMessage(r.likes < item.likes ? "取消点赞成功!" : "点赞成功!");
     return r;
-  } catch (e) {
-    log("[PostItem] failed to like post with id :${item.id}");
+  } catch (e, s) {
+    LogUtil.errorE("[PostItem] failed to like post with id :${item.id}", e, s);
   }
   return null;
 }
