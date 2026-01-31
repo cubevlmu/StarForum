@@ -10,6 +10,7 @@ import 'dart:developer';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:forum/data/api/api.dart';
+import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/data/model/notifications.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
@@ -47,7 +48,7 @@ class NotificationPageController extends GetxController {
 
   @override
   void onInit() {
-    isLogin.value = repo.isLogin();
+    isLogin.value = repo.isLogin;
     super.onInit();
   }
 
@@ -65,7 +66,7 @@ class NotificationPageController extends GetxController {
       items.clear();
       nextUrl = null;
 
-      if (!repo.isLogin()) {
+      if (!repo.isLogin) {
         log("[NotifyPage] refresh failed, user not login.");
         if (!isFirstSync) {
           SnackbarUtils.showMessage("用户未登录");
@@ -237,6 +238,44 @@ class NotificationPageController extends GetxController {
         "[NotifyPage] Failed to clear all notifications with error:",
         error: e,
       );
+    } finally {
+      isInvoking.value = false;
+    }
+  }
+
+  Future<DiscussionItem?> naviToDisPage(int discussion) async {
+    if (isInvoking.value) {
+      return null;
+    }
+    isInvoking.value = true;
+
+    try {
+      final r = await Api.getDiscussionById(discussion.toString());
+      if (r == null) {
+        log("[NotifyPage] Failed to get discussion detail by discussion id : $discussion");
+        SnackbarUtils.showMessage("获取帖子信息失败");
+        return null;
+      }
+      r.firstPost = r.posts?[r.firstPostId];
+      r.firstPost?.user = r.users?.values.first;
+      return DiscussionItem(
+        id: r.id,
+        title: r.title,
+        excerpt: r.firstPost?.contentHtml ?? "",
+        lastPostedAt: DateTime.parse(r.lastPostedAt),
+        authorAvatar: r.firstPost?.user?.avatarUrl ?? "",
+        authorName: r.firstPost?.user?.displayName ?? "",
+        viewCount: r.views,
+        likeCount: r.firstPost?.likes ?? 0,
+        commentCount: r.commentCount,
+        userId: r.users?.keys.first ?? 0,
+      );
+    } catch (e) {
+      log(
+        "[UserPage] Failed to fetch discussion information with id: $discussion with error:",
+        error: e,
+      );
+      return null;
     } finally {
       isInvoking.value = false;
     }

@@ -20,6 +20,7 @@ class PostCard extends StatelessWidget {
     final realText = htmlToPlainText(item.excerpt);
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         Navigator.push(
           context,
@@ -135,7 +136,7 @@ class PostCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${item.commentCount-1} 回复',
+                      '${item.commentCount - 1} 回复',
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],

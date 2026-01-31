@@ -48,32 +48,7 @@ class _UserPageState extends State<UserPage>
     return Column(
       children: [
         _buildUserInfo(context),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text("🔍", style: TextStyle(fontSize: 64)),
-                const SizedBox(height: 16),
-                Text(
-                  "没有找到相关内容",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "换个关键词试试吧",
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ),
+        SharedNotice.buildNoticeView(context, "🧐", "这里还没有任何帖子", "下拉刷新试试看"),
       ],
     );
   }
@@ -100,7 +75,7 @@ class _UserPageState extends State<UserPage>
   }
 
   PreferredSizeWidget? _buildAppBar(BuildContext context) {
-    if (widget.isAccountPage) return null;
+    if (widget.isAccountPage && widget.userId > 0) return null;
 
     return AppBar(
       title: const Text("用户资料"),

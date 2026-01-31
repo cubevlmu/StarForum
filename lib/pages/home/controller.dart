@@ -45,16 +45,33 @@ class HomeController extends GetxController {
 
   Future<void> _restoreLoginUser() async {
     if (!await userRepo.setup()) {
-      log("[HomePage] User login is expired.");
-      SnackbarUtils.showMessage("用户登录状态过期!请重新登录");
-      userRepo.logout();
+      log("[HomePage] User repo init failed.");
+      SnackbarUtils.showMessage("用户服务初始化失败");
       return;
+    }
+
+    final state = userRepo.loginState;
+    switch (state) {
+      case UserRepoState.kUnknown:
+        log("[HomePage] User repo init failed.");
+        SnackbarUtils.showMessage("用户服务初始化失败");
+        return;
+      case UserRepoState.kNotLogin:
+      case UserRepoState.kLogined:
+        break;
+      case UserRepoState.kExpired:
+        log("[HomePage] User login is expired.");
+        SnackbarUtils.showMessage("用户登录状态过期!请重新登录");
+        userRepo.logout();
+        return;
     }
     if (userRepo.user == null) {
       return;
     }
 
     avatarUrl.value = userRepo.user!.avatarUrl;
-    log("[HomePage] Fetched user info, nickname :${userRepo.user!.displayName} avatar url:${avatarUrl.value}");
+    log(
+      "[HomePage] Fetched user info, nickname :${userRepo.user!.displayName} avatar url:${avatarUrl.value}",
+    );
   }
 }

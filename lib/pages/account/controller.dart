@@ -16,7 +16,7 @@ class AccountPageController extends GetxController {
   RxBool isLogOut = true.obs;
 
   int getTrueId() {
-    if (!repo.isLogin()) return -2;
+    if (!repo.isLogin) return -2;
     if (repo.user == null) {
       return -1;
     }

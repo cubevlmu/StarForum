@@ -15,20 +15,24 @@ import 'package:forum/pages/notification/controller.dart';
 import 'package:forum/utils/http_utils.dart';
 import 'package:get/get.dart';
 
+enum UserRepoState { kUnknown, kNotLogin, kExpired, kLogined }
+
 class UserRepo {
-  UserInfo? user;
-  bool _isLogin = false;
 
   void _onLoginStateChange() {
     final homeC = Get.find<HomeController>();
     homeC.avatarUrl.value = user?.avatarUrl ?? "";
     final notiC = Get.find<NotificationPageController>();
-    notiC.isLogin.value = isLogin();
+    notiC.isLogin.value = isLogin;
     final accoC = Get.find<AccountPageController>();
-    accoC.isLogOut.value = !isLogin();
+    accoC.isLogOut.value = !isLogin;
   }
 
   Future<bool> setup() async {
+    if (_state != UserRepoState.kUnknown) {
+      log("[UserRepo] Already setup.");
+      return true;
+    }
     if (AuthStorage.hasToken && AuthStorage.hasUserId) {
       log("[UserRepo] Buffered user token : ${AuthStorage.accessToken ?? ""}");
       HttpUtils.setToken(AuthStorage.accessToken ?? "");
@@ -39,7 +43,9 @@ class UserRepo {
           log("[UserRepo] Buffered token is invalid.");
           _isLogin = false;
           _onLoginStateChange();
-          return false;
+
+          _state = UserRepoState.kExpired;
+          return true;
         }
 
         _isLogin = true;
@@ -48,25 +54,31 @@ class UserRepo {
           log(
             "[UserRepo] Get user information failed with id ${AuthStorage.userId}. Maybe expired.",
           );
-          return false;
+          _state = UserRepoState.kExpired;
+          return true;
         }
 
         user = me;
         log(
           "[UserRepo] Logged user : id: ${me.id} nickname: ${me.displayName}",
         );
+
         _onLoginStateChange();
-        return true;
+        _state = UserRepoState.kLogined;
+          return true;
       } catch (e) {
         // token 失效
         await AuthStorage.clear();
         _onLoginStateChange();
         _isLogin = false;
+        _state = UserRepoState.kExpired;
         HttpUtils().getInstance().options.headers.remove("Authorization");
         log("[UserRepo] Token expired.");
+
       }
     }
 
+    _state = UserRepoState.kNotLogin;
     return false;
   }
 
@@ -116,7 +128,10 @@ class UserRepo {
     return false;
   }
 
-  bool isLogin() {
-    return user != null && user?.id != 0 && _isLogin == true;
-  }
+  bool get isLogin => user != null && user?.id != 0 && _isLogin == true;
+  UserRepoState get loginState => _state;
+
+  UserInfo? user;
+  bool _isLogin = false;
+  UserRepoState _state = UserRepoState.kUnknown;
 }

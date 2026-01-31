@@ -4,8 +4,11 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
 import 'package:forum/pages/main/view.dart';
 import 'package:forum/utils/http_utils.dart';
@@ -20,10 +23,11 @@ const bool isStarFourmForATC = true;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageUtils.ensureInitialized();
-  
+
   setupInjector();
+
   runApp(const MyApp());
-  
+
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(
@@ -45,6 +49,12 @@ class MyApp extends StatelessWidget {
           onInit: () async {
             await HttpUtils().init();
             await StorageUtils.ensureInitialized();
+
+            final repo = getIt<UserRepo>();
+            if (!await repo.setup()) {
+              log("[Main] User login is expired.");
+              repo.logout();
+            }
           },
           useInheritedMediaQuery: true,
           themeMode: SettingsUtil.currentThemeMode,

@@ -157,7 +157,7 @@ class UserPageController extends GetxController {
     if (info == null) {
       return "";
     }
-    if (repo.isLogin()) {
+    if (repo.isLogin) {
       if (repo.user?.id == info?.id) return "在线";
     }
 
@@ -204,7 +204,7 @@ class UserPageController extends GetxController {
 
   bool isMe() {
     if (info == null) return false;
-    if (!repo.isLogin()) return false;
+    if (!repo.isLogin) return false;
     if (info?.id == repo.user?.id) return true;
     return false;
   }

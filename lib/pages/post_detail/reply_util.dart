@@ -16,7 +16,7 @@ import '../../di/injector.dart';
 
 class ReplyUtil {
   static bool _checkLogin(UserRepo repo) {
-    if (!repo.isLogin()) {
+    if (!repo.isLogin) {
       SnackbarUtils.showMessage("请先登录!");
       return false;
     }

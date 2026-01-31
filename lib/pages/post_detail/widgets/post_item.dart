@@ -50,6 +50,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                     avatarUrl: widget.reply.user?.avatarUrl ?? "",
                     radius: 45 / 2,
                     onPressed: () {
+                      if (widget.isUserPage) return;
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => UserPage(
@@ -73,6 +74,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                       padding: const EdgeInsets.only(left: 10),
                       child: GestureDetector(
                         onTap: () {
+                          if (widget.isUserPage) return;
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => UserPage(
@@ -246,7 +248,7 @@ class AddReplyButton extends StatelessWidget {
 
 Future<PostInfo?> addLikeToPost(PostInfo item) async {
   final repo = getIt<UserRepo>();
-  if (!repo.isLogin()) {
+  if (!repo.isLogin) {
     SnackbarUtils.showMessage("请先登录!");
     return null;
   }

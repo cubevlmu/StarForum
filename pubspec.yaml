@@ -34,6 +34,7 @@ dependencies:
   get_it: ^9.2.0
   path_provider: 2.1.5
   easy_refresh: ^3.4.0
+  url_launcher: ^6.2.5
   
   sqlite3_flutter_libs: ^0.5.18
   path: ^1.9.0

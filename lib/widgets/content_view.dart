@@ -7,20 +7,23 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:forum/data/api/api_constants.dart';
+import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/cache_utils.dart';
+import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/widgets/cached_network_image.dart';
 import 'package:forum/widgets/image_view.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
-typedef OnLinkTap = void Function(String link);
+enum ContentLikeType { kUnknown, kLink, kUserMention, kReply }
 
 class ContentView extends StatelessWidget {
   final String content;
-  final OnLinkTap? onLinkTap;
   static double textSize = 16;
 
-  const ContentView({super.key, this.onLinkTap, required this.content});
+  const ContentView({super.key, required this.content});
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +58,7 @@ class ContentView extends StatelessWidget {
           if (url != null && url.isNotEmpty) {
             span.add(
               WidgetSpan(
-                alignment: PlaceholderAlignment.middle, // 解决图片与文字对齐问题
+                alignment: PlaceholderAlignment.middle,
 
                 child: contentPadding(
                   Center(
@@ -71,8 +74,6 @@ class ContentView extends StatelessWidget {
                       ),
 
                       onTap: () {
-                        // 这里建议调用你 getWidget 里的那个图片预览逻辑
-
                         _previewImage(context, url);
                       },
                     ),
@@ -164,7 +165,11 @@ class ContentView extends StatelessWidget {
                         ),
                       ),
                       onTap: () {
-                        onLinkTap?.call(n.parent!.attributes["href"]!);
+                        onLinkTap(
+                          context,
+                          n.parent!.attributes["href"]!,
+                          ContentLikeType.kUserMention,
+                        );
                       },
                     ),
                   ),
@@ -196,7 +201,11 @@ class ContentView extends StatelessWidget {
                         ],
                       ),
                       onTap: () {
-                        onLinkTap?.call(n.parent!.attributes["href"]!);
+                        onLinkTap(
+                          context,
+                          n.parent!.attributes["href"]!,
+                          ContentLikeType.kReply,
+                        );
                       },
                     ),
                   ),
@@ -231,7 +240,11 @@ class ContentView extends StatelessWidget {
                         ],
                       ),
                       onTap: () {
-                        onLinkTap?.call(n.parent!.attributes["href"]!);
+                        onLinkTap(
+                          context,
+                          n.parent!.attributes["href"]!,
+                          ContentLikeType.kLink,
+                        );
                       },
                     ),
                   ),
@@ -245,13 +258,17 @@ class ContentView extends StatelessWidget {
                         "${n.text}",
                         style: TextStyle(
                           fontSize: textSize,
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           decoration: TextDecoration.underline,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       onTap: () {
-                        onLinkTap?.call(n.parent!.attributes["href"]!);
+                        onLinkTap(
+                          context,
+                          n.parent!.attributes["href"]!,
+                          ContentLikeType.kLink,
+                        );
                       },
                     ),
                   ),
@@ -404,9 +421,6 @@ class ContentView extends StatelessWidget {
           SizedBox(
             width: MediaQuery.of(context).size.width,
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                //TODO primary: Theme.of(context).primaryColor,
-              ),
               child: Text(
                 "title_show_details",
                 style: TextStyle(color: Theme.of(context).primaryColor),
@@ -538,29 +552,9 @@ class ContentView extends StatelessWidget {
                           fontFamily: 'monospace',
                         ),
                       ),
-                      // onNotification: (ScrollNotification notification) {
-                      //   return true;
-                      // },
                     ),
                   ),
                 ),
-                // onTap: () async {
-                //   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-                //       overlays: []);
-                //   SystemChrome.setPreferredOrientations([
-                //     DeviceOrientation.landscapeRight,
-                //     DeviceOrientation.landscapeRight,
-                //   ]);
-                //   await Navigator.push(context,
-                //       MaterialPageRoute(builder: (BuildContext context) {
-                //     return CodeView(element.text);
-                //   }));
-                //   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-                //       overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
-                //   SystemChrome.setPreferredOrientations([
-                //     DeviceOrientation.portraitUp,
-                //   ]);
-                // },
               ),
             ),
           ),
@@ -581,25 +575,6 @@ class ContentView extends StatelessWidget {
             ),
           ),
         );
-      // return contentPadding(contentPadding(SizedBox(
-      //   width: MediaQuery.of(context).size.width,
-      //   child: RaisedButton(
-      //       color: Colors.red,
-      //       child: Text(
-      //         "UnimplementedNode",
-      //         style: TextStyle(color: Colors.white),
-      //       ),
-      //       onPressed: () {
-      //         showDialog(
-      //             context: context,
-      //             builder: (BuildContext context) {
-      //               return AlertDialog(
-      //                 title: Text("Source"),
-      //                 content: Text(element.outerHtml),
-      //               );
-      //             });
-      //       }),
-      // )));
     }
   }
 
@@ -610,10 +585,36 @@ class ContentView extends StatelessWidget {
     );
   }
 
-  // 建议抽离的预览方法
   void _previewImage(BuildContext context, String url) {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => ImagePreviewWidget(url: url)));
+  }
+
+  void onLinkTap(BuildContext context, String s, ContentLikeType type) {
+    try {
+      switch (type) {
+        case ContentLikeType.kUnknown:
+          break;
+        case ContentLikeType.kLink:
+          launchUrlString(s);
+          break;
+        case ContentLikeType.kUserMention:
+          final id = int.parse(s.replaceAll("${ApiConstants.apiBase}/u/", ""));
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => UserPage(userId: id)));
+          break;
+        case ContentLikeType.kReply:
+          SnackbarUtils.showMessage("功能开发中");
+          break;
+      }
+    } catch (e) {
+      log(
+        "[ContentView] Failed to process or open link with link : $s and type: $type and error:",
+        error: e,
+      );
+      SnackbarUtils.showMessage("链接打开失败");
+    }
   }
 }

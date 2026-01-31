@@ -55,7 +55,7 @@ class _NotificationPageState extends State<NotificationPage> {
             if (items.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _onEmpty(context),
+                child: SharedNotice.buildNoticeView(context, "📭", "暂无通知", "这里会显示回复、提及和系统消息"),
               )
             else
               SliverList(
@@ -72,37 +72,6 @@ class _NotificationPageState extends State<NotificationPage> {
       },
     );
   }
-
-  Widget _onEmpty(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("📭", style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 16),
-            Text(
-              "暂无通知",
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "这里会显示回复、提及和系统消息",
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  
 
   @override
   Widget build(BuildContext context) {

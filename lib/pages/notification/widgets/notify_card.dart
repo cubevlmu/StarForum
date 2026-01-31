@@ -68,40 +68,39 @@ class NotifyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (title, desc) = buildMsg(item);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// 头像
-            GestureDetector(
-              child: AvatarWidget(
-                avatarUrl: item.fromUser?.avatarUrl ?? "",
-                radius: 22,
-                placeholder: item.fromUser?.displayName[0] ?? "U",
+    return GestureDetector(
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 5),
+
+              GestureDetector(
+                child: AvatarWidget(
+                  avatarUrl: item.fromUser?.avatarUrl ?? "",
+                  radius: 22,
+                  placeholder: item.fromUser?.displayName[0] ?? "U",
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => UserPage(userId: item.fromUser?.id ?? -1),
+                    ),
+                  );
+                },
               ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => UserPage(userId: item.fromUser?.id ?? -1),
-                  ),
-                );
-              },
-            ),
 
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
 
-            /// 右侧内容
-            Expanded(
-              child: GestureDetector(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// 标题行（含未读点）
                     Row(
                       children: [
                         if (!item.isRead)
@@ -131,7 +130,6 @@ class NotifyCard extends StatelessWidget {
 
                     const SizedBox(height: 6),
 
-                    /// 描述正文
                     Text(
                       desc,
                       maxLines: 2,
@@ -145,7 +143,6 @@ class NotifyCard extends StatelessWidget {
 
                     const SizedBox(height: 8),
 
-                    /// 底部 meta（用户 + 时间）
                     Row(
                       children: [
                         if (item.fromUser != null)
@@ -172,41 +169,44 @@ class NotifyCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                onTap: () {
-                  if (item.contentType == "postLiked" ||
-                      item.contentType == "postMentioned") {
-                    // final s = item.subject as PostSubject;
-                    // s.post.id
-                    // // TODO: 跳转帖子详情
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (_) => PostPage(item: DiscussionItem(id: id, title: title, excerpt: excerpt, lastPostedAt: lastPostedAt, userId: userId)),
-                    //   ),
-                    // );
-                  }
-                },
               ),
-            ),
 
-            /// 已读按钮
-            IconButton(
-              icon: const Icon(Icons.check_outlined),
-              color: Colors.grey,
-              onPressed: item.isRead
-                  ? null
-                  : () async {
-                      if (await controller.checkAsRead(item.id)) {}
-                    },
-            ),
-          ],
+              /// 已读按钮
+              IconButton(
+                icon: const Icon(Icons.check_outlined),
+                color: Colors.grey,
+                onPressed: item.isRead
+                    ? null
+                    : () async {
+                        if (await controller.checkAsRead(item.id)) {}
+                      },
+              ),
+            ],
+          ),
         ),
       ),
+      onTap: () => naviToPage(context),
     );
   }
 
   String _formatTime(DateTime time) {
     return "${time.month}-${time.day} "
         "${time.hour}:${time.minute.toString().padLeft(2, '0')}";
+  }
+
+  void naviToPage(BuildContext context) async {
+    if (item.contentType == "postLiked" ||
+        item.contentType == "postMentioned") {
+      final s = item.subject as PostSubject;
+      final r = await controller.naviToDisPage(s.post.discussion);
+      if (r == null) {
+        return;
+      }
+      if (!context.mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PostPage(item: r)),
+      );
+    }
   }
 }

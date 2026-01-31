@@ -47,6 +47,8 @@ class _AccountPageState extends State<AccountPage> {
                 onPressed: () {
                   SharedDialog.showDialog2(
                     context,
+                    "登出",
+                    "是否要登出账号?",
                     "取消",
                     () => Navigator.pop(context, 'Cancel'),
                     "确认",

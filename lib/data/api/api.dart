@@ -21,7 +21,7 @@ class Api {
   static final HttpUtils _utils = HttpUtils();
   static Map<int, TagInfo>? _allTags;
   static Tags? _tags;
-
+  
   static Future<ForumInfo?> checkUrl(String url) async {
     try {
       var info = ForumInfo.formJson((await Dio().get(url)).data);

@@ -5,12 +5,16 @@
  */
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forum/pages/settings/dev_page.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
 
-  final String authorUrl = "https://github.com/cubevlmu";
+  static const String authorUrl = "https://github.com/cubevlmu";
+  static const String projectUrl = "https://github.com/cubevlmu/StarForum";
+  static int tapTimes = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +37,16 @@ class AboutPage extends StatelessWidget {
             title: const Text("作者"),
             subtitle: const Text("cubevlmu @ flybird studio"),
             onTap: () {
-              // launchUrlString(authorUrl);
+              tapTimes += 1;
+              if (tapTimes == 5) {
+                tapTimes = 0;
+                Navigator.push(
+                  context,
+                  GetPageRoute(page: () => DevSettingPage()),
+                );
+                return;
+              }
+              launchUrlString(authorUrl);
             },
             onLongPress: () {
               Clipboard.setData(ClipboardData(text: authorUrl));
@@ -42,18 +55,18 @@ class AboutPage extends StatelessWidget {
             },
           ),
           const Divider(height: 1, thickness: 0.5),
-          // ListTile(
-          //   title: const Text("项目链接"),
-          //   subtitle: Text(projectUrl),
-          //   onTap: () {
-          //     // launchUrlString(projectUrl);
-          //   },
-          //   onLongPress: () {
-          //     Clipboard.setData(ClipboardData(text: projectUrl));
-          //     ScaffoldMessenger.of(context);
-          //     Get.rawSnackbar(message: '已复制$projectUrl到剪切板');
-          //   },
-          // ),
+          ListTile(
+            title: const Text("项目链接"),
+            subtitle: Text(projectUrl),
+            onTap: () {
+              launchUrlString(projectUrl);
+            },
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: projectUrl));
+              ScaffoldMessenger.of(context);
+              Get.rawSnackbar(message: '已复制$projectUrl到剪切板');
+            },
+          ),
           ListTile(
             title: const Text("许可"),
             onTap: () => Navigator.push(

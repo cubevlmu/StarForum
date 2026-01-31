@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:forum/pages/post_list/controller.dart';
 import 'package:forum/widgets/post_card.dart';
+import 'package:forum/widgets/shared_notice.dart';
 import 'package:forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
@@ -89,31 +90,11 @@ class _PostListPageState extends State<PostListPage> {
   Widget _onEmptyView(BuildContext context) {
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.6,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("🧐", style: TextStyle(fontSize: 64)),
-              const SizedBox(height: 16),
-              Text(
-                "这里还没有任何帖子",
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "下拉刷新试试看",
-                textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
+      child: SharedNotice.buildNoticeView(
+        context,
+        "🧐",
+        "这里还没有任何帖子",
+        "下拉刷新试试看",
       ),
     );
   }
