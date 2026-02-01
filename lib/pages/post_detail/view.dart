@@ -4,8 +4,6 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/pages/post_detail/controller.dart';
@@ -48,7 +46,6 @@ class _PostPageState extends State<PostPage>
     super.dispose();
   }
 
-  // Main view
   Widget _buildView(PostPageController controller) {
     controller.updateWidget = () => setState(() => ());
 
@@ -64,27 +61,22 @@ class _PostPageState extends State<PostPage>
           controller: controller.scrollController,
           physics: physics,
           slivers: [
-            /// Main post (first post)
             SliverToBoxAdapter(child: PostMainWidget(content: widget.item)),
 
-            /// Order button
             SliverToBoxAdapter(
               child: SortReplyItemWidget(replyController: controller),
             ),
 
-            /// Check if no reply
             if (!hasReply)
-              SliverFillRemaining(
+              const SliverFillRemaining(
                 hasScrollBody: false,
-                child: SharedNotice.buildNoticeView(
-                  context,
-                  "💬",
-                  "还没有回复",
-                  "成为第一个发表评论的人吧",
+                child: NoticeWidget(
+                  emoji: "💬",
+                  title: "还没有回复",
+                  tips: "成为第一个发表评论的人吧",
                 ),
               )
             else ...[
-              /// New reply
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final item = controller.newReplyItems[index];
@@ -92,7 +84,6 @@ class _PostPageState extends State<PostPage>
                 }, childCount: controller.newReplyItems.length),
               ),
 
-              /// Old reply
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final item = controller.replyItems[index];
@@ -115,14 +106,18 @@ class _PostPageState extends State<PostPage>
         tooltip: '发表评论',
         child: Icon(Icons.reply),
       ),
-      appBar: AppBar(
-        title: Text("贴文: ${widget.item.title}"),
-        shadowColor: Theme.of(context).shadowColor,
-      ),
+      appBar: _buildAppBar(context),
       body: Padding(
         padding: EdgeInsetsGeometry.only(left: 12, right: 12),
         child: _buildView(controller),
       ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      title: Text("贴文: ${widget.item.title}"),
+      shadowColor: Theme.of(context).shadowColor,
     );
   }
 }
@@ -144,7 +139,6 @@ class SortReplyItemWidget extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        //排列方式按钮
         MaterialButton(
           child: Row(
             children: [
@@ -161,7 +155,6 @@ class SortReplyItemWidget extends StatelessWidget {
               ),
             ],
           ),
-          //点击切换评论排列方式
           onPressed: () {
             replyController.toggleSort();
           },

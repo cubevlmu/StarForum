@@ -7,7 +7,6 @@
 import 'package:flutter/material.dart';
 import 'package:forum/pages/home/controller.dart';
 import 'package:forum/pages/home/widgets/user_dialog.dart';
-import 'package:forum/pages/login/view.dart';
 import 'package:forum/pages/post_list/controller.dart';
 import 'package:forum/pages/post_list/view.dart';
 import 'package:forum/pages/search/view.dart';
@@ -108,7 +107,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             case '主题':
               return themeListPage;
             default:
-              return SharedNotice.onWorkInProgress(context);
+              return const WorkInProgressNotice();
           }
         }).toList(),
       ),

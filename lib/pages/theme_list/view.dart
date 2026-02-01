@@ -1,11 +1,12 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
  * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
 import 'package:flutter/material.dart';
 import 'package:forum/pages/theme_list/controller.dart';
+import 'package:forum/widgets/post_card.dart';
 import 'package:forum/widgets/shared_notice.dart';
 import 'package:forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
@@ -18,12 +19,12 @@ class ThemeListPage extends StatefulWidget {
 }
 
 class _ThemeListPageState extends State<ThemeListPage> {
-  late ThemeListController controller;
+  late final ThemeListController controller;
 
   @override
   void initState() {
-    controller = Get.put(ThemeListController());
     super.initState();
+    controller = Get.put(ThemeListController());
   }
 
   @override
@@ -34,88 +35,117 @@ class _ThemeListPageState extends State<ThemeListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SimpleEasyRefresher(
-      easyRefreshController: controller.refreshController,
-      onRefresh: controller.onRefresh,
-      onLoad: controller.onLoad,
-      childBuilder: (context, physics) => SharedNotice.onWorkInProgress(context), 
-      // ListView.builder(
-      //   addAutomaticKeepAlives: false,
-      //   addRepaintBoundaries: false,
-      //   controller: controller.scrollController,
-      //   physics: physics,
-      //   padding: const EdgeInsets.all(0),
-      //   itemCount: controller.items.length,
-      //   itemBuilder: (context, index) {
-      //     // final item = controller.items[index];
-      //     // return PostCard(item: item);
-      //     return Column(
-      //       children: [
-      //         // GestureDetector(
-      //         //   onTap: () {
-      //         //     Navigator.push(
-      //         //       context,
-      //         //       MaterialPageRoute(builder: (_) => PostPage(item: item)),
-      //         //     );
-      //         //   },
-      //         //   child: TopBarItem(item: item),
-      //         // ),
-      //         // body: SimpleEasyRefresher(
-      //         //   easyRefreshController: controller.refreshController,
-      //         //   onRefresh: controller.onRefresh,
-      //         //   onLoad: controller.onLoad,
-      //         //   childBuilder: (context, physics) {
-      //         //     return ListView(
-      //         //       physics: physics,
-      //         //       children: [
-      //         //         const SizedBox(height: 10),
-      //         //         Padding(
-      //         //           padding: const EdgeInsets.symmetric(horizontal: 10),
-      //         //           child: const TopBar(),
-      //         //         ),
-      //         //         const SizedBox(height: 20),
-      //         //         const Padding(
-      //         //           padding: EdgeInsets.symmetric(horizontal: 20),
-      //         //           child: Text(
-      //         //             "主题",
-      //         //             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-      //         //           ),
-      //         //         ),
-      //         //         const SizedBox(height: 10),
-      //         //         Padding(
-      //         //           padding: const EdgeInsets.symmetric(horizontal: 15),
-      //         //           child: PopularTopics(),
-      //         //         ),
-      //         //         const SizedBox(height: 20),
-      //         //         const Padding(
-      //         //           padding: EdgeInsets.symmetric(horizontal: 20),
-      //         //           child: Text(
-      //         //             "贴文",
-      //         //             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-      //         //           ),
-      //         //         ),
-      //         //         const SizedBox(height: 10),
-      //         //         Padding(
-      //         //           padding: const EdgeInsets.symmetric(horizontal: 15),
-      //         //           child: const PostListWidget(),
-      //         //         ),
-      //         //         const SizedBox(height: 20),
-      //         //       ],
-      //         //     );
-      //         //   },
-      //         // ),
-      //         // if (index != controller.items.length - 1)
-      //         //   const Divider(
-      //         //     height: 1,
-      //         //     thickness: 0.5,
-      //         //     indent: 12,
-      //         //     endIndent: 12,
-      //         //   ),
-      //       ],
-      //     );
-      //   },
-      // ),
+    return Scaffold(
+      body: SimpleEasyRefresher(
+        easyRefreshController: controller.refreshController,
+        onRefresh: controller.onRefresh,
+        onLoad: controller.onLoad,
+        childBuilder: (context, physics) {
+          return CustomScrollView(
+            controller: controller.scrollController,
+            physics: physics,
+            slivers: [_buildPostListSliver()],
+          );
+        },
+      ),
+      bottomNavigationBar: _buildBadgeBar(),
     );
   }
 
+  Widget _buildBadgeBar() {
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: 45,
+        child: Obx(
+          () => ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: controller.primayTag.length + controller.tags.length,
+            itemBuilder: (context, index) {
+              final item = index < controller.primayTag.length
+                  ? controller.primayTag[index]
+                  : controller.tags[index - controller.primayTag.length];
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Obx(
+                  () => ChoiceChip(
+                    label: Text(item.name),
+                    selected: controller.selectId.value == item.id,
+
+                    onSelected: controller.onLoading.value
+                        ? null
+                        : (selected) {
+                            if (selected) {
+                              controller.onTagSelectChange(item.id);
+                            }
+                          },
+
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPostListSliver() {
+    return Obx(() {
+      if (controller.onLoading.value) {
+        return SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                RefreshProgressIndicator(),
+                SizedBox(height: 8),
+                Text("正在加载..."),
+              ],
+            ),
+          ),
+        );
+      }
+      if (controller.searchItems.isEmpty) {
+        return SliverFillRemaining(
+          hasScrollBody: false,
+          child: Obx(() {
+            return controller.isSearching.value
+                ? const SizedBox.shrink()
+                : const NoticeWidget(
+                    emoji: "🧐",
+                    title: "这里还没有任何帖子",
+                    tips: "下拉刷新试试看",
+                  );
+          }),
+        );
+      } else {
+        return SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final i = controller.searchItems[index];
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: PostCard(item: i.toItem()),
+                ),
+                if (index != controller.searchItems.length - 1)
+                  const Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    indent: 12,
+                    endIndent: 12,
+                  ),
+              ],
+            );
+          }, childCount: controller.searchItems.length),
+        );
+      }
+    });
+  }
 }

@@ -18,6 +18,7 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final realText = htmlToPlainText(item.excerpt);
+    final needMoreSing = realText.length >= 80;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -89,7 +90,7 @@ class PostCard extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsetsGeometry.only(left: 55),
                   child: Text(
-                    "$realText......",
+                    "$realText${needMoreSing? "....." : ""}",
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -136,7 +137,7 @@ class PostCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${item.commentCount - 1} 回复',
+                      '${item.commentCount == 0 ? 0 : (item.commentCount - 1)} 回复',
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],

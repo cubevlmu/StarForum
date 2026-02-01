@@ -17,6 +17,7 @@ class PostListController extends GetxController {
   final DiscussionRepository repo = getIt<DiscussionRepository>();
 
   final RxList<DiscussionItem> items = <DiscussionItem>[].obs;
+  // final RxList<DiscussionItem> newItems = <DiscussionItem>[].obs;
 
   final ScrollController scrollController = ScrollController();
   final EasyRefreshController refreshController = EasyRefreshController(
@@ -74,6 +75,8 @@ class PostListController extends GetxController {
     }
 
     try {
+      // newItems.clear();
+      
       _loading = true;
       _offset = 0;
       _hasMore = true;
@@ -81,6 +84,7 @@ class PostListController extends GetxController {
       _visibleCount.value = _pageSize;
 
       await repo.syncDiscussionPage(offset: 0, limit: _pageSize);
+      await repo.cleanupDeletedDiscussions();
 
       _offset = _pageSize;
 

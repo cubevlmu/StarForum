@@ -1,3 +1,5 @@
+import 'package:forum/data/model/discussion_item.dart';
+
 import 'base.dart';
 import 'posts.dart';
 import 'tags.dart';
@@ -41,6 +43,20 @@ class DiscussionInfo {
     this.users,
     this.tags,
   );
+
+  DiscussionItem toItem() {
+    return DiscussionItem(
+      id: id,
+      title: title,
+      excerpt: firstPost?.contentHtml ?? "",
+      lastPostedAt: DateTime.parse(lastPostedAt),
+      userId: user?.id ?? 0,
+      authorName: user?.displayName ?? "",
+      authorAvatar: user?.avatarUrl ?? "",
+      commentCount: commentCount,
+      viewCount: views,
+    );
+  }
 
   factory DiscussionInfo.formMaoAndId(Map m, int id) {
     return DiscussionInfo(

@@ -85,13 +85,12 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _init() {
-    controller.defaultSearchWord = ""; //widget.defaultHintSearchWord;
+    controller.defaultSearchWord = "";
     if (widget.defaultInputSearchWord != null) {
       controller.textEditingController.text = widget.defaultInputSearchWord!;
     }
   }
 
-  // 主视图
   Widget _buildView() {
     _init();
     return Container(child: _viewSelecter());
@@ -118,7 +117,6 @@ class _SearchPageState extends State<SearchPage> {
                     },
                     style: const TextStyle(fontSize: 18),
                     decoration: InputDecoration(
-                      //删除键
                       suffixIcon: Obx(
                         () => Offstage(
                           offstage: controller.showEditDelete.isFalse,
@@ -134,7 +132,7 @@ class _SearchPageState extends State<SearchPage> {
                       ),
                       border: InputBorder.none,
                       hintText: "",
-                    ), //widget.defaultHintSearchWord),
+                    ),
                   ),
                 ),
               ],

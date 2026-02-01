@@ -5,7 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/pages/post_list/controller.dart';
+import 'package:forum/pages/post_list/create_discuss_util.dart';
 import 'package:forum/widgets/post_card.dart';
 import 'package:forum/widgets/shared_notice.dart';
 import 'package:forum/widgets/simple_easy_refresher.dart';
@@ -33,76 +35,83 @@ class _PostListPageState extends State<PostListPage> {
     super.dispose();
   }
 
-  Widget _buildView(BuildContext context) {
-    return Scaffold(
-      body: SimpleEasyRefresher(
-        easyRefreshController: controller.refreshController,
-        onRefresh: controller.onRefresh,
-        onLoad: controller.onLoad,
-        childBuilder: (context, physics) => Obx(() {
-          final items = controller.items;
-
-          return ListView.builder(
-            controller: controller.scrollController,
-            physics: physics,
-            padding: EdgeInsets.zero,
-            itemCount: items.isEmpty ? 1 : items.length,
-            itemBuilder: (context, index) {
-              if (items.isEmpty) {
-                return _onEmptyView(context);
-              }
-
-              final item = items[index];
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8, right: 8),
-                    child: PostCard(item: item),
-                  ),
-                  if (index != items.length - 1)
-                    const Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      indent: 12,
-                      endIndent: 12,
-                    ),
-                  if (index == items.length - 1)
-                    const Padding(padding: EdgeInsets.only(bottom: 65)),
-                ],
-              );
-            },
-          );
-        }),
-      ),
-      floatingActionButton: Padding(
-        padding: MediaQuery.of(context).size.width >= 640
-            ? EdgeInsetsGeometry.only(bottom: 20)
-            : EdgeInsetsGeometry.only(bottom: 80),
-        child: FloatingActionButton(
-          onPressed: () {
-            
-          },
-          child: Icon(Icons.add_outlined),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-    );
-  }
-
-  Widget _onEmptyView(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.6,
-      child: SharedNotice.buildNoticeView(
-        context,
-        "🧐",
-        "这里还没有任何帖子",
-        "下拉刷新试试看",
+  Widget _buildFloatBtn() {
+    return Padding(
+      padding: MediaQuery.of(context).size.width >= 640
+          ? EdgeInsetsGeometry.only(bottom: 20)
+          : EdgeInsetsGeometry.only(bottom: 80),
+      child: FloatingActionButton(
+        onPressed: () => _onCreateDiscussion(),
+        child: Icon(Icons.add_outlined),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return _buildView(context);
+    return Scaffold(
+      body: _buildBody(),
+      floatingActionButton: _buildFloatBtn(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+    );
+  }
+
+  Widget _buildBody() {
+    return SimpleEasyRefresher(
+      easyRefreshController: controller.refreshController,
+      onRefresh: controller.onRefresh,
+      onLoad: controller.onLoad,
+      childBuilder: (context, physics) {
+        return Obx(() {
+          final items = controller.items;
+          final bool hasData = items.isNotEmpty;
+
+          return CustomScrollView(
+            controller: controller.scrollController,
+            physics: physics,
+            slivers: [
+              if (!hasData)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: NoticeWidget(
+                    emoji: "🧐",
+                    title: "这里还没有任何帖子",
+                    tips: "下拉刷新试试看",
+                  ),
+                )
+              else ...[
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final item = items[index];
+                    return _buildPostItem(item);
+                  }, childCount: items.length),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+              ],
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  Widget _buildPostItem(DiscussionItem item) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: PostCard(item: item),
+        ),
+        const Divider(height: 1, thickness: 0.5, indent: 12, endIndent: 12),
+      ],
+    );
+  }
+
+  void _onCreateDiscussion() {
+    CreateDiscussUtil.showCreateDiscuss(
+      updateWidget: () => controller.items.refresh(),
+      scrollController: controller.scrollController,
+    );
   }
 }

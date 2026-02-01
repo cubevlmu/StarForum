@@ -4,7 +4,7 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'dart:developer';
+
 
 import 'package:flutter/material.dart';
 import 'package:forum/data/api/api.dart';
@@ -21,6 +21,7 @@ import 'package:forum/widgets/avatar.dart';
 import 'package:forum/widgets/content_view.dart';
 import 'package:forum/widgets/icon_text_button.dart';
 import 'package:get/get.dart';
+import 'package:nil/nil.dart';
 
 class PostItemWidget extends StatefulWidget {
   const PostItemWidget({
@@ -64,7 +65,6 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                     cacheWidthHeight: 200,
                   ),
                   const SizedBox(height: 10),
-                  const SizedBox(),
                 ],
               ),
               Expanded(

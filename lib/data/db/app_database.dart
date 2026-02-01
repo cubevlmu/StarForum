@@ -30,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// 数据库版本号（⚠️ 以后改表一定要 +1）
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 5;
 
   /// 迁移策略
   @override

@@ -1,9 +1,9 @@
-class CountryId {
-  static const contryId = [
+class LocalId {
+  static const localId = [
     {"id": 1, "cname": "中国大陆", "country_id": "86"},
-    {"id": 5, "cname": "中国香港特别行政区", "country_id": "852"},
-    {"id": 2, "cname": "中国澳门特别行政区", "country_id": "853"},
-    {"id": 3, "cname": "台湾", "country_id": "886"},
+    {"id": 5, "cname": "香港地区", "country_id": "852"},
+    {"id": 2, "cname": "澳门地区", "country_id": "853"},
+    {"id": 3, "cname": "台湾地区", "country_id": "886"},
     {"id": 4, "cname": "美国", "country_id": "1"},
     {"id": 6, "cname": "比利时", "country_id": "32"},
     {"id": 7, "cname": "澳大利亚", "country_id": "61"},
@@ -55,7 +55,7 @@ class CountryId {
     {"id": 216, "cname": "智利", "country_id": "56"},
     {"id": 77, "cname": "哥伦比亚", "country_id": "57"},
     {"id": 103, "cname": "科摩罗", "country_id": "269"},
-    {"id": 75, "cname": "刚果", "country_id": "242"},
+    {"id": 75, "cname": "刚果(布)", "country_id": "242"},
     {"id": 76, "cname": "刚果(金)", "country_id": "243"},
     {"id": 107, "cname": "库克岛", "country_id": "682"},
     {"id": 78, "cname": "哥斯达黎加", "country_id": "506"},

@@ -33,14 +33,14 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
     return list;
   }
 
-  RadioListTile themeListTile(BiliTheme theme) {
-    return RadioListTile<BiliTheme>(
+  RadioListTile themeListTile(AppTheme theme) {
+    return RadioListTile<AppTheme>(
       value: theme,
       groupValue: SettingsUtil.currentTheme,
       title: Text(
         theme.value,
         style: TextStyle(
-            color: theme == BiliTheme.dynamic ? null : theme.seedColor),
+            color: theme == AppTheme.dynamic ? null : theme.seedColor),
       ),
       onChanged: (value) {
         SettingsUtil.changeTheme(value!);
@@ -52,7 +52,7 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
 
   List<RadioListTile> buildThemeLists() {
     List<RadioListTile> list = [];
-    for (var theme in BiliTheme.values) {
+    for (var theme in AppTheme.values) {
       list.add(themeListTile(theme));
     }
     return list;

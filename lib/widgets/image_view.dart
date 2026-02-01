@@ -78,7 +78,6 @@ class ImagePreviewWidgetState extends State<ImagePreviewWidget> {
     late Directory targetDir;
 
     if (Platform.isAndroid) {
-      // Android 公共 Pictures 目录
       targetDir = Directory('/storage/emulated/0/DCIM/Forum');
     } else if (Platform.isWindows) {
       targetDir = Directory('${Platform.environment['USERPROFILE']}\\Pictures');

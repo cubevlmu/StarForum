@@ -4,6 +4,8 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forum/data/repository/tag_repo.dart';
@@ -16,6 +18,7 @@ import 'package:forum/utils/setting_util.dart';
 import 'package:forum/utils/storage_utils.dart';
 import 'package:get/get.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:nil/nil.dart';
 
 /// Enable functions designed for StarFish Forum.
 const bool isStarFourmForATC = true;
@@ -34,7 +37,7 @@ void main() async {
   LogUtil.info("[Main] Begin to setup user service.");
   await repo.setup();
   LogUtil.info("[Main] End setup user service.");
-  
+
   LogUtil.info("[Main] Begin sync tags.");
   final tag = getIt<TagRepo>();
   await tag.syncTags();
@@ -60,24 +63,25 @@ class MyApp extends StatelessWidget {
     return DynamicColorBuilder(
       builder: ((lightDynamic, darkDynamic) {
         return GetMaterialApp(
+          scrollBehavior: const _DesktopScrollBehavior(),
           onInit: () async {},
           useInheritedMediaQuery: true,
           themeMode: SettingsUtil.currentThemeMode,
           theme: ThemeData(
-            colorScheme: SettingsUtil.currentTheme == BiliTheme.dynamic
-                ? lightDynamic ?? BiliTheme.dynamic.themeDataLight.colorScheme
+            colorScheme: SettingsUtil.currentTheme == AppTheme.dynamic
+                ? lightDynamic ?? AppTheme.dynamic.themeDataLight.colorScheme
                 : SettingsUtil.currentTheme.themeDataLight.colorScheme,
             useMaterial3: true,
           ),
           darkTheme: ThemeData(
-            colorScheme: SettingsUtil.currentTheme == BiliTheme.dynamic
-                ? darkDynamic ?? BiliTheme.dynamic.themeDataDark.colorScheme
+            colorScheme: SettingsUtil.currentTheme == AppTheme.dynamic
+                ? darkDynamic ?? AppTheme.dynamic.themeDataDark.colorScheme
                 : SettingsUtil.currentTheme.themeDataDark.colorScheme,
             useMaterial3: true,
           ),
           home: const MainPage(),
           builder: (context, child) => child == null
-              ? const SizedBox()
+              ? nil
               : MediaQuery(
                   data: MediaQuery.of(context).copyWith(
                     textScaler: TextScaler.linear(
@@ -95,4 +99,16 @@ class MyApp extends StatelessWidget {
       }),
     );
   }
+}
+
+class _DesktopScrollBehavior extends MaterialScrollBehavior {
+  const _DesktopScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse, // ✅ 关键
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.trackpad,
+  };
 }

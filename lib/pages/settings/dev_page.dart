@@ -11,12 +11,9 @@ import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/pages/post_detail/view.dart';
 import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/storage_utils.dart';
 import 'package:forum/pages/settings/widgets/settings_label.dart';
-import 'package:forum/pages/settings/widgets/settings_switch_tile.dart';
 import 'package:forum/utils/string_util.dart';
 import 'package:forum/widgets/shared_dialog.dart';
-import 'package:forum/widgets/shared_notice.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 

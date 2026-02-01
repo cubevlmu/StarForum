@@ -31,27 +31,25 @@ class SettingsUtil {
     Get.changeThemeMode(themeMode);
   }
 
-  static BiliTheme get currentTheme {
+  static AppTheme get currentTheme {
     var index = getValue(
       SettingsStorageKeys.biliTheme,
-      defaultValue: BiliTheme.dynamic.index,
+      defaultValue: AppTheme.dynamic.index,
     );
-    return BiliTheme.values[index];
+    return AppTheme.values[index];
   }
 
-  static void changeTheme(BiliTheme theme) {
+  static void changeTheme(AppTheme theme) {
     setValue(SettingsStorageKeys.biliTheme, theme.index);
-    //不知道为什么Get.changeTheme()暗色不能更新
-    //只能强制更新
     Get.forceAppUpdate();
   }
 }
 
 extension ThemeModeString on ThemeMode {
-  String get value => ['系统', '淡色', '深色'][index];
+  String get value => ['系统', '浅色', '深色'][index];
 }
 
-enum BiliTheme {
+enum AppTheme {
   dynamic,
   blue,
   lightBlue,
@@ -73,7 +71,7 @@ enum BiliTheme {
   grey,
 }
 
-extension BiliThemeName on BiliTheme {
+extension AppThemeName on AppTheme {
   String get value => [
     '动态',
     '蓝色',

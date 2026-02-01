@@ -240,7 +240,10 @@ class NotificationPageController extends GetxController {
       }
 
       Get.rawSnackbar(message: "标记已读成功！");
-      await onRefresh();
+      for(var item in items) {
+        item.isRead = true;
+      }
+
     } catch (e, s) {
       LogUtil.errorE("[NotifyPage] Failed to make all read with error:", e, s);
     } finally {
@@ -261,6 +264,7 @@ class NotificationPageController extends GetxController {
       }
 
       items.clear();
+      
       nextUrl = null;
       loading = false;
       Get.rawSnackbar(message: "清理全部消息成功!");

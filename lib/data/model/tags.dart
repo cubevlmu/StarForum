@@ -16,6 +16,9 @@ class TagInfo {
   String lastPostedAt;
   SplayTreeMap<int, TagInfo>? children;
   int parent;
+  bool isChild;
+  int? parentId;
+  bool canStartDiscussion;
 
   TagInfo(
     this.name,
@@ -31,10 +34,19 @@ class TagInfo {
     this.lastPostedAt,
     this.children,
     this.parent,
+    this.isChild,
+    this.parentId,
+    this.canStartDiscussion
   );
 
   factory TagInfo.formBaseData(BaseData data) {
     var m = data.attributes;
+
+    int? parentId;
+    if (m["isChild"] == true) {
+      parentId = int.parse(data.relationships!["parent"]["data"]["id"]);
+    }
+
     return TagInfo(
       m["name"],
       data.id,
@@ -45,10 +57,13 @@ class TagInfo {
       m["backgroundMode"] ?? "",
       m["icon"] ?? "",
       m["discussionCount"] ?? 0,
-      m["position"] ?? 0,
+      m["position"] ?? -1,
       m["lastPostedAt"] ?? "",
       SplayTreeMap(),
       -1,
+      m["isChild"] ?? false,
+      parentId,
+      m["canStartDiscussion"] ?? false
     );
   }
 
@@ -57,48 +72,40 @@ class TagInfo {
   }
 
   static Tags getListFormBase(BaseListBean base) {
-    Map<int, TagInfo> tags = {};
-    List<TagInfo> children = [];
-    Map<int, TagInfo> miniTags = {};
-    for (var m in base.data.list) {
-      var t = TagInfo.formBaseData(m);
+    final Map<int, TagInfo> all = {};
+    final Map<int, TagInfo> miniTags = {};
+
+    for (final m in base.data.list) {
+      final t = TagInfo.formBaseData(m);
+
       if (t.position == null) {
         t.children = null;
-        miniTags.addAll({t.id: t});
-      // } else if (t.isChild) {
-      //   int parentId = int.parse(m.relationships?["parent"]["data"]["id"]);
-      //   t.parent = parentId;
-      //   children.add(t);
+        miniTags[t.id] = t;
       } else {
-        tags.addAll({t.id: t});
+        all[t.id] = t;
       }
     }
-      for (var tag in children) {
-      var parent = tags[tag.parent];
-      parent?.children?.addAll({?tag.position: tag});
-    }
-    SplayTreeMap<int, TagInfo> splayTreeList = SplayTreeMap();
-    tags.forEach((id, tag) {
-      splayTreeList.addAll({?tag.position: tag});
-    });
 
-    SplayTreeMap<int, TagInfo> positionFixedSplayTreeListList = SplayTreeMap();
-    var i = 0;
-    splayTreeList.forEach((position, t) {
-      if (t.children?.isEmpty ?? false) {
-        t.children = null;
+    final SplayTreeMap<int, TagInfo> roots = SplayTreeMap();
+
+    for (final t in all.values) {
+      if (t.isChild && t.parentId != null) {
+        final parent = all[t.parentId!];
+        parent?.children ??= SplayTreeMap();
+        parent?.children![t.position!] = t;
+      } else {
+        roots[t.position!] = t;
       }
-      positionFixedSplayTreeListList.addAll({i: t});
-      i++;
-    });
+    }
 
-    return Tags(positionFixedSplayTreeListList, miniTags);
+    return Tags(all, roots, miniTags);
   }
 }
 
 class Tags {
   SplayTreeMap<int, TagInfo> tags;
   Map<int, TagInfo> miniTags;
+  Map<int, TagInfo> all = {};
 
-  Tags(this.tags, this.miniTags);
+  Tags(this.all, this.tags, this.miniTags);
 }

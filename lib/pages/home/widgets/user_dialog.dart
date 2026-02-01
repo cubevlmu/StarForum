@@ -15,6 +15,7 @@ import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/widgets/shared_dialog.dart';
 import 'package:get/get.dart';
+import 'package:nil/nil.dart';
 
 class UserDialogWidget extends StatelessWidget {
   const UserDialogWidget({super.key, required this.controller});
@@ -106,7 +107,7 @@ class UserDialogWidget extends StatelessWidget {
                 },
               );
             } else {
-              return const SizedBox.shrink();
+              return nil;
             }
           }),
         ],

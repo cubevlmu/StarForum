@@ -50,11 +50,10 @@ class _UserPageState extends State<UserPage>
         _buildUserInfo(context),
 
         Expanded(
-          child: SharedNotice.buildNoticeView(
-            context,
-            "🧐",
-            "这里还没有任何帖子",
-            "下拉刷新试试看",
+          child: const NoticeWidget(
+            emoji: "🧐",
+            title: "这里还没有任何帖子",
+            tips: "下拉刷新试试看",
           ),
         ),
       ],
@@ -181,14 +180,13 @@ class _UserPageState extends State<UserPage>
     super.build(context);
 
     if (widget.userId == -1) {
-      return SharedNotice.buildNoticeView(
-        context,
-        "🤦‍♂️",
-        "错误的账号",
-        "很抱歉,我们找不到这个账户",
+      return const NoticeWidget(
+        emoji: "🤦‍♂️",
+        title: "错误的账号",
+        tips: "很抱歉,我们找不到这个账户",
       );
     } else if (widget.userId == -2) {
-      return SharedNotice.onNotLogin(context, "账号未登录", "请登录您的账号来查看");
+      return const NotLoginNotice(title: "账号未登录", tipsText: "请登录您的账号来查看");
     }
 
     return Scaffold(appBar: _buildAppBar(context), body: _buildBody(context));

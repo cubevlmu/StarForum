@@ -8,7 +8,9 @@ import 'package:forum/utils/log_util.dart';
 
 class ApiLog {
   static void ok(String api, String action, [String? extra]) {
-    LogUtil.debug("[API::$api] $action | OK${extra != null ? ' | $extra' : ''}");
+    LogUtil.debug(
+      "[API::$api] $action | OK${extra != null ? ' | $extra' : ''}",
+    );
   }
 
   static void fail(String api, String action, String reason) {

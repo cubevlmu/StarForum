@@ -123,6 +123,28 @@ class Api {
     );
   }
 
+  static Future<Discussions?> getDiscussByTag({
+    required String tag,
+    int offset = 0,
+    int limit = 20,
+  }) async {
+    final url =
+        "${ApiConstants.apiBase}/api/discussions"
+        "?include=user,lastPostedUser,mostRelevantPost,mostRelevantPost.user,firstPost,tags"
+        "&filter[tag]=$tag"
+        "&page[offset]=$offset"
+        "&page[limit]=$limit";
+
+    return ApiGuard.run(
+      name: "getDiscussByTag",
+      method: "GET",
+      call: () async {
+        return Discussions.formJson((await _utils.get(url)).toString());
+      },
+      fallback: null,
+    );
+  }
+  
   static Future<PostInfo?> getFirstPost(String discussionId) async {
     final url =
         "${ApiConstants.apiBase}/api/posts"
@@ -144,36 +166,37 @@ class Api {
     );
   }
 
-  static Future<DiscussionInfo?> createDiscussion(
-    List<TagInfo> tags,
+  static Future<(DiscussionInfo?, bool)> createDiscussion(
+    List<int> tags,
     String title,
     String post,
   ) async {
     List<Map<String, String>> ts = [];
     for (var t in tags) {
-      ts.add({"type": "tags", "id": t.id.toString()});
+      ts.add({"type": "tags", "id": t.toString()});
     }
 
     var m = {
       "data": {
         "type": "discussions",
-        "attributes": {"title": title, "content": post},
+        "attributes": {"title": title.toString(), "content": post.toString()},
         "relationships": {
           "tags": {"data": ts},
         },
       },
     };
 
-    return ApiGuard.run(
+    return ApiGuard.runWithToken(
       name: "createDiscussion",
       method: "POST",
       call: () async {
         var r = await _utils.post(
           "${ApiConstants.apiBase}/api/discussions",
           data: m,
+          options: Options(contentType: 'application/vnd.api+json'),
         );
         if (r?.statusCode == 201) {
-          return DiscussionInfo.formJson(r?.data);
+          return DiscussionInfo.formJson(r?.toString() ?? "");
         } else {
           return null;
         }

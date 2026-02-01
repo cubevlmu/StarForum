@@ -56,20 +56,23 @@ class ApiGuard {
       if (status == 401) {
         ApiLog.fail(name, "[$method] cost=${sw.elapsedMilliseconds}ms {$extra}", "token expired.");
         return (fallback, false);
+      } else if (status == 422) {
+        ApiLog.fail(name, "[$method] cost=${sw.elapsedMilliseconds}ms {$extra}", e.response?.statusMessage ?? "");
+        return (fallback, true);
       } else {
         ApiLog.fail(name, "[$method] cost=${sw.elapsedMilliseconds}ms {$extra}", "network error.");
         return (fallback, true);
       }
-    } catch (e, s) {
-      sw.stop();
+    // } catch (e, s) {
+    //   sw.stop();
 
-      ApiLog.exception(
-        name,
-        "[$method] cost=${sw.elapsedMilliseconds}ms",
-        e,
-        s,
-      );
-      return (fallback, true);
+    //   ApiLog.exception(
+    //     name,
+    //     "[$method] cost=${sw.elapsedMilliseconds}ms",
+    //     e,
+    //     s,
+    //   );
+    //   return (fallback, true);
     }
   }
 

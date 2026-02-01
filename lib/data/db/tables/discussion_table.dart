@@ -17,12 +17,13 @@ class DbDiscussions extends Table {
   IntColumn get viewCount => integer().withDefault(const Constant(0))();
   IntColumn get likeCount => integer().withDefault(const Constant(0))();
 
-  /// 作者（discussion.user）
   TextColumn get authorName => text().withDefault(const Constant(""))();
   TextColumn get authorAvatar => text().withDefault(const Constant(""))();
 
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get lastPostedAt => dateTime().nullable()();
+  DateTimeColumn get lastSeenAt => dateTime()();
+  
   IntColumn get lastPostNumber => integer()();
   IntColumn get posterId => integer()();
 

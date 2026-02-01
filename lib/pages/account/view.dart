@@ -12,6 +12,7 @@ import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/widgets/shared_dialog.dart';
 import 'package:forum/widgets/shared_notice.dart';
 import 'package:get/get.dart';
+import 'package:nil/nil.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -62,7 +63,7 @@ class _AccountPageState extends State<AccountPage> {
                 icon: Icon(Icons.logout_outlined),
               );
             }
-            return const SizedBox();
+            return nil;
           }),
           const SizedBox(width: 10),
           IconButton(
@@ -79,7 +80,7 @@ class _AccountPageState extends State<AccountPage> {
       ),
       body: Obx(() {
         if (!controller.isLogin.value) {
-          return SharedNotice.onNotLogin(context, "你还没有登录", "请登录你的账户来查看个人信息");
+          return const NotLoginNotice(title: "你还没有登录", tipsText: "请登录你的账户来查看个人信息");
         } else {
           return UserPage(userId: controller.getTrueId(), isAccountPage: true);
         }

@@ -34,6 +34,19 @@ class UserInfo {
     this.bio,
   );
 
+  void update(UserInfo? info) {
+    if (info == null) return;
+    if (displayName != info.displayName) displayName = info.displayName;
+    if (avatarUrl != info.avatarUrl) avatarUrl = info.avatarUrl;
+    if (discussionCount != info.discussionCount) {
+      discussionCount = info.discussionCount;
+    }
+    if (commentCount != info.commentCount) commentCount = info.commentCount;
+    if (lastSeenAt != info.lastSeenAt) lastSeenAt = info.lastSeenAt;
+    if (email != info.email) email = info.email;
+    if (bio != info.bio) bio = info.bio;
+  }
+
   factory UserInfo.formJson(String data) {
     return UserInfo.formBaseData(BaseBean.formJson(data).data);
   }

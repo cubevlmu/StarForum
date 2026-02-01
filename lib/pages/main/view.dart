@@ -29,39 +29,6 @@ class _MainPageState extends State<MainPage> {
   }
 
   void onDestinationSelected(int value) {
-    // 点击当前 NavigationBar
-    if (value == controller.selectedIndex.value) {
-      // var currentPage = controller.pages[value];
-      // 首页
-    //   if (currentPage is HomePage) {
-    //     var homeController = Get.find<HomeController>();
-    //     // var controllerName = homeController
-    //     //     .tabsList[homeController.tabController!.index]['controller'];
-    //     // late dynamic controller;
-    //     // // if (controllerName == 'RecommendController') {
-    //     // //   controller = Get.find<RecommendController>();
-    //     // // } else if (controllerName == "PopularVideoController") {
-    //     // //   controller = Get.find<PopularVideoController>();
-    //     // // } else if (controllerName == "LiveTabPageController") {
-    //     // //   controller = Get.find<LiveTabPageController>();
-    //     // // }
-    //     // if (controller.scrollController.offset == 0) {
-    //     //   controller.refreshController.callRefresh();
-    //     // } else {
-    //     //   controller.animateToTop();
-    //     // }
-    //   }
-    //   // 动态
-    //   if (currentPage is AccountPage) {
-    //     // var controller = Get.find<AccountPageController>();
-    //     // if (controller.scrollController.offset == 0) {
-    //     //   controller.refreshController.callRefresh();
-    //     // } else {
-    //     //   Get.find<AccountPageController>().animateToTop();
-    //     // }
-    //   }
-    // }
-    }
     controller.selectedIndex.value = value;
   }
 
@@ -71,7 +38,6 @@ class _MainPageState extends State<MainPage> {
     super.dispose();
   }
 
-  // 主视图
   Widget _buildView() {
     return Obx(
       () => Scaffold(

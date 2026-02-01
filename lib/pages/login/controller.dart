@@ -16,8 +16,14 @@ class LoginController extends GetxController {
 
   String account = "";
   String password = "";
+  RxBool obscurePassword = true.obs;
+
   final repo = getIt<UserRepo>();
   bool isLoading = false;
+
+  void togglePasswordVisible() {
+    obscurePassword.value = !obscurePassword.value;
+  }
 
   void _setLoading(bool value) {
     isLoading = value;

@@ -39,7 +39,7 @@ class CommonSettingsPage extends StatelessWidget {
             onTap: () {
               Navigator.of(
                 context,
-              ).push(GetPageRoute(page: () => SharedNotice.onWorkInProgressPage(context)));
+              ).push(GetPageRoute(page: () => const WorkInProgressPage()));
             },
           ),
         ],
@@ -47,7 +47,6 @@ class CommonSettingsPage extends StatelessWidget {
     );
   }
 }
-
 
 class CacheManagementPage extends StatefulWidget {
   const CacheManagementPage({super.key});
@@ -85,30 +84,34 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
         //我们只取保存在文件夹的缓存
         //如果是文件夹的话，就计算它的大小
         double size = await getTotalSizeOfFilesInDir(element);
-        items.add(ListTile(
-          title: Text(element.path.split('/').last),
-          subtitle: Text(StringUtil.byteNumToFileSize(size)),
-          onLongPress: () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text("是否删除该缓存？"),
-                actions: [
-                  TextButton(
+        items.add(
+          ListTile(
+            title: Text(element.path.split('/').last),
+            subtitle: Text(StringUtil.byteNumToFileSize(size)),
+            onLongPress: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("是否删除该缓存？"),
+                  actions: [
+                    TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text("否")),
-                  TextButton(
+                      child: const Text("否"),
+                    ),
+                    TextButton(
                       onPressed: () {
                         element.deleteSync(recursive: true);
                         Navigator.of(context).pop();
                         setState(() {});
                       },
-                      child: const Text("是")),
-                ],
-              ),
-            );
-          },
-        ));
+                      child: const Text("是"),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
       }
     }
   }
@@ -116,9 +119,7 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("缓存管理"),
-      ),
+      appBar: AppBar(title: const Text("缓存管理")),
       body: FutureBuilder(
         future: buildItems(),
         builder: (context, snapshot) {

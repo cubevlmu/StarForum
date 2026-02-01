@@ -137,7 +137,7 @@ class _SearchResultPageState extends State<SearchResultPage>
                   },
                   child: Obx(() {
                     return controller.isSearching.value
-                        ? const SizedBox()
+                        ? const SizedBox.shrink()
                         : _onEmptySearch(context);
                   }),
                 ),

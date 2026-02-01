@@ -10,6 +10,7 @@ import 'package:forum/data/model/posts.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/pages/post_detail/widgets/reply_input_sheet.dart';
 import 'package:forum/utils/snackbar_utils.dart';
+import 'package:forum/widgets/sheet_util.dart';
 import 'package:get/get.dart';
 
 import '../../di/injector.dart';
@@ -32,8 +33,8 @@ class ReplyUtil {
     final repo = getIt<UserRepo>();
     if (!_checkLogin(repo)) return;
 
-    Get.bottomSheet(
-      ReplyInputSheet(
+    SheetUtil.newBottomSheet(
+      widget: ReplyInputSheet(
         onSubmit: (content) async {
           final (r, rs) = await Api.createPost(discussionId, content);
 
@@ -75,8 +76,8 @@ class ReplyUtil {
     final repo = getIt<UserRepo>();
     if (!_checkLogin(repo)) return;
 
-    Get.bottomSheet(
-      ReplyInputSheet(
+    SheetUtil.newBottomSheet(
+      widget: ReplyInputSheet(
         hintText: "回复 @${pi.user?.displayName ?? ""}",
         onSubmit: (content) async {
           final (r, rs) = await Api.replyToPost(

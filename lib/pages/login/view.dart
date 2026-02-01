@@ -10,7 +10,6 @@ import 'package:get/get.dart';
 class LoginPage extends GetView<LoginController> {
   const LoginPage({super.key});
 
-  // 主视图
   Widget _buildView(BuildContext context) {
     var outlineInputBorder = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -32,15 +31,29 @@ class LoginPage extends GetView<LoginController> {
               ),
             ),
             const SizedBox(height: 20),
-            TextField(
-              onChanged: (value) {
-                controller.password = value;
-              },
-              decoration: InputDecoration(
-                labelText: "密码",
-                border: outlineInputBorder,
-              ),
-            ),
+            Obx(() {
+              return TextField(
+                obscureText: controller.obscurePassword.value,
+                onChanged: (value) {
+                  controller.password = value;
+                },
+                decoration: InputDecoration(
+                  labelText: "密码",
+                  border: outlineInputBorder,
+                  suffixIcon: Padding(
+                    padding: EdgeInsetsGeometry.fromLTRB(0, 0, 5, 0),
+                    child: IconButton(
+                      icon: Icon(
+                        controller.obscurePassword.value
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: controller.togglePasswordVisible,
+                    ),
+                  ),
+                ),
+              );
+            }),
             const SizedBox(height: 20),
             OutlinedButton(
               onPressed: controller.isLoading ? null : controller.startLogin,

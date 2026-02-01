@@ -56,7 +56,11 @@ class UserPageController extends GetxController {
         return;
       }
 
-      info = r;
+      if (info == null) {
+        info = r;
+      } else {
+        info?.update(r);
+      }
     } catch (e, s) {
       LogUtil.errorE(
         "[UserPage] Get user information failed with error: ",
@@ -71,9 +75,7 @@ class UserPageController extends GetxController {
     if (_isSyncing) return false;
     _isSyncing = true;
 
-    if (info == null) {
-      await loadUserData();
-    }
+    await loadUserData();
     if (info == null) {
       LogUtil.warn("[UserPage] User info is not prepared.");
       return false;

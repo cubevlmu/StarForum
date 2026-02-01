@@ -52,21 +52,28 @@ class _NotificationPageState extends State<NotificationPage> {
           controller: controller.scrollController,
           physics: physics,
           slivers: [
-            if (items.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: SharedNotice.buildNoticeView(context, "📭", "暂无通知", "这里会显示回复、提及和系统消息"),
-              )
-            else
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final item = items[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: NotifyCard(item: item, controller: controller),
-                  );
-                }, childCount: items.length),
-              ),
+            Obx(() {
+              if (items.isEmpty) {
+                return const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: NoticeWidget(
+                    emoji: "📭",
+                    title: "暂无通知",
+                    tips: "这里会显示回复、提及和系统消息",
+                  ),
+                );
+              } else {
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final item = items[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: NotifyCard(item: item, controller: controller),
+                    );
+                  }, childCount: items.length),
+                );
+              }
+            }),
           ],
         );
       },
@@ -76,11 +83,11 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final isLogin = controller.isLogin.value;
-
       return Scaffold(
         appBar: _buildAppBar(context),
-        body: isLogin ? _buildView(context) : SharedNotice.onNotLogin(context, "你还没有登录", "登录后即可查看消息通知"),
+        body: controller.isLogin.value
+            ? _buildView(context)
+            : const NotLoginNotice(title: "你还没有登录", tipsText: "登录后即可查看消息通知"),
       );
     });
   }
@@ -107,7 +114,7 @@ class _NotificationPageState extends State<NotificationPage> {
               : () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => SettingsPage()),
+                    MaterialPageRoute(builder: (_) => const SettingsPage()),
                   );
                 },
           icon: const Icon(Icons.settings_outlined),

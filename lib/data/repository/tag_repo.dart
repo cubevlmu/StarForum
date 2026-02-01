@@ -4,6 +4,8 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'dart:collection';
+
 import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/tags.dart';
 import 'package:forum/utils/log_util.dart';
@@ -45,5 +47,62 @@ class TagRepo {
   List<String> getTagNames() {
     if (_tags == null) return const [];
     return _tags!.tags.values.map((e) => e.name).toList();
+  }
+
+  List<TagInfo> getRootTagsForUI() {
+    if (_tags == null) return const [];
+
+    final Map<int, TagInfo> all = {};
+
+    for (final root in _tags!.tags.values) {
+      all[root.id] = root;
+      _collect(root, all);
+    }
+
+    final Map<int, List<TagInfo>> childrenMap = {};
+
+    for (final tag in all.values) {
+      if (tag.isChild && tag.parent > 0) {
+        childrenMap.putIfAbsent(tag.parent, () => []).add(tag);
+      }
+    }
+
+    for (final root in _tags!.tags.values) {
+      final list = childrenMap[root.id];
+      if (list != null && list.isNotEmpty) {
+        root.children ??= SplayTreeMap();
+        for (final c in list) {
+          root.children!.addAll({c.position ?? 0: c});
+        }
+      }
+    }
+
+    return _tags!.tags.values.toList();
+  }
+
+  void _collect(TagInfo tag, Map<int, TagInfo> all) {
+    final children = tag.children;
+    if (children == null) return;
+
+    for (final c in children.values) {
+      all[c.id] = c;
+      _collect(c, all);
+    }
+  }
+
+  List<TagInfo> getTags() {
+    if (_tags == null) return const [];
+    return _tags!.all.values.where((t) => t.position == -1).toList();
+  }
+
+  List<TagInfo> getPrimaryTags() {
+    if (_tags == null) return const [];
+    return _tags!.all.values.where((t) => t.position != -1).toList();
+  }
+
+  TagInfo? getTagById(int value) {
+    if (_tags == null) return null;
+    if (!_tags!.all.containsKey(value)) return null;
+    return _tags!.all[value];
   }
 }
