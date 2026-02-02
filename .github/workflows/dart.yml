@@ -1,5 +1,6 @@
 name: Flutter Release Build CI/CD
 
+# Reference: https://xmaihh.github.io/blog/2024/07/26/yong-yu-gou-jian-he-fa-bu-flutter-ying-yong-cheng-xu-de-github-actions-gong-zuo-liu-cheng
 on:
   push:
     tags:
