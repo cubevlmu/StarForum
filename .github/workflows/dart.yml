@@ -1,6 +1,5 @@
 name: Flutter Release Build CI/CD
 
-# Reference: https://xmaihh.github.io/blog/2024/07/26/yong-yu-gou-jian-he-fa-bu-flutter-ying-yong-cheng-xu-de-github-actions-gong-zuo-liu-cheng/
 on:
   push:
     tags:
@@ -10,64 +9,48 @@ on:
 jobs:
   build_env:
     runs-on: ubuntu-latest
+    outputs:
+      FULL_VERSION: ${{ steps.read_version.outputs.FULL_VERSION }}
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Generate Version Number
+      - name: Generate build version and update pubspec
         id: generate_version
         run: |
-          if [[ ${{ github.ref }} == refs/tags/* ]]; then
-            TAG_VERSION=$(echo ${{ github.ref }} | sed -E 's/^refs\/tags\/(v)?//')
-            echo "This is a tag release: $TAG_VERSION"
-          
-          elif [[ ${{ github.ref }} == refs/heads/* ]]; then
-            TAG_VERSION=$(echo ${{ github.ref }} | sed -E 's/^refs\/heads\///' | sed 's/\//-/g')
-            echo "This is a branch push: $TAG_VERSION"
-          
-          elif [[ ${{ github.ref }} == refs/pull/* ]]; then
-            PR_NUMBER=$(echo ${{ github.ref }} | sed -E 's/^refs\/pull\/([0-9]+)\/merge$/\1/')
-            TAG_VERSION="pr-$PR_NUMBER"
-            echo "This is a Pull Request: $TAG_VERSION"
-          
-          else
-            TAG_VERSION=$(echo ${{ github.ref }} | sed 's/\//-/g')
-            echo "This is another trigger: $TAG_VERSION"
-          fi
-          echo "TAG_VERSION=$TAG_VERSION" 
+          set -e
+
+          MAIN_VERSION=$(grep "^version:" pubspec.yaml | sed -E 's/version: ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
           COMMIT_COUNT=$(git rev-list --count HEAD)
           SHORT_HASH=$(git rev-parse --short HEAD)
-          BUILD_VERSION="${COMMIT_COUNT}"
-          echo "BUILD_VERSION=${BUILD_VERSION}" >> $GITHUB_OUTPUT
-          echo "Generated BUILD_VERSION: ${BUILD_VERSION}"
-        shell: bash
 
-      - name: Update version in pubspec.yaml
-        id: update_version_in_pubspec
-        run: |
-          MAIN_VERSION=$(grep "^version:" pubspec.yaml | sed -E 's/version: ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          FULL_VERSION="${MAIN_VERSION}+${COMMIT_COUNT}"
+
           echo "MAIN_VERSION=${MAIN_VERSION}"
-          
-          FULL_VERSION="${MAIN_VERSION}+${{ steps.generate_version.outputs.BUILD_VERSION }}"
+          echo "BUILD_VERSION=${COMMIT_COUNT}"
           echo "FULL_VERSION=${FULL_VERSION}"
-          
-          sed -i "s/^version: .*/version: ${FULL_VERSION}/" pubspec.yaml
-          echo "Updated pubspec.yaml content:"
-          cat pubspec.yaml
-          
-          if grep -q "^version: ${FULL_VERSION}" pubspec.yaml; then
-            echo "Version updated successfully to ${FULL_VERSION}"
-          else
-            echo "Failed to update version"
-            echo "Current version line:"
-            grep "^version:" pubspec.yaml
-            exit 1
-          fi
-          
-        shell: bash
 
-      - name: Upload updated pubspec.yaml
+          sed -i "s/^version: .*/version: ${FULL_VERSION}/" pubspec.yaml
+
+          cat <<EOF > _build_env.config
+MAIN_VERSION=${MAIN_VERSION}
+BUILD_VERSION=${COMMIT_COUNT}
+FULL_VERSION=${FULL_VERSION}
+SHORT_HASH=${SHORT_HASH}
+EOF
+
+          echo "Updated pubspec.yaml:"
+          grep "^version:" pubspec.yaml
+
+      - name: Read FULL_VERSION
+        id: read_version
+        run: |
+          FULL_VERSION=$(grep 'FULL_VERSION=' _build_env.config | cut -d '=' -f2)
+          echo "FULL_VERSION=${FULL_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Upload build env files
         uses: actions/upload-artifact@v4
         with:
           name: build_env_files
@@ -78,6 +61,7 @@ jobs:
   build_app:
     needs: build_env
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         include:
@@ -97,44 +81,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download updated pubspec.yaml
+      - name: Download build env files
         uses: actions/download-artifact@v4
         with:
           name: build_env_files
 
-      # - name: Replace pubspec.yaml
-      #   run: |
-      #     ls
-      #     cat pubspec.yaml
-      #     pwd
-      #     cat _build_env.config
-      #   shell: bash
-
-      - name: Read FULL_VERSION from _build_env.config
-        id: read_build_env
+      - name: Verify build env
         run: |
-          echo "Reading version from _build_env.config..."
-          FULL_VERSION=$(grep 'FULL_VERSION=' _build_env.config | cut -d '=' -f2)
-          echo "FULL_VERSION=${FULL_VERSION}" >> $GITHUB_OUTPUT # 设置输出变量
+          cat pubspec.yaml
+          cat _build_env.config
         shell: bash
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable 
+          channel: stable
 
-      - name: Check Flutter version
-        run: flutter --version
-      
       - name: Install dependencies
         run: |
-         flutter pub get
-         dart run build_runner build --delete-conflicting-outputs
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
 
       - name: Build Android APK
         if: matrix.name == 'android'
         run: |
-         flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=./symbols 
+          flutter build apk --release --target-platform android-arm64 \
+            --obfuscate --split-debug-info=./symbols
 
       - name: Build Android App Bundle
         if: matrix.name == 'android-aab'
@@ -159,26 +131,26 @@ jobs:
         if: matrix.name == 'macos'
         run: flutter build macos
 
-      - name: Compress Build
+      - name: Compress build
         run: |
+          FULL_VERSION=$(grep 'FULL_VERSION=' _build_env.config | cut -d '=' -f2)
+
           if [ "${{ matrix.name }}" = "android" ]; then
-            mv build/app/outputs/flutter-apk/app-release.apk ./app-release-all-${{ steps.read_build_env.outputs.FULL_VERSION }}.apk
-            mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ./app-release-arm64-v8a-${{ steps.read_build_env.outputs.FULL_VERSION }}.apk
+            mv build/app/outputs/flutter-apk/app-release.apk app-${FULL_VERSION}.apk
           elif [ "${{ matrix.name }}" = "linux" ]; then
-            zip -r linux-release-${{ steps.read_build_env.outputs.FULL_VERSION }}.zip build/linux/x64/release/bundle
+            zip -r linux-${FULL_VERSION}.zip build/linux/x64/release/bundle
           elif [ "${{ matrix.name }}" = "windows" ]; then
-            powershell Compress-Archive build/windows/x64/runner/Release windows-release-${{ steps.read_build_env.outputs.FULL_VERSION }}.zip
+            powershell Compress-Archive build/windows/x64/runner/Release windows-${FULL_VERSION}.zip
           elif [ "${{ matrix.name }}" = "ios" ]; then
             mkdir Payload
             cp -r build/ios/iphoneos/Runner.app Payload/
-            zip -r ios-release-${{ steps.read_build_env.outputs.FULL_VERSION }}.ipa Payload/
-            zip -r ios-release-${{ steps.read_build_env.outputs.FULL_VERSION }}.zip build/ios/iphoneos
+            zip -r ios-${FULL_VERSION}.ipa Payload
           elif [ "${{ matrix.name }}" = "macos" ]; then
-            zip -r macos-release-${{ steps.read_build_env.outputs.FULL_VERSION }}.zip build/macos/Build/Products/Release
+            zip -r macos-${FULL_VERSION}.zip build/macos/Build/Products/Release
           fi
         shell: bash
 
-      - name: Upload Build Artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-artifact
@@ -192,43 +164,39 @@ jobs:
   release:
     needs: build_app
     runs-on: ubuntu-latest
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - name: Display structure of downloaded files
-        run: ls -R artifacts
-      - name: Read FULL_VERSION from _build_env.config
-        id: read_build_env
+
+      - name: Read version
+        id: read_version
         run: |
-          echo "Reading version from _build_env.config..."
           FULL_VERSION=$(grep 'FULL_VERSION=' artifacts/build_env_files/_build_env.config | cut -d '=' -f2)
           echo "FULL_VERSION=${FULL_VERSION}" >> $GITHUB_OUTPUT
-      - name: Create Release
-        id: create_release
+
+      - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.read_build_env.outputs.FULL_VERSION }}
-          release_name: Release ${{ steps.read_build_env.outputs.FULL_VERSION }}
-          draft: false
+          tag_name: v${{ steps.read_version.outputs.FULL_VERSION }}
+          release_name: Release ${{ steps.read_version.outputs.FULL_VERSION }}
           prerelease: false
 
-      - name: Upload Release Assets
+      - name: Upload release assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for artifact in artifacts/*/*.{apk,aab,ipa,zip}
-          do
-            if [ -f "$artifact" ]; then
-              asset_name=$(basename "$artifact")
-              echo "Uploading $asset_name"
-              curl --fail -X POST \
-                -H "Authorization: token $GITHUB_TOKEN" \
-                -H "Content-Type: $(file -b --mime-type $artifact)" \
-                --data-binary @"$artifact" \
-                "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$asset_name"
-            fi
+          for f in artifacts/*/*.{apk,aab,ipa,zip}; do
+            [ -f "$f" ] || continue
+            name=$(basename "$f")
+            echo "Uploading $name"
+            curl --fail -X POST \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Content-Type: $(file -b --mime-type "$f")" \
+              --data-binary @"$f" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ github.run_id }}/assets?name=$name"
           done
