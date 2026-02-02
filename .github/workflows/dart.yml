@@ -127,7 +127,9 @@ jobs:
         run: flutter --version
       
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+         flutter pub get
+         dart run build_runner build --delete-conflicting-outputs
 
       - name: Build Android APK
         if: matrix.name == 'android'
