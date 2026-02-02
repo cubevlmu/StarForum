@@ -5,12 +5,13 @@
  */
 
 class AuthStorageKeys {
-  /// Flarum access token
   static const String accessToken = 'accessToken';
 
-  /// token 获取时间（可选，用于调试）
   static const String tokenCreatedAt = 'tokenCreatedAt';
-
-  /// 当前登录用户 id（可选）
   static const String userId = 'userId';
+  
+  static const String autoRelogin = 'autoRelogin';
+  static const String username = 'username';
+  static const String password = 'password';
+  static const String lastInputPwd = 'lastInputPwdTime';
 }

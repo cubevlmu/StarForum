@@ -14,6 +14,7 @@ import 'package:forum/pages/theme_list/controller.dart';
 import 'package:forum/pages/theme_list/view.dart';
 import 'package:forum/widgets/avatar.dart';
 import 'package:forum/widgets/shared_notice.dart';
+import 'package:forum/widgets/sheet_util.dart';
 import 'package:get/get.dart';
 
 class HomePage extends StatefulWidget {
@@ -67,13 +68,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               radius: 18,
               placeholder: "",
               onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (context) {
-                    return UserDialogWidget(controller: controller);
-                  },
-                );
+                SheetUtil.newBottomSheet(widget: UserDialogWidget(controller: controller));
               },
             );
           }),

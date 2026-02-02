@@ -16,7 +16,7 @@ class CachedNetworkImage extends image.CachedNetworkImage {
     super.width,
     super.height,
     super.fit,
-    super.filterQuality,
+    super.filterQuality = FilterQuality.low,
     Widget Function()? placeholder,
     Widget Function()? errorWidget,
     int? cacheWidth,

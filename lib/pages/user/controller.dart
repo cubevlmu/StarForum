@@ -168,7 +168,7 @@ class UserPageController extends GetxController {
     }
 
     try {
-      final date = DateTime.parse(info?.lastSeenAt ?? "");
+      final date = info?.lastSeenAt ?? fallbackTime;
       return StringUtil.timeStampToAgoDate(date.millisecondsSinceEpoch ~/ 1000);
     } catch (e, s) {
       LogUtil.errorE("[UserPage] Failed to parse last seen at time", e, s);
@@ -181,7 +181,7 @@ class UserPageController extends GetxController {
       return "";
     }
     try {
-      final date = DateTime.parse(info?.joinTime ?? "");
+      final date = info?.joinTime ?? fallbackTime;
       return StringUtil.timeStampToAgoDate(date.millisecondsSinceEpoch ~/ 1000);
     } catch (e, s) {
       LogUtil.errorE("[UserPage] Failed to parse last seen at time", e, s);
@@ -226,19 +226,19 @@ class UserPageController extends GetxController {
         SnackbarUtils.showMessage("获取帖子信息失败");
         return null;
       }
-      r.firstPost = r.posts?[r.firstPostId];
-      r.firstPost?.user = r.users?.values.first;
+      r.firstPost = r.posts[r.firstPostId];
+      r.firstPost?.user = r.users.values.first;
       return DiscussionItem(
         id: r.id,
         title: r.title,
         excerpt: r.firstPost?.contentHtml ?? "",
-        lastPostedAt: DateTime.parse(r.lastPostedAt),
+        lastPostedAt: r.lastPostedAt,
         authorAvatar: r.firstPost?.user?.avatarUrl ?? "",
         authorName: r.firstPost?.user?.displayName ?? "",
         viewCount: r.views,
         likeCount: r.firstPost?.likes ?? 0,
         commentCount: r.commentCount,
-        userId: r.users?.keys.first ?? 0,
+        userId: r.users.keys.first,
       );
     } catch (e, s) {
       LogUtil.errorE(

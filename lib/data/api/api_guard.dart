@@ -8,7 +8,6 @@ import 'package:dio/dio.dart';
 import 'package:forum/data/api/api_log.dart';
 
 class ApiGuard {
-
   static Future<T> run<T>({
     required String name,
     required String method,
@@ -54,26 +53,37 @@ class ApiGuard {
       final status = e.response?.statusCode;
 
       if (status == 401) {
-        ApiLog.fail(name, "[$method] cost=${sw.elapsedMilliseconds}ms {$extra}", "token expired.");
+        ApiLog.fail(
+          name,
+          "[$method] cost=${sw.elapsedMilliseconds}ms {$extra}",
+          "token expired.",
+        );
         return (fallback, false);
       } else if (status == 422) {
-        ApiLog.fail(name, "[$method] cost=${sw.elapsedMilliseconds}ms {$extra}", e.response?.statusMessage ?? "");
+        ApiLog.fail(
+          name,
+          "[$method] cost=${sw.elapsedMilliseconds}ms {$extra}",
+          e.response?.statusMessage ?? "",
+        );
         return (fallback, true);
       } else {
-        ApiLog.fail(name, "[$method] cost=${sw.elapsedMilliseconds}ms {$extra}", "network error.");
+        ApiLog.fail(
+          name,
+          "[$method] cost=${sw.elapsedMilliseconds}ms {$extra}",
+          "network error.",
+        );
         return (fallback, true);
       }
-    // } catch (e, s) {
-    //   sw.stop();
+    } catch (e, s) {
+      sw.stop();
 
-    //   ApiLog.exception(
-    //     name,
-    //     "[$method] cost=${sw.elapsedMilliseconds}ms",
-    //     e,
-    //     s,
-    //   );
-    //   return (fallback, true);
+      ApiLog.exception(
+        name,
+        "[$method] cost=${sw.elapsedMilliseconds}ms",
+        e,
+        s,
+      );
+      return (fallback, true);
     }
   }
-
 }

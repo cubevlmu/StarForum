@@ -4,6 +4,9 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'package:flutter/foundation.dart';
+
+@immutable
 class DiscussionItem {
   final String id;
   final String title;
@@ -18,7 +21,7 @@ class DiscussionItem {
   final int commentCount;
   final int userId;
 
-  DiscussionItem({
+  const DiscussionItem({
     required this.id,
     required this.title,
     required this.excerpt,

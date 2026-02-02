@@ -1,34 +1,31 @@
+/*
+ * @Author: cubevlmu khfahqp@gmail.com
+ * @LastEditors: cubevlmu khfahqp@gmail.com
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ */
 import 'dart:collection';
 
 import 'base.dart';
 
 class TagInfo {
-  String name;
-  int id;
-  String description;
-  String slug;
-  String color;
-  String backgroundUrl;
-  String backgroundMode;
-  String icon;
-  int discussionCount;
-  int? position;
-  String lastPostedAt;
+  final String name;
+  final int id;
+  final String description;
+  final String slug;
+  final int discussionCount;
+  final int? position;
+  final String lastPostedAt;
   SplayTreeMap<int, TagInfo>? children;
-  int parent;
-  bool isChild;
-  int? parentId;
-  bool canStartDiscussion;
+  final int parent;
+  final bool isChild;
+  final int? parentId;
+  final bool canStartDiscussion;
 
   TagInfo(
     this.name,
     this.id,
     this.description,
     this.slug,
-    this.color,
-    this.backgroundUrl,
-    this.backgroundMode,
-    this.icon,
     this.discussionCount,
     this.position,
     this.lastPostedAt,
@@ -39,12 +36,12 @@ class TagInfo {
     this.canStartDiscussion
   );
 
-  factory TagInfo.formBaseData(BaseData data) {
+  factory TagInfo.fromBaseData(BaseData data) {
     var m = data.attributes;
 
     int? parentId;
     if (m["isChild"] == true) {
-      parentId = int.parse(data.relationships!["parent"]["data"]["id"]);
+      parentId = int.parse(data.relationships["parent"]["data"]["id"]);
     }
 
     return TagInfo(
@@ -52,10 +49,6 @@ class TagInfo {
       data.id,
       m["description"],
       m["slug"],
-      m["color"],
-      m["backgroundUrl"] ?? "",
-      m["backgroundMode"] ?? "",
-      m["icon"] ?? "",
       m["discussionCount"] ?? 0,
       m["position"] ?? -1,
       m["lastPostedAt"] ?? "",
@@ -67,16 +60,16 @@ class TagInfo {
     );
   }
 
-  static Tags getListFormJson(String data) {
-    return getListFormBase(BaseListBean.formJson(data));
+  static Tags getListFormMap(Map data) {
+    return getListfromBase(BaseListBean.fromMap(data));
   }
 
-  static Tags getListFormBase(BaseListBean base) {
+  static Tags getListfromBase(BaseListBean base) {
     final Map<int, TagInfo> all = {};
     final Map<int, TagInfo> miniTags = {};
 
     for (final m in base.data.list) {
-      final t = TagInfo.formBaseData(m);
+      final t = TagInfo.fromBaseData(m);
 
       if (t.position == null) {
         t.children = null;

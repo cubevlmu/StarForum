@@ -16,6 +16,7 @@ class LoginController extends GetxController {
 
   String account = "";
   String password = "";
+  RxBool autoRelogin = true.obs;
   RxBool obscurePassword = true.obs;
 
   final repo = getIt<UserRepo>();
@@ -39,7 +40,11 @@ class LoginController extends GetxController {
     _setLoading(true);
 
     try {
-      final r = await repo.login(account, password);
+      final r = await repo.login(
+        account,
+        password,
+        autoRelogin: autoRelogin.value,
+      );
       if (!r) {
         LogUtil.error("[LoginPage] Login failed with empty response");
         Get.rawSnackbar(title: "登录", message: "网络错误或账号密码错误");

@@ -295,19 +295,19 @@ class NotificationPageController extends GetxController {
         SnackbarUtils.showMessage("获取帖子信息失败");
         return null;
       }
-      r.firstPost = r.posts?[r.firstPostId];
-      r.firstPost?.user = r.users?.values.first;
+      r.firstPost = r.posts[r.firstPostId];
+      r.firstPost?.user = r.users.values.first;
       return DiscussionItem(
         id: r.id,
         title: r.title,
         excerpt: r.firstPost?.contentHtml ?? "",
-        lastPostedAt: DateTime.parse(r.lastPostedAt),
+        lastPostedAt: r.lastPostedAt,
         authorAvatar: r.firstPost?.user?.avatarUrl ?? "",
         authorName: r.firstPost?.user?.displayName ?? "",
         viewCount: r.views,
         likeCount: r.firstPost?.likes ?? 0,
         commentCount: r.commentCount,
-        userId: r.users?.keys.first ?? 0,
+        userId: r.users.keys.first,
       );
     } catch (e, s) {
       LogUtil.errorE(

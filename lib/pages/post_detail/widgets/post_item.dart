@@ -4,24 +4,16 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-
-
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/posts.dart';
-import 'package:forum/data/repository/user_repo.dart';
-import 'package:forum/di/injector.dart';
 import 'package:forum/pages/post_detail/controller.dart';
 import 'package:forum/pages/post_detail/reply_util.dart';
 import 'package:forum/pages/user/view.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/utils/string_util.dart';
 import 'package:forum/widgets/avatar.dart';
 import 'package:forum/widgets/content_view.dart';
 import 'package:forum/widgets/icon_text_button.dart';
 import 'package:get/get.dart';
-import 'package:nil/nil.dart';
 
 class PostItemWidget extends StatefulWidget {
   const PostItemWidget({
@@ -143,13 +135,13 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                         children: [
                           StatefulBuilder(
                             builder: (context, setState) {
-                              return ThumUpButton(
+                              return _ThumUpButton(
                                 likeNum: widget.reply.likes,
                                 selected: false,
                                 onPressed: widget.isUserPage
                                     ? null
                                     : () async {
-                                        final r = await addLikeToPost(
+                                        final r = await ReplyUtil.addLikeToPost(
                                           widget.reply,
                                         );
                                         if (r != null) {
@@ -161,7 +153,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                             },
                           ),
                           if (!widget.isUserPage)
-                            AddReplyButton(
+                            _ReplyButton(
                               postItem: widget.reply,
                               updateWidget: () {
                                 setState(() => ());
@@ -181,9 +173,8 @@ class _PostItemWidgetState extends State<PostItemWidget> {
   }
 }
 
-class ThumUpButton extends StatelessWidget {
-  const ThumUpButton({
-    super.key,
+class _ThumUpButton extends StatelessWidget {
+  const _ThumUpButton({
     required this.onPressed,
     required this.likeNum,
     this.selected = false,
@@ -219,9 +210,8 @@ class ThumUpButton extends StatelessWidget {
   }
 }
 
-class AddReplyButton extends StatelessWidget {
-  const AddReplyButton({
-    super.key,
+class _ReplyButton extends StatelessWidget {
+  const _ReplyButton({
     required this.postItem,
     required this.updateWidget,
   });
@@ -248,33 +238,4 @@ class AddReplyButton extends StatelessWidget {
       text: null,
     );
   }
-}
-
-Future<PostInfo?> addLikeToPost(PostInfo item) async {
-  final repo = getIt<UserRepo>();
-  if (!repo.isLogin) {
-    SnackbarUtils.showMessage("请先登录!");
-    return null;
-  }
-
-  try {
-    final (r, rs) = await Api.likePost(item.id.toString(), true);
-    if (!rs) {
-      repo.logout();
-      SnackbarUtils.showMessage("登录过期!");
-      return null;
-    }
-
-    if (r == null) {
-      LogUtil.error("[PostItem] failed to like post with empty response");
-      SnackbarUtils.showMessageWithTitle("点赞失败", "可能是网络错误");
-      return null;
-    }
-
-    SnackbarUtils.showMessage(r.likes < item.likes ? "取消点赞成功!" : "点赞成功!");
-    return r;
-  } catch (e, s) {
-    LogUtil.errorE("[PostItem] failed to like post with id :${item.id}", e, s);
-  }
-  return null;
 }

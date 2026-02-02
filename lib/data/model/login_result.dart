@@ -4,6 +4,9 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'package:flutter/material.dart';
+
+@immutable
 class LoginResult {
   final int userId;
   final String token;
@@ -12,5 +15,5 @@ class LoginResult {
     return LoginResult(userId: data["userId"] ?? 0, token: data["token"] ?? "");
   }
 
-  LoginResult({required this.userId, required this.token});
+  const LoginResult({required this.userId, required this.token});
 }

@@ -17,16 +17,17 @@ import 'package:get/get.dart';
 enum UserRepoState { unknown, notLogin, checkingToken, loggedIn, expired }
 
 class UserRepo {
-  UserRepoState _state = UserRepoState.unknown;
+  UserRepoState _state = .unknown;
   UserInfo? _user;
+  final storge = AuthStorage();
 
   UserRepoState get state => _state;
-  bool get isLogin => _state == UserRepoState.loggedIn;
+  bool get isLogin => _state == .loggedIn;
   UserInfo? get user => _user;
 
   bool _setupCalled = false;
 
-  int get userId => int.parse(AuthStorage.userId ?? "-1");
+  int get userId => int.parse(storge.userId ?? "-1");
 
   Future<void> setup() async {
     if (_setupCalled) {
@@ -35,13 +36,13 @@ class UserRepo {
     }
     _setupCalled = true;
 
-    if (!AuthStorage.hasToken || !AuthStorage.hasUserId) {
+    if (!storge.hasLogin || storge.userId == null) {
       _setNotLogin();
       return;
     }
 
-    _state = UserRepoState.checkingToken;
-    HttpUtils.setToken(AuthStorage.accessToken ?? "");
+    _state = .checkingToken;
+    HttpUtils.setToken(await storge.accessToken ?? "");
 
     try {
       final valid = await Api.isTokenValid();
@@ -60,7 +61,7 @@ class UserRepo {
 
   Future<void> _fetchMe() async {
     try {
-      final me = await Api.getUserInfoByNameOrId(AuthStorage.userId ?? "0");
+      final me = await Api.getUserInfoByNameOrId(storge.userId ?? "0");
 
       if (me == null) {
         LogUtil.error("[UserRepo] fetch me failed");
@@ -69,7 +70,7 @@ class UserRepo {
       }
 
       _user = me;
-      _state = UserRepoState.loggedIn;
+      _state = .loggedIn;
       _notifyLoginState();
     } catch (e, s) {
       LogUtil.errorE("[UserRepo] fetch me error", e, s);
@@ -77,23 +78,26 @@ class UserRepo {
     }
   }
 
-  Future<bool> login(String usr, String pwd) async {
+  Future<bool> login(String usr, String pwd, {bool autoRelogin = true}) async {
     try {
       final resp = await Api.login(usr, pwd);
       if (resp == null) return false;
 
-      await AuthStorage.saveAccessToken(
-        'Token ${resp.token}; userId=${resp.userId}',
-        resp.userId.toString(),
+      await storge.saveLogin(
+        token: 'Token ${resp.token}; userId=${resp.userId}',
+        userId: resp.userId.toString(),
+        autoRelogin: autoRelogin,
+        username: usr,
+        password: pwd,
       );
 
-      HttpUtils.setToken(AuthStorage.accessToken ?? "");
+      HttpUtils.setToken('Token ${resp.token}; userId=${resp.userId}');
 
       final me = await Api.getLoggedInUserInfo(resp);
       if (me == null) return false;
 
       _user = me;
-      _state = UserRepoState.loggedIn;
+      _state = .loggedIn;
       _notifyLoginState();
       return true;
     } catch (e, s) {
@@ -109,14 +113,45 @@ class UserRepo {
 
   Future<void> _clearLogin() async {
     _state = .expired;
-    await AuthStorage.clear();
+    if (_state == .expired && storge.autoRelogin) {
+      final r = await _autoRelogin();
+      if (r) {
+        LogUtil.info("[UserRepo] Auto relogin success.");
+        return;
+      }
+
+      storge.clearAutoLogin();
+    }
+
+    await storge.clear();
     HttpUtils.setToken("");
+    LogUtil.debug("[UserRepo] Login state has been cleared.");
     _setNotLogin();
   }
 
+  Future<bool> _autoRelogin() async {
+  if (!storge.autoRelogin) return false;
+
+  final last = storge.lastInputPwdTime;
+  if (last == null ||
+      DateTime.now().difference(last).inDays > 7) {
+    return false;
+  }
+
+  final pwd = await storge.password;
+  if (pwd == null) return false;
+
+  return login(
+    storge.username ?? "",
+    pwd,
+    autoRelogin: true,
+  );
+}
+
+
   void _setNotLogin() {
     _user = null;
-    _state = UserRepoState.notLogin;
+    _state = .notLogin;
     _notifyLoginState();
   }
 

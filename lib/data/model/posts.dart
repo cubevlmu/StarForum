@@ -25,11 +25,11 @@ class PostInfo {
     this.likes,
   );
 
-  factory PostInfo.formJson(String data) {
-    return PostInfo.formBaseData(BaseBean.formJson(data).data);
+  factory PostInfo.fromMap(Map data) {
+    return PostInfo.fromBaseData(BaseBean.fromMap(data).data);
   }
 
-  factory PostInfo.formBaseData(BaseData data) {
+  factory PostInfo.fromBaseData(BaseData data) {
     var m = data.attributes;
 
     int discussion = 0;
@@ -37,18 +37,18 @@ class PostInfo {
     int editedUser = 0;
     List<int> mentionedBy = [];
 
-    if (data.relationships != null) {
-      if (data.relationships?["discussion"] != null) {
-        discussion = int.parse(data.relationships?["discussion"]["data"]["id"]);
+    if (data.relationships.isNotEmpty) {
+      if (data.relationships["discussion"] != null) {
+        discussion = int.parse(data.relationships["discussion"]["data"]["id"]);
       }
-      if (data.relationships?["user"] != null) {
-        user = int.parse(data.relationships?["user"]["data"]["id"]);
+      if (data.relationships["user"] != null) {
+        user = int.parse(data.relationships["user"]["data"]["id"]);
       }
-      if (data.relationships?["editedUser"] != null) {
-        editedUser = int.parse(data.relationships?["editedUser"]["data"]["id"]);
+      if (data.relationships["editedUser"] != null) {
+        editedUser = int.parse(data.relationships["editedUser"]["data"]["id"]);
       }
-      if (data.relationships?["mentionedBy"] != null) {
-        for (var m in (data.relationships?["mentionedBy"]["data"] as List)) {
+      if (data.relationships["mentionedBy"] != null) {
+        for (var m in (data.relationships["mentionedBy"]["data"] as List)) {
           m = m as Map;
           mentionedBy.add(int.parse(m["id"]));
         }
@@ -75,28 +75,28 @@ class Posts {
   final Map<int, UserInfo> users;
   Posts(this.posts, this.users, this.discussions);
 
-  factory Posts.formJson(String data) {
-    return Posts.formBaseList(BaseListBean.formJson(data));
+  factory Posts.fromMap(Map data) {
+    return Posts.fromBaseList(BaseListBean.fromMap(data));
   }
 
-  factory Posts.formBaseList(BaseListBean baseBean) {
+  factory Posts.fromBaseList(BaseListBean baseBean) {
     Map<int, PostInfo> posts = {};
     Map<int, UserInfo> users = {};
     Map<int, DiscussionInfo> diss = {};
     for (var e in baseBean.data.list) {
       if (e.type == "posts") {
-        var p = PostInfo.formBaseData(e);
+        var p = PostInfo.fromBaseData(e);
         posts.addAll({p.id: p});
       }
     }
-      baseBean.included.data?.forEach((e) {
+      for (var e in baseBean.included.data) {
       switch (e.type) {
         case "users":
-          var u = UserInfo.formBaseData(e);
+          var u = UserInfo.fromBaseData(e);
           users.addAll({u.id: u});
           break;
         case "posts":
-          var p = PostInfo.formBaseData(e);
+          var p = PostInfo.fromBaseData(e);
           posts.addAll({p.id: p});
           break;
         case "discussions":
@@ -104,7 +104,7 @@ class Posts {
           diss.addAll({e.id: d});
           break;
       }
-    });
+    }
     return Posts(posts, users, diss);
   }
 }

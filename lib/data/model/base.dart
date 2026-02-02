@@ -1,16 +1,18 @@
-import 'dart:convert';
+/*
+ * @Author: cubevlmu khfahqp@gmail.com
+ * @LastEditors: cubevlmu khfahqp@gmail.com
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ */
 
 class BaseBean {
-  Links links;
-  BaseData data;
-  BaseIncluded included;
+  final Map links;
+  final dynamic data;
+  final List<dynamic> included;
 
-  BaseBean(this.links, this.data, this.included);
+  BaseBean._(this.links, this.data, this.included);
 
-  factory BaseBean.formJson(String data) {
-    PrivateBaseBean baseBean = PrivateBaseBean.formJson(data);
-    return BaseBean(Links.formBase(baseBean), BaseData.formBase(baseBean),
-        BaseIncluded.formBase(baseBean));
+  factory BaseBean.fromMap(Map map) {
+    return BaseBean._(map["links"] ?? {}, map["data"], map["included"] ?? []);
   }
 }
 
@@ -21,43 +23,36 @@ class BaseListBean {
 
   BaseListBean(this.links, this.data, this.included);
 
-  factory BaseListBean.formJson(String data) {
-    PrivateBaseBean baseBean = PrivateBaseBean.formJson(data);
-    return BaseListBean(Links.formBase(baseBean),
-        BaseDataList.formBase(baseBean), BaseIncluded.formBase(baseBean));
-  }
-}
-
-class PrivateBaseBean {
-  Map<String, dynamic>? links;
-  dynamic data;
-  List? included;
-
-  PrivateBaseBean(this.links, this.data, this.included);
-
-  factory PrivateBaseBean.formJson(String data) {
-    Map j = json.decode(data);
-    return PrivateBaseBean(j["links"], j["data"], j["included"]);
+  factory BaseListBean.fromMap(Map map) {
+    final base = BaseBean.fromMap(map);
+    return BaseListBean(
+      Links.fromBase(base),
+      BaseDataList.fromBase(base),
+      BaseIncluded.fromBase(base),
+    );
   }
 }
 
 class BaseData {
   String type;
   int id;
-  Map<String, dynamic> attributes;
-  Map<String, dynamic>? relationships;
-  Map source;
+  Map attributes;
+  Map relationships;
 
-  BaseData(this.type, this.id, this.attributes, this.relationships,this.source);
+  BaseData(this.type, this.id, this.attributes, this.relationships);
 
-  factory BaseData.formBase(PrivateBaseBean baseBean) {
+  factory BaseData.fromBase(BaseBean baseBean) {
     Map j = baseBean.data;
     return BaseData.formMap(j);
   }
 
   factory BaseData.formMap(Map j) {
     return BaseData(
-        j["type"], int.parse(j["id"]), j["attributes"], j["relationships"],j);
+      j["type"],
+      int.parse(j["id"]),
+      j["attributes"],
+      j["relationships"] ?? {},
+    );
   }
 }
 
@@ -66,7 +61,7 @@ class BaseDataList {
 
   BaseDataList(this.list);
 
-  factory BaseDataList.formBase(PrivateBaseBean baseBean) {
+  factory BaseDataList.fromBase(BaseBean baseBean) {
     List l = baseBean.data;
     return BaseDataList.formList(l);
   }
@@ -81,20 +76,16 @@ class BaseDataList {
 }
 
 class BaseIncluded {
-  List<BaseData>? data;
+  final List<BaseData> data;
 
   BaseIncluded(this.data);
 
-  factory BaseIncluded.formBase(PrivateBaseBean baseBean) {
-    List? l = baseBean.included;
-    List<BaseData> data = [];
-    if (l != null) {
-      for (var map in l) {
-        data.add(BaseData.formMap(map));
-      }
-      return BaseIncluded(data);
+  factory BaseIncluded.fromBase(BaseBean baseBean) {
+    final r = BaseIncluded([]);
+    for (var map in baseBean.included) {
+      r.data.add(BaseData.formMap(map));
     }
-    return BaseIncluded(null);
+    return r;
   }
 }
 
@@ -105,12 +96,16 @@ class Links {
 
   static Links empty = Links(first: '', prev: '', next: '');
 
-  factory Links.formBase(PrivateBaseBean baseBean) {
-    Map? j = baseBean.links;
-    if (j == null) {
+  factory Links.fromBase(BaseBean baseBean) {
+    final j = baseBean.links;
+    if (j.isEmpty) {
       return empty;
     }
-    return Links(first: j["first"], prev: j["prev"] ?? "", next: j["next"] ?? "");
+    return Links(
+      first: j["first"],
+      prev: j["prev"] ?? "",
+      next: j["next"] ?? "",
+    );
   }
 
   Links({required this.first, required this.prev, required this.next});

@@ -19,12 +19,14 @@ class SimpleEasyRefresher extends StatefulWidget {
     this.onRefresh,
     required this.childBuilder,
     this.indicatorPosition = IndicatorPosition.above,
+    this.autoRefreshOnStart = true
   });
   final EasyRefreshController? easyRefreshController;
   final FutureOr<dynamic> Function()? onLoad;
   final FutureOr<dynamic> Function()? onRefresh;
   final Widget Function(BuildContext context, ScrollPhysics physics)?
   childBuilder;
+  final bool autoRefreshOnStart;
   final IndicatorPosition indicatorPosition;
 
   @override
@@ -35,7 +37,7 @@ class _SimpleEasyRefresherState extends State<SimpleEasyRefresher> {
   @override
   Widget build(BuildContext context) {
     return EasyRefresh.builder(
-      refreshOnStart: true,
+      refreshOnStart: widget.autoRefreshOnStart,
       resetAfterRefresh: true,
       onLoad: () async {
         await widget.onLoad?.call();

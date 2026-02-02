@@ -17,7 +17,7 @@ class PostListController extends GetxController {
   final DiscussionRepository repo = getIt<DiscussionRepository>();
 
   final RxList<DiscussionItem> items = <DiscussionItem>[].obs;
-  // final RxList<DiscussionItem> newItems = <DiscussionItem>[].obs;
+  final RxBool onLoading = true.obs;
 
   final ScrollController scrollController = ScrollController();
   final EasyRefreshController refreshController = EasyRefreshController(
@@ -46,6 +46,10 @@ class PostListController extends GetxController {
 
     _visibleCount.value = _visibleCount.value;
     _restorePagingState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      refreshController.callRefresh();
+    });
   }
 
   Future<void> _restorePagingState() async {
@@ -75,8 +79,6 @@ class PostListController extends GetxController {
     }
 
     try {
-      // newItems.clear();
-      
       _loading = true;
       _offset = 0;
       _hasMore = true;

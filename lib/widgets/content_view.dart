@@ -1,11 +1,10 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
  * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
-
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/pages/user/view.dart';
@@ -20,600 +19,381 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 enum ContentLikeType { kUnknown, kLink, kUserMention, kReply }
 
-class ContentView extends StatelessWidget {
+class ContentView extends StatefulWidget {
   final String content;
   static double textSize = 16;
 
   const ContentView({super.key, required this.content});
 
   @override
+  State<ContentView> createState() => _ContentViewState();
+}
+
+class _ContentViewState extends State<ContentView> {
+  late dom.Document _doc;
+
+  @override
+  void initState() {
+    super.initState();
+    _doc = parse(widget.content);
+  }
+
+  @override
+  void didUpdateWidget(covariant ContentView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.content != widget.content) {
+      _doc = parse(widget.content);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    List<Widget> widgets = [];
-    parse(content).body?.children.forEach((element) {
-      widgets.add(getWidget(context, element));
-    });
-    return SizedBox(
-      width: MediaQuery.of(context).size.width,
+    final children = _doc.body?.children ?? const <dom.Element>[];
+
+    return RepaintBoundary(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: widgets,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final e in children) _buildBlock(context, e),
+        ],
       ),
     );
   }
 
-  List<InlineSpan> getRichTextSpan(
-    BuildContext context,
-    dom.NodeList nodes, {
-    List<InlineSpan>? span,
-  }) {
-    final scheme = Theme.of(context).colorScheme;
+  // =========================
+  // Block level
+  // =========================
 
-    span ??= <InlineSpan>[];
-    for (var n in nodes) {
-      if (n is dom.Element && n.localName == 'a') {
-        final n1 = n.firstChild;
-        if (n1 is dom.Element && n1.localName == "img") {
-          String? url = n1.attributes["src"];
-
-          if (url != null && url.isNotEmpty) {
-            span.add(
-              WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
-
-                child: contentPadding(
-                  Center(
-                    child: InkWell(
-                      child: Hero(
-                        tag: url,
-
-                        child: CachedNetworkImage(
-                          imageUrl: url,
-                          scale: 2.15,
-                          cacheManager: CacheUtils.contentCacheManager,
-                        ),
-                      ),
-
-                      onTap: () {
-                        _previewImage(context, url);
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }
-        } else {
-          getRichTextSpan(context, n.nodes, span: span);
-        }
-        continue;
-      }
-
-      if (n.hasChildNodes()) {
-        getRichTextSpan(context, n.nodes, span: span);
-      } else {
-        switch (n.parent?.localName ?? "") {
-          case "div":
-          case "span":
-            getRichTextSpan(context, n.nodes).forEach((s) {
-              span!.add(s);
-            });
-            break;
-          case "p":
-            if (n.text?.contains("img") ?? false) {
-              String? url = n.attributes["src"];
-              String k = UniqueKey().toString();
-              span.add(
-                WidgetSpan(
-                  child: contentPadding(
-                    Center(
-                      child: InkWell(
-                        child: Material(
-                          child: Hero(
-                            tag: k,
-                            child: CachedNetworkImage(
-                              imageUrl: url ?? "",
-                              cacheManager: CacheUtils.contentCacheManager,
-                            ),
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (BuildContext context) {
-                                return CachedNetworkImage(
-                                  imageUrl: n.attributes["src"] ?? "",
-                                  cacheManager: CacheUtils.contentCacheManager,
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            } else {
-              span.add(
-                TextSpan(
-                  text: "${n.text}",
-                  style: TextStyle(
-                    fontSize: textSize,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
-                  ),
-                ),
-              );
-            }
-            break;
-          case "a":
-            // PATCH FIX:
-            if (n.firstChild != null) {
-              LogUtil.debug(n.firstChild.toString());
-            }
-
-            switch (n.parent?.className ?? "") {
-              case "UserMention":
-                span.add(
-                  WidgetSpan(
-                    child: InkWell(
-                      child: Text(
-                        "${n.text}",
-                        style: TextStyle(
-                          fontSize: textSize,
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onTap: () {
-                        onLinkTap(
-                          context,
-                          n.parent!.attributes["href"]!,
-                          ContentLikeType.kUserMention,
-                        );
-                      },
-                    ),
-                  ),
-                );
-                break;
-              case "PostMention":
-                span.add(
-                  WidgetSpan(
-                    child: InkWell(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(right: 5),
-                            child: Icon(
-                              Icons.reply,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: textSize,
-                            ),
-                          ),
-                          Text(
-                            "${n.text}",
-                            style: TextStyle(
-                              fontSize: textSize,
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        onLinkTap(
-                          context,
-                          n.parent!.attributes["href"]!,
-                          ContentLikeType.kReply,
-                        );
-                      },
-                    ),
-                  ),
-                );
-                break;
-              case "github-issue-link":
-                span.add(
-                  WidgetSpan(
-                    child: InkWell(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(left: 5, right: 2),
-                            child: Icon(
-                              Icons.link,
-                              size: 18,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                          Text(
-                            "${n.text}",
-                            style: TextStyle(
-                              fontSize: textSize,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.color,
-                              decoration: TextDecoration.underline,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        onLinkTap(
-                          context,
-                          n.parent!.attributes["href"]!,
-                          ContentLikeType.kLink,
-                        );
-                      },
-                    ),
-                  ),
-                );
-                break;
-              default:
-                span.add(
-                  WidgetSpan(
-                    child: InkWell(
-                      child: Text(
-                        "${n.text}",
-                        style: TextStyle(
-                          fontSize: textSize,
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
-                          decoration: TextDecoration.underline,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onTap: () {
-                        onLinkTap(
-                          context,
-                          n.parent!.attributes["href"]!,
-                          ContentLikeType.kLink,
-                        );
-                      },
-                    ),
-                  ),
-                );
-                if (n.parent!.className != "") {
-                  LogUtil.debug("UnimplementedUrlClass:${n.parent!.className}");
-                }
-                break;
-            }
-            break;
-          case "b":
-          case "strong":
-            span.add(
-              TextSpan(
-                text: "${n.text}",
-                style: TextStyle(
-                  fontSize: textSize,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            );
-            break;
-          case "br":
-            span.add(WidgetSpan(child: Text("\n")));
-            break;
-          case "em":
-            span.add(
-              TextSpan(
-                text: n.text,
-                style: TextStyle(
-                  fontSize: textSize,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            );
-            break;
-          case "code":
-            span.add(
-              TextSpan(
-                text: n.text,
-                style: TextStyle(
-                  color: scheme.onSurfaceVariant,
-                  backgroundColor: scheme.surfaceContainerHighest,
-                ),
-              ),
-            );
-            break;
-          case "s":
-          case "del":
-            span.add(
-              TextSpan(
-                text: "${n.text}",
-                style: TextStyle(
-                  fontSize: textSize,
-                  decoration: TextDecoration.lineThrough,
-                ),
-              ),
-            );
-            break;
-          default:
-            LogUtil.debug("UnimplementedNode:${n.parent?.localName}");
-            span.add(
-              WidgetSpan(
-                child: Text(
-                  "${n.text}",
-                  style: TextStyle(
-                    fontSize: textSize,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
-                  ),
-                ),
-              ),
-            );
-            break;
-        }
-      }
-    }
-    return span;
-  }
-
-  Widget getWidget(BuildContext context, dom.Element element) {
-    final scheme = Theme.of(context).colorScheme;
+  Widget _buildBlock(BuildContext context, dom.Element element) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textColor = theme.textTheme.bodyMedium?.color;
 
     switch (element.localName) {
       case "p":
-        return contentPadding(
+        return _padding(
           RichText(
             text: TextSpan(
-              children: getRichTextSpan(context, element.nodes),
-              style: TextStyle(
-                fontSize: textSize,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-              ),
+              style: TextStyle(fontSize: ContentView.textSize, color: textColor),
+              children: _buildInline(context, element.nodes),
             ),
           ),
         );
+
       case "h1":
-        return contentPadding(
-          Text(
-            element.text,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-        );
       case "h2":
-        return contentPadding(
-          Text(
-            element.text,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-        );
       case "h3":
-        return contentPadding(
-          Text(
-            element.text,
-            style: TextStyle(fontSize: textSize, fontWeight: FontWeight.bold),
-          ),
-        );
       case "h4":
-        return contentPadding(
-          Text(
-            element.text,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        );
       case "h5":
-        return contentPadding(
-          Text(
-            element.text,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-          ),
-        );
       case "h6":
-        return contentPadding(
+        final size = switch (element.localName) {
+          "h1" => 22.0,
+          "h2" => 20.0,
+          "h3" => ContentView.textSize,
+          "h4" => 16.0,
+          "h5" => 14.0,
+          _ => 12.0,
+        };
+        return _padding(
           Text(
             element.text,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: size,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).dividerColor,
+              color: element.localName == "h6"
+                  ? theme.dividerColor
+                  : null,
             ),
           ),
         );
+
       case "hr":
-        return contentPadding(
-          Divider(height: 1, color: Theme.of(context).dividerColor),
-        );
+        return _padding(Divider(height: 1, color: theme.dividerColor));
+
       case "br":
-        return contentPadding(SizedBox());
-      case "details":
-        return contentPadding(
-          SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: ElevatedButton(
-              child: Text(
-                "title_show_details",
-                style: TextStyle(color: Theme.of(context).primaryColor),
-              ),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    var e = element.outerHtml.replaceAll("<details", "<p");
-                    return AlertDialog(
-                      title: Text("title_details"),
-                      content: Scrollbar(
-                        child: SingleChildScrollView(
-                          child: Text(e), //, onLinkTap: onLinkTap),
-                        ),
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: Text("close"),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        );
-      case "ol":
-        List<Widget> list = [];
-        int index = 1;
-        for (var c in element.children) {
-          list.add(
-            Text(
-              "$index.${c.text}",
-              style: TextStyle(
-                fontSize: textSize,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-              ),
-            ),
-          );
-          index++;
-        }
-        return Padding(
-          padding: EdgeInsets.all(10),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: list,
-            ),
-          ),
-        );
-      case "ul":
-        List<Widget> list = [];
-        for (var c in element.children) {
-          list.add(
-            Text(
-              "• ${c.text}",
-              style: TextStyle(
-                fontSize: textSize,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-              ),
-            ),
-          );
-        }
-        return Padding(
-          padding: EdgeInsets.all(10),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: list,
-            ),
-          ),
-        );
+        return const SizedBox();
+
       case "blockquote":
-        Color background = Theme.of(
-          context,
-        ).scaffoldBackgroundColor; //HexColor.fromHex("#e7edf3");
-        return SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: Card(
+        return Card(
+          elevation: 0,
+          color: theme.scaffoldBackgroundColor,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(0)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: RichText(
+              text: TextSpan(
+                style:
+                    TextStyle(fontSize: ContentView.textSize, color: textColor),
+                children: _buildInline(context, element.nodes),
+              ),
+            ),
+          ),
+        );
+
+      case "pre":
+        return _padding(
+          Card(
             elevation: 0,
-            color: background,
+            color: scheme.surfaceContainerHighest,
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(0)),
             ),
             child: Padding(
-              padding: EdgeInsets.all(15),
-              child: RichText(
-                text: TextSpan(
-                  children: getRichTextSpan(context, element.nodes),
+              padding: const EdgeInsets.all(10),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Text(
+                  element.text,
                   style: TextStyle(
-                    fontSize: textSize,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    color: scheme.onSurfaceVariant,
+                    fontFamily: 'monospace',
                   ),
                 ),
               ),
             ),
           ),
         );
-      case "pre":
-        Color backGroundColor = scheme.surfaceContainerHighest;
-        return contentPadding(
-          SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: InkWell(
-              child: Card(
-                elevation: 0,
-                color: backGroundColor,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(0)),
+
+      case "ol":
+      case "ul":
+        final isOrdered = element.localName == "ol";
+        int index = 1;
+        return _padding(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final c in element.children)
+                Text(
+                  isOrdered ? "${index++}. ${c.text}" : "• ${c.text}",
+                  style:
+                      TextStyle(fontSize: ContentView.textSize, color: textColor),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: NotificationListener(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Text(
-                        element.text,
-                        style: TextStyle(
-                          color: scheme.onSurfaceVariant,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            ],
           ),
         );
+
+      case "script":
+        return const SizedBox();
+
       case "div":
         return Text(element.outerHtml.replaceAll("<div", "<p"));
-      case "script":
-        return SizedBox();
+
       default:
-        return contentPadding(
+        if (kDebugMode) {
+          LogUtil.debug("UnimplementedBlock:${element.localName}");
+        }
+        return _padding(
           RichText(
             text: TextSpan(
-              children: getRichTextSpan(context, element.nodes),
-              style: TextStyle(
-                fontSize: textSize,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-              ),
+              style:
+                  TextStyle(fontSize: ContentView.textSize, color: textColor),
+              children: _buildInline(context, element.nodes),
             ),
           ),
         );
     }
   }
 
-  Widget contentPadding(Widget child) {
-    return Padding(
-      padding: EdgeInsets.only(top: 5, bottom: 5, left: 5, right: 5),
-      child: child,
+  // =========================
+  // Inline level
+  // =========================
+
+  List<InlineSpan> _buildInline(
+      BuildContext context, dom.NodeList nodes) {
+    final spans = <InlineSpan>[];
+    _walkInline(context, nodes, spans);
+    return spans;
+  }
+
+  void _walkInline(
+    BuildContext context,
+    dom.NodeList nodes,
+    List<InlineSpan> spans,
+  ) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textColor = theme.textTheme.bodyMedium?.color;
+
+    for (final n in nodes) {
+      if (n is dom.Element && n.localName == 'a') {
+        _handleAnchor(context, n, spans);
+        continue;
+      }
+
+      if (n.hasChildNodes()) {
+        _walkInline(context, n.nodes, spans);
+        continue;
+      }
+
+      final parent = n.parent?.localName ?? "";
+
+      switch (parent) {
+        case "b":
+        case "strong":
+          spans.add(TextSpan(
+              text: n.text,
+              style: const TextStyle(fontWeight: FontWeight.bold)));
+          break;
+
+        case "em":
+          spans.add(TextSpan(
+              text: n.text,
+              style: const TextStyle(fontStyle: FontStyle.italic)));
+          break;
+
+        case "code":
+          spans.add(TextSpan(
+            text: n.text,
+            style: TextStyle(
+              color: scheme.onSurfaceVariant,
+              backgroundColor: scheme.surfaceContainerHighest,
+            ),
+          ));
+          break;
+
+        case "s":
+        case "del":
+          spans.add(TextSpan(
+              text: n.text,
+              style: const TextStyle(
+                  decoration: TextDecoration.lineThrough)));
+          break;
+
+        case "br":
+          spans.add(const TextSpan(text: "\n"));
+          break;
+
+        default:
+          spans.add(TextSpan(
+            text: n.text,
+            style:
+                TextStyle(fontSize: ContentView.textSize, color: textColor),
+          ));
+          break;
+      }
+    }
+  }
+
+  void _handleAnchor(
+    BuildContext context,
+    dom.Element element,
+    List<InlineSpan> spans,
+  ) {
+    final href = element.attributes["href"] ?? "";
+    final className = element.className;
+    final text = element.text;
+
+    if (element.children.isNotEmpty &&
+        element.children.first.localName == "img") {
+      final url = element.children.first.attributes["src"];
+      if (url != null && url.isNotEmpty) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: InkWell(
+              onTap: () => _previewImage(context, url),
+              child: Hero(
+                tag: "img:$url",
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  cacheManager: CacheUtils.contentCacheManager,
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    ContentLikeType type = ContentLikeType.kLink;
+    Widget child;
+
+    switch (className) {
+      case "UserMention":
+        type = ContentLikeType.kUserMention;
+        child = Text(text,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary));
+        break;
+
+      case "PostMention":
+        type = ContentLikeType.kReply;
+        child = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.reply,
+                size: ContentView.textSize,
+                color: Theme.of(context).colorScheme.primary),
+            Text(text,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary)),
+          ],
+        );
+        break;
+
+      default:
+        child = Text(text,
+            style: TextStyle(
+                decoration: TextDecoration.underline,
+                fontWeight: FontWeight.bold,
+                color:
+                    Theme.of(context).textTheme.bodyMedium?.color));
+        break;
+    }
+
+    spans.add(
+      WidgetSpan(
+        child: InkWell(
+          onTap: () => _onLinkTap(context, href, type),
+          child: child,
+        ),
+      ),
     );
   }
 
+  // =========================
+  // Utils
+  // =========================
+
+  Widget _padding(Widget child) =>
+      Padding(padding: const EdgeInsets.all(5), child: child);
+
   void _previewImage(BuildContext context, String url) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => ImagePreviewWidget(url: url)));
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ImagePreviewWidget(url: url)),
+    );
   }
 
-  void onLinkTap(BuildContext context, String s, ContentLikeType type) {
+  void _onLinkTap(BuildContext context, String s, ContentLikeType type) {
     try {
       switch (type) {
-        case ContentLikeType.kUnknown:
-          break;
         case ContentLikeType.kLink:
           launchUrlString(s);
           break;
         case ContentLikeType.kUserMention:
-          final id = int.parse(s.replaceAll("${ApiConstants.apiBase}/u/", ""));
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => UserPage(userId: id)));
+          final id =
+              int.parse(s.replaceAll("${ApiConstants.apiBase}/u/", ""));
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => UserPage(userId: id)),
+          );
           break;
         case ContentLikeType.kReply:
           SnackbarUtils.showMessage("功能开发中");
           break;
+        default:
+          break;
       }
-    } catch (e, s) {
+    } catch (e, st) {
       LogUtil.errorE(
-        "[ContentView] Failed to process or open link with link : $s and type: $type and error:",
-        e, s
+        "[ContentView] Failed to open link: $s",
+        e,
+        st,
       );
       SnackbarUtils.showMessage("链接打开失败");
     }

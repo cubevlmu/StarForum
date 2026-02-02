@@ -27,8 +27,8 @@ class PostPageController extends GetxController {
   final RxString sortTypeText = "按热度".obs;
   final RxString content = "<p>加载中...</p>".obs;
 
-  final List<PostInfo> replyItems = [];
-  final List<PostInfo> newReplyItems = [];
+  final RxList<PostInfo> replyItems = <PostInfo>[].obs;
+  final RxList<PostInfo> newReplyItems = <PostInfo>[].obs;
 
   final EasyRefreshController refreshController = EasyRefreshController(
     controlFinishLoad: true,
@@ -36,7 +36,7 @@ class PostPageController extends GetxController {
   );
   final repo = getIt<DiscussionRepository>();
   final ScrollController scrollController = ScrollController();
-  late PostInfo _firstPost;
+  final Rxn<PostInfo> firstPost = Rxn<PostInfo>();
 
   @override
   void onInit() async {
@@ -50,7 +50,7 @@ class PostPageController extends GetxController {
         SnackbarUtils.showMessage("无法获取到贴文内容");
         return;
       }
-      _firstPost = r;
+      firstPost.value = r;
       content.value = r.contentHtml;
     } catch (e, s) {
       LogUtil.errorE(
@@ -68,8 +68,6 @@ class PostPageController extends GetxController {
   bool _loading = false;
 
   ReplySort _replySort = ReplySort.like;
-
-  Function()? updateWidget;
 
   void toggleSort() {
     if (_replySort == ReplySort.like) {
@@ -99,8 +97,6 @@ class PostPageController extends GetxController {
     refreshController.finishLoad(
       _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
     );
-
-    updateWidget?.call();
   }
 
   Future<void> onReplyLoad() async {
@@ -121,8 +117,6 @@ class PostPageController extends GetxController {
           ? (_hasMore ? IndicatorResult.success : IndicatorResult.noMore)
           : IndicatorResult.fail,
     );
-
-    updateWidget?.call();
   }
 
   Future<bool> _loadReplies({bool reset = false}) async {
@@ -182,7 +176,7 @@ class PostPageController extends GetxController {
     await ReplyUtil.showAddReplySheet(
       discussionId: discussion.id,
       newReplyItems: newReplyItems,
-      updateWidget: updateWidget,
+      updateWidget: () {},
       scrollController: scrollController,
     );
   }

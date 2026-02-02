@@ -10,10 +10,9 @@ import 'package:forum/data/model/users.dart';
 import 'base.dart';
 
 class NotificationsInfo {
-  int id;
-  String contentType;
-  dynamic content;
-  DateTime createdAt;
+  final int id;
+  final String contentType;
+  final DateTime createdAt;
   bool isRead;
 
   UserInfo? fromUser;
@@ -22,7 +21,6 @@ class NotificationsInfo {
   NotificationsInfo({
     required this.id,
     required this.contentType,
-    required this.content,
     required this.createdAt,
     required this.isRead,
     this.fromUser,
@@ -33,14 +31,13 @@ class NotificationsInfo {
     return NotificationsInfo(
       id: id,
       contentType: map["contentType"],
-      content: map["content"],
       createdAt: DateTime.parse(map["createdAt"]),
       isRead: map["isRead"] ?? false,
     );
   }
 
-  factory NotificationsInfo.formJson(String data) {
-    var base = BaseBean.formJson(data);
+  factory NotificationsInfo.fromMap(Map map) {
+    var base = BaseBean.fromMap(map);
     return NotificationsInfo.formMapAndId(base.data.attributes, base.data.id);
   }
 }
@@ -49,11 +46,11 @@ class NotificationInfoList {
   Links links;
   List<NotificationsInfo> list;
 
-  factory NotificationInfoList.formJson(String data) {
-    return NotificationInfoList.formBase(BaseListBean.formJson(data));
+  factory NotificationInfoList.fromMap(Map map) {
+    return NotificationInfoList.fromBase(BaseListBean.fromMap(map));
   }
 
-  factory NotificationInfoList.formBase(BaseListBean base) {
+  factory NotificationInfoList.fromBase(BaseListBean base) {
     List<NotificationsInfo> list = [];
     final Map<String, Map<int, dynamic>> included = {};
 
@@ -61,25 +58,25 @@ class NotificationInfoList {
       included.putIfAbsent(type, () => {})[id] = value;
     }
 
-    for (var d in base.included.data ?? []) {
+    for (var d in base.included.data) {
       switch (d.type) {
         case "users":
-          addIncluded("users", d.id, UserInfo.formBaseData(d));
+          addIncluded("users", d.id, UserInfo.fromBaseData(d));
           break;
         case "posts":
-          addIncluded("posts", d.id, PostInfo.formBaseData(d));
+          addIncluded("posts", d.id, PostInfo.fromBaseData(d));
           break;
         case "quest-infos":
-          addIncluded("quest-infos", d.id, QuestInfo.formBaseData(d));
+          addIncluded("quest-infos", d.id, QuestInfo.fromBaseData(d));
           break;
         case "levels":
-          addIncluded("levels", d.id, LevelInfo.formBaseData(d));
+          addIncluded("levels", d.id, LevelInfo.fromBaseData(d));
           break;
         case "userBadges":
-          addIncluded("userBadges", d.id, UserBadgeInfo.formBaseData(d));
+          addIncluded("userBadges", d.id, UserBadgeInfo.fromBaseData(d));
           break;
         case "warnings":
-          addIncluded("warnings", d.id, WarningInfo.formBaseData(d));
+          addIncluded("warnings", d.id, WarningInfo.fromBaseData(d));
           break;
       }
     }
@@ -88,13 +85,13 @@ class NotificationInfoList {
       final n = NotificationsInfo.formMapAndId(d.attributes, d.id);
 
       // fromUser
-      final from = d.relationships?["fromUser"]?["data"];
+      final from = d.relationships["fromUser"]?["data"];
       if (from != null) {
         n.fromUser = included["users"]?[int.parse(from["id"])];
       }
 
       // subject
-      final sub = d.relationships?["subject"]?["data"];
+      final sub = d.relationships["subject"]?["data"];
       if (sub != null) {
         final type = sub["type"];
         final id = int.parse(sub["id"]);
@@ -151,7 +148,7 @@ class QuestInfo {
 
   QuestInfo({required this.id, required this.name, required this.description});
 
-  factory QuestInfo.formBaseData(BaseData d) {
+  factory QuestInfo.fromBaseData(BaseData d) {
     return QuestInfo(
       id: d.id,
       name: d.attributes["name"],
@@ -171,7 +168,7 @@ class LevelInfo {
     required this.minExpRequired,
   });
 
-  factory LevelInfo.formBaseData(BaseData d) {
+  factory LevelInfo.fromBaseData(BaseData d) {
     return LevelInfo(
       id: d.id,
       name: d.attributes["name"],
@@ -195,7 +192,7 @@ class UserBadgeInfo {
     this.description,
   });
 
-  factory UserBadgeInfo.formBaseData(BaseData d) {
+  factory UserBadgeInfo.fromBaseData(BaseData d) {
     return UserBadgeInfo(
       id: d.id,
       description: d.attributes["description"],
@@ -228,7 +225,7 @@ class WarningInfo {
     this.privateComment,
   });
 
-  factory WarningInfo.formBaseData(BaseData d) {
+  factory WarningInfo.fromBaseData(BaseData d) {
     return WarningInfo(
       id: d.id,
       userId: d.attributes["userId"],

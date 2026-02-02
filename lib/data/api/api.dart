@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/data/api/api_guard.dart';
+import 'package:forum/data/api/api_log.dart';
 import 'package:forum/data/model/notifications.dart';
 import 'package:forum/utils/http_utils.dart';
 import 'package:forum/utils/log_util.dart';
@@ -26,7 +27,7 @@ class Api {
       name: "getForumInfo",
       method: "GET",
       call: () async {
-        return ForumInfo.formJson((await Dio().get(url)).toString());
+        return ForumInfo.fromMap((await Dio().get(url)).data);
       },
       fallback: null,
     );
@@ -37,8 +38,8 @@ class Api {
       name: "getTags",
       method: "GET",
       call: () async {
-        return TagInfo.getListFormJson(
-          (await _utils.get(ApiConstants.tags)).toString(),
+        return TagInfo.getListFormMap(
+          (await _utils.get(ApiConstants.tags)).data,
         );
       },
       fallback: null,
@@ -50,10 +51,10 @@ class Api {
       name: "getDiscussionById",
       method: "GET",
       call: () async {
-        return DiscussionInfo.formJson(
+        return DiscussionInfo.fromMap(
           (await _utils.get(
             "${ApiConstants.apiBase}/api/discussions/$id?include=user,firstPost",
-          )).toString(),
+          )).data,
         );
       },
       fallback: null,
@@ -85,7 +86,7 @@ class Api {
           "${ApiConstants.apiBase}/api/discussions",
         ).replace(queryParameters: params);
         final resp = await _utils.get(uri.toString());
-        final data = Discussions.formJson(resp.toString());
+        final data = Discussions.fromMap(resp.data);
 
         return PagedDiscussions(
           data: data,
@@ -117,7 +118,7 @@ class Api {
       name: "searchDiscuss",
       method: "GET",
       call: () async {
-        return Discussions.formJson((await _utils.get(url)).toString());
+        return Discussions.fromMap((await _utils.get(url)).data);
       },
       fallback: null,
     );
@@ -139,12 +140,12 @@ class Api {
       name: "getDiscussByTag",
       method: "GET",
       call: () async {
-        return Discussions.formJson((await _utils.get(url)).toString());
+        return Discussions.fromMap((await _utils.get(url)).data);
       },
       fallback: null,
     );
   }
-  
+
   static Future<PostInfo?> getFirstPost(String discussionId) async {
     final url =
         "${ApiConstants.apiBase}/api/posts"
@@ -156,7 +157,7 @@ class Api {
       name: "getFirstPost",
       method: "GET",
       call: () async {
-        var data = Posts.formJson((await _utils.get(url)).toString());
+        var data = Posts.fromMap((await _utils.get(url)).data);
         final posts = data.posts;
         if (posts.isEmpty) return null;
 
@@ -196,7 +197,7 @@ class Api {
           options: Options(contentType: 'application/vnd.api+json'),
         );
         if (r?.statusCode == 201) {
-          return DiscussionInfo.formJson(r?.toString() ?? "");
+          return DiscussionInfo.fromMap(r?.data);
         } else {
           return null;
         }
@@ -227,7 +228,7 @@ class Api {
       name: "getPosts",
       method: "GET",
       call: () async {
-        return Posts.formJson((await _utils.get(url)).toString());
+        return Posts.fromMap((await _utils.get(url)).data);
       },
       fallback: null,
     );
@@ -240,7 +241,7 @@ class Api {
       name: "getPostsById",
       method: "GET",
       call: () async {
-        return Posts.formJson((await _utils.get(url)).toString());
+        return Posts.fromMap((await _utils.get(url)).data);
       },
       fallback: null,
     );
@@ -253,7 +254,7 @@ class Api {
       name: "getPostsById",
       method: "GET",
       call: () async {
-        return Posts.formJson((await _utils.get(url)).toString());
+        return Posts.fromMap((await _utils.get(url)).data);
       },
       fallback: null,
     );
@@ -279,12 +280,11 @@ class Api {
       name: "createPost",
       method: "POST",
       call: () async {
-        return PostInfo.formJson(
+        return PostInfo.fromMap(
           (await _utils.post(
-                "${ApiConstants.apiBase}/api/posts",
-                data: m,
-              ))?.toString() ??
-              "{}",
+            "${ApiConstants.apiBase}/api/posts",
+            data: m,
+          ))?.data,
         );
       },
       fallback: null,
@@ -314,11 +314,11 @@ class Api {
       name: "likePost",
       method: "POST",
       call: () async {
-        return PostInfo.formJson(
+        return PostInfo.fromMap(
           (await _utils.patch(
             "${ApiConstants.apiBase}/api/posts/$id",
             data: m,
-          )).toString(),
+          )).data,
         );
       },
       fallback: null,
@@ -365,11 +365,17 @@ class Api {
   static Future<bool> isTokenValid() async {
     try {
       await _utils.get("${ApiConstants.apiBase}/api/users?page[limit]=1");
+      ApiLog.ok("isTokenValid", "Token varified.");
       return true;
     } on DioException catch (e) {
       final status = e.response?.statusCode;
 
+      LogUtil.debug("[API] isTokenValid : ${e.response.toString()}");
       if (status == 401 || status == 403 || status == 404) {
+        return false;
+      }
+      if (status == 500) {
+        ApiLog.fail("isTokenValid", "check token varified.", "Token expired.");
         return false;
       }
 
@@ -390,8 +396,8 @@ class Api {
       name: "getNotification",
       method: "GET",
       call: () async {
-        return NotificationInfoList.formJson(
-          (await _utils.get(reqUrl)).toString(),
+        return NotificationInfoList.fromMap(
+          (await _utils.get(reqUrl)).data,
         );
       },
       fallback: null,
@@ -403,7 +409,7 @@ class Api {
       name: "getNotificationByUrl",
       method: "GET",
       call: () async =>
-          NotificationInfoList.formJson((await _utils.get(url)).toString()),
+          NotificationInfoList.fromMap((await _utils.get(url)).data),
       fallback: null,
     );
   }
@@ -419,11 +425,11 @@ class Api {
     return ApiGuard.run(
       name: "setNotificationIsRead",
       method: "PATCH",
-      call: () async => NotificationsInfo.formJson(
+      call: () async => NotificationsInfo.fromMap(
         (await _utils.patch(
           "${ApiConstants.apiBase}/api/notifications/$id",
           data: m,
-        )).toString(),
+        )).data,
       ),
       fallback: null,
     );
@@ -488,7 +494,7 @@ class Api {
         ).replace(queryParameters: params);
 
         final resp = await _utils.get(uri.toString());
-        final data = Posts.formJson(resp.toString());
+        final data = Posts.fromMap(resp.data);
 
         return data;
       },
@@ -501,7 +507,7 @@ class Api {
     return ApiGuard.run(
       name: "getUserByUrl",
       method: "GET",
-      call: () async => UserInfo.formJson((await _utils.get(url)).toString()),
+      call: () async => UserInfo.fromMap((await _utils.get(url)).data),
       fallback: null,
     );
   }

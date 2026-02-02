@@ -14,22 +14,14 @@ import 'package:get/get.dart';
 
 class SearchPageController extends GetxController {
   SearchPageController();
-  RxBool showSearchSuggest = false.obs;
-  RxList<Widget> searchSuggestionItems = <Widget>[].obs;
-  TextEditingController textEditingController = TextEditingController();
+  final TextEditingController textEditingController = TextEditingController();
   final FocusNode textFeildFocusNode = FocusNode();
   late String defaultSearchWord;
-  RxBool showEditDelete = false.obs;
-
-  Rx<List<Widget>> historySearchedWords = Rx<List<Widget>>([]);
+  
+  final RxBool showEditDelete = false.obs;
+  final RxList<String> historySearchedWords = <String>[].obs;
 
   void onSearchWordChanged(String keyWord) {
-    if (keyWord.trim().isNotEmpty) {
-      showSearchSuggest.value = true;
-    } else {
-      showSearchSuggest.value = false;
-    }
-
     if (keyWord.isNotEmpty) {
       showEditDelete.value = true;
     } else {
@@ -57,25 +49,15 @@ class SearchPageController extends GetxController {
 
   Future<void> _refreshHistoryWord() async {
     var box = StorageUtils.history;
-    List<Widget> widgetList = [];
-    List<dynamic> list = box.get("searchHistory", defaultValue: <String>[]);
-    for (String i in list.reversed) {
-      widgetList.add(
-        GestureDetector(
-          child: Chip(
-            label: Text(i),
-            onDeleted: () {
-              _deleteSearchedWord(i);
-            },
-          ),
-          onTap: () {
-            search(i);
-            setTextFieldText(i);
-          },
-        ),
-      );
-    }
-    historySearchedWords.value = widgetList;
+    // List<Widget> widgetList = [];
+    // List<dynamic> list = ;
+    // for (String i in list.reversed) {
+    //   widgetList.add(
+    //     
+    // }
+    final items = box.get("searchHistory", defaultValue: <String>[]).reversed;
+    historySearchedWords.clear();
+    historySearchedWords.addAll(items);
   }
 
   Future<void> _saveSearchedWord(String keyWord) async {
@@ -94,7 +76,7 @@ class SearchPageController extends GetxController {
     _refreshHistoryWord();
   }
 
-  Future<void> _deleteSearchedWord(String word) async {
+  Future<void> deleteSearchedWord(String word) async {
     var box = StorageUtils.history;
     List<dynamic> list = box.get("searchHistory", defaultValue: <String>[]);
     list.remove(word);

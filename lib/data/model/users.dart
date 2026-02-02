@@ -3,21 +3,23 @@
  * @LastEditors: cubevlmu khfahqp@gmail.com
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
+import 'package:forum/utils/string_util.dart';
+
 import 'base.dart';
 import 'group_info.dart';
 
 class UserInfo {
-  int id;
-  String username;
+  final int id;
+  final String username;
   String displayName;
   String avatarUrl;
-  String joinTime;
+  final DateTime joinTime;
+  DateTime lastSeenAt;
   int discussionCount;
   int commentCount;
-  String lastSeenAt;
   String email;
   String bio;
-  Groups? groups;
+  final Groups? groups;
   ExpInfo? expInfo;
 
   UserInfo(
@@ -47,23 +49,23 @@ class UserInfo {
     if (bio != info.bio) bio = info.bio;
   }
 
-  factory UserInfo.formJson(String data) {
-    return UserInfo.formBaseData(BaseBean.formJson(data).data);
+  factory UserInfo.fromMap(Map data) {
+    return UserInfo.fromBaseData(BaseData.formMap(BaseBean.fromMap(data).data));
   }
 
-  factory UserInfo.formBaseData(BaseData data) {
+  factory UserInfo.fromBaseData(BaseData data) {
     Map m = data.attributes;
-    final ifo = ExpInfo.formBaseData(data);
+    final ifo = ExpInfo.fromBaseData(data);
 
     final u = UserInfo(
       data.id,
       m["username"],
       m["displayName"],
       m["avatarUrl"] ?? "",
-      m["joinTime"] ?? "",
+      DateTime.tryParse(m["joinTime"] ?? "") ?? fallbackTime,
       m["discussionCount"] ?? 0,
       m["commentCount"] ?? 0,
-      m["lastSeenAt"] ?? "",
+      DateTime.tryParse(m["lastSeenAt"] ?? "") ?? fallbackTime,
       m["email"] ?? "",
       m["groups"],
       m["bio"] ?? "",
@@ -79,10 +81,10 @@ class UserInfo {
     "[deleted]",
     "[deleted]",
     "",
-    "",
+    fallbackTime,
     0,
     0,
-    "",
+    fallbackTime,
     "",
     null,
     "",
@@ -93,10 +95,10 @@ class UserInfo {
     "[GUEST]",
     "[GUEST]",
     "",
-    "",
+    fallbackTime,
     -1,
     -1,
-    "",
+    fallbackTime,
     "",
     null,
     "",
@@ -118,7 +120,7 @@ class ExpInfo {
     this.expNextNeed,
   );
 
-  factory ExpInfo.formBaseData(BaseData data) {
+  factory ExpInfo.fromBaseData(BaseData data) {
     Map m = data.attributes;
     return ExpInfo(
       m["expLevel"] ?? "",

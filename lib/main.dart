@@ -16,6 +16,7 @@ import 'package:forum/utils/http_utils.dart';
 import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/setting_util.dart';
 import 'package:forum/utils/storage_utils.dart';
+import 'package:forum/utils/window_util.dart';
 import 'package:get/get.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:nil/nil.dart';
@@ -43,6 +44,7 @@ void main() async {
   await tag.syncTags();
   LogUtil.info("[Main] End sync tags.");
 
+  WindowResizeObserver.instance.init();
   runApp(const MyApp());
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);

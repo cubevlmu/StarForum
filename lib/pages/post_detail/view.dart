@@ -4,16 +4,19 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/pages/post_detail/controller.dart';
 import 'package:forum/pages/post_detail/widgets/post_item.dart';
 import 'package:forum/pages/post_detail/widgets/post_main.dart';
-import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/string_util.dart';
 import 'package:forum/widgets/shared_notice.dart';
 import 'package:forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PostPage extends StatefulWidget {
   const PostPage({super.key, required this.item});
@@ -38,63 +41,8 @@ class _PostPageState extends State<PostPage>
 
   @override
   void dispose() {
-    try {
-      Get.delete<PostPageController>();
-    } catch (e, s) {
-      LogUtil.errorE("[PostDetailPage] failed to dispose controller", e, s);
-    }
+    Get.delete<PostPageController>();
     super.dispose();
-  }
-
-  Widget _buildView(PostPageController controller) {
-    controller.updateWidget = () => setState(() => ());
-
-    final bool hasReply =
-        controller.replyItems.isNotEmpty || controller.newReplyItems.isNotEmpty;
-
-    return SimpleEasyRefresher(
-      onLoad: controller.onReplyLoad,
-      onRefresh: controller.onReplyRefresh,
-      easyRefreshController: controller.refreshController,
-      childBuilder: (context, physics) {
-        return CustomScrollView(
-          controller: controller.scrollController,
-          physics: physics,
-          slivers: [
-            SliverToBoxAdapter(child: PostMainWidget(content: widget.item)),
-
-            SliverToBoxAdapter(
-              child: SortReplyItemWidget(replyController: controller),
-            ),
-
-            if (!hasReply)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: NoticeWidget(
-                  emoji: "💬",
-                  title: "还没有回复",
-                  tips: "成为第一个发表评论的人吧",
-                ),
-              )
-            else ...[
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final item = controller.newReplyItems[index];
-                  return PostItemWidget(reply: item);
-                }, childCount: controller.newReplyItems.length),
-              ),
-
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final item = controller.replyItems[index];
-                  return PostItemWidget(reply: item);
-                }, childCount: controller.replyItems.length),
-              ),
-            ],
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -106,24 +54,17 @@ class _PostPageState extends State<PostPage>
         tooltip: '发表评论',
         child: Icon(Icons.reply),
       ),
-      appBar: _buildAppBar(context),
+      appBar: _DetailTitleBar(item: widget.item),
       body: Padding(
         padding: EdgeInsetsGeometry.only(left: 12, right: 12),
-        child: _buildView(controller),
+        child: _DetailPageReplies(controller: controller, item: widget.item),
       ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: Text("贴文: ${widget.item.title}"),
-      shadowColor: Theme.of(context).shadowColor,
     );
   }
 }
 
-class SortReplyItemWidget extends StatelessWidget {
-  const SortReplyItemWidget({super.key, required this.replyController});
+class _SortReplyItemWidget extends StatelessWidget {
+  const _SortReplyItemWidget({required this.replyController});
   final PostPageController replyController;
 
   @override
@@ -160,6 +101,100 @@ class SortReplyItemWidget extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class _DetailTitleBar extends StatelessWidget implements PreferredSizeWidget {
+  final DiscussionItem item;
+
+  const _DetailTitleBar({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Text("贴文: ${item.title}"),
+      shadowColor: Theme.of(context).shadowColor,
+      actions: [
+        if (Platform.isAndroid || Platform.isAndroid)
+          IconButton(
+            onPressed: _onShareClick,
+            icon: Icon(Icons.share_outlined),
+          ),
+        const SizedBox(width: 10),
+      ],
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  void _onShareClick() async {
+    await Share.shareUri(Uri.parse("${ApiConstants.apiBase}/d/${item.id}"));
+  }
+}
+
+class _DetailPageReplies extends StatelessWidget {
+  final PostPageController controller;
+  final DiscussionItem item;
+
+  const _DetailPageReplies({required this.controller, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return SimpleEasyRefresher(
+      onLoad: controller.onReplyLoad,
+      onRefresh: controller.onReplyRefresh,
+      easyRefreshController: controller.refreshController,
+      childBuilder: (context, physics) {
+        return Obx(() {
+          final hasReply =
+              controller.replyItems.isNotEmpty ||
+              controller.newReplyItems.isNotEmpty;
+
+          return CustomScrollView(
+            controller: controller.scrollController,
+            physics: physics,
+            slivers: [
+              SliverToBoxAdapter(child: Obx(() => PostMainWidget(content: item, info: controller.firstPost.value))),
+
+              SliverToBoxAdapter(
+                child: _SortReplyItemWidget(replyController: controller),
+              ),
+
+              if (!hasReply)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: NoticeWidget(
+                    emoji: "💬",
+                    title: "还没有回复",
+                    tips: "成为第一个发表评论的人吧",
+                  ),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final totalNew = controller.newReplyItems.length;
+
+                      if (index < totalNew) {
+                        return PostItemWidget(
+                          reply: controller.newReplyItems[index],
+                        );
+                      }
+
+                      final i = index - totalNew;
+                      return PostItemWidget(reply: controller.replyItems[i]);
+                    },
+                    childCount:
+                        controller.newReplyItems.length +
+                        controller.replyItems.length,
+                  ),
+                ),
+            ],
+          );
+        });
+      },
     );
   }
 }

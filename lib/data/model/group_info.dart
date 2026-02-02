@@ -12,7 +12,7 @@ class GroupInfo {
   final String color;
   final String icon;
 
-  factory GroupInfo.formBaseData(BaseData data) {
+  factory GroupInfo.fromBaseData(BaseData data) {
     var m = data.attributes;
     return GroupInfo(
       id: data.id,
@@ -22,23 +22,28 @@ class GroupInfo {
     );
   }
 
-  GroupInfo({required this.id, required this.name, required this.color, required this.icon});
+  GroupInfo({
+    required this.id,
+    required this.name,
+    required this.color,
+    required this.icon,
+  });
 }
 
 class Groups {
   final List<GroupInfo> list;
 
-  factory Groups.formBase(BaseListBean base) {
-    List<GroupInfo> list = [];
+  factory Groups.fromBase(BaseListBean base) {
+    final groups = Groups(list: []);
     for (var m in base.data.list) {
-      var g = GroupInfo.formBaseData(m);
-      list.add(g);
+      var g = GroupInfo.fromBaseData(m);
+      groups.list.add(g);
     }
-      return Groups(list: list);
+    return groups;
   }
 
-  factory Groups.formJson(String data) {
-    return Groups.formBase(BaseListBean.formJson(data));
+  factory Groups.fromMap(Map map) {
+    return Groups.fromBase(BaseListBean.fromMap(map));
   }
 
   Groups({required this.list});

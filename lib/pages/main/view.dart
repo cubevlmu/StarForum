@@ -34,7 +34,6 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void dispose() {
-    Get.delete<MainController>();
     super.dispose();
   }
 

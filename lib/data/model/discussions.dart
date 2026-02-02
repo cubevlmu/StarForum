@@ -6,30 +6,26 @@ import 'tags.dart';
 import 'users.dart';
 
 class DiscussionInfo {
-  String id;
-  String title;
-  String slug;
-  int commentCount;
-  int participantCount;
-  int views;
-  String createdAt;
-  String lastPostedAt;
-  int lastPostNumber;
+  final String id;
+  final String title;
+  final int commentCount;
+  final int views;
+  final DateTime createdAt;
+  final DateTime lastPostedAt;
+  final int lastPostNumber;
   int firstPostId;
   UserInfo? user;
   UserInfo? lastPostedUser;
   PostInfo? firstPost;
-  List<int> postsIdList;
-  Map<int, PostInfo>? posts;
-  Map<int, UserInfo>? users;
-  List<TagInfo>? tags;
+  final List<int> postsIdList;
+  final Map<int, PostInfo> posts;
+  final Map<int, UserInfo> users;
+  final List<TagInfo> tags;
 
   DiscussionInfo(
     this.id,
     this.title,
-    this.slug,
     this.commentCount,
-    this.participantCount,
     this.views,
     this.createdAt,
     this.lastPostedAt,
@@ -49,7 +45,7 @@ class DiscussionInfo {
       id: id,
       title: title,
       excerpt: firstPost?.contentHtml ?? "",
-      lastPostedAt: DateTime.parse(lastPostedAt),
+      lastPostedAt: lastPostedAt,
       userId: user?.id ?? 0,
       authorName: user?.displayName ?? "",
       authorAvatar: user?.avatarUrl ?? "",
@@ -62,150 +58,139 @@ class DiscussionInfo {
     return DiscussionInfo(
       id.toString(),
       m["title"],
-      m["slug"],
       m["commentCount"] ?? 0,
-      m["participantCount"] ?? 0,
       m["views"] ?? 0,
-      m["createdAt"] ?? "",
-      m["lastPostedAt"] ?? "",
+      DateTime.tryParse(m["createdAt"] ?? "") ?? DateTime.utc(1980),
+      DateTime.tryParse(m["lastPostedAt"] ?? "") ?? DateTime.utc(1980),
       m["lastPostNumber"] ?? 0,
       0,
       null,
       null,
       null,
       [],
-      null,
-      null,
-      null,
+      {},
+      {},
+      [],
     );
   }
 
   static bool isInitDiscussion(DiscussionInfo discussionInfo) {
-    return discussionInfo.firstPost != null || discussionInfo.posts == null;
+    return discussionInfo.firstPost != null || discussionInfo.posts.isEmpty;
   }
 
-  factory DiscussionInfo.formJson(String j) {
-    return DiscussionInfo.formBase(BaseBean.formJson(j));
+  factory DiscussionInfo.fromMap(Map map) {
+    return DiscussionInfo.fromBase(BaseBean.fromMap(map));
   }
 
-  factory DiscussionInfo.formBase(BaseBean base) {
+  factory DiscussionInfo.fromBase(BaseBean base) {
     Map<int, PostInfo> allPosts = {};
-    Map<int, PostInfo> posts = {};
-    List<int> postsId = [];
-    List<TagInfo> tags = [];
-    Map<int, UserInfo> users = {};
     var d = DiscussionInfo.formMaoAndId(base.data.attributes, base.data.id);
 
-    base.included.data?.forEach((data) {
+    for (var data in base.included) {
       switch (data.type) {
         case "posts":
-          var p = PostInfo.formBaseData(data);
+          var p = PostInfo.fromBaseData(data);
           allPosts.addAll({p.id: p});
           break;
         case "tags":
-          var t = TagInfo.formBaseData(data);
-          tags.add(t);
+          var t = TagInfo.fromBaseData(data);
+          d.tags.add(t);
           break;
         case "users":
-          var u = UserInfo.formBaseData(data);
-          users.addAll({u.id: u});
+          var u = UserInfo.fromBaseData(data);
+          d.users.addAll({u.id: u});
           break;
       }
-    });
+    }
     if (base.data.relationships?.containsKey("posts") ?? false) {
       for (var data in (base.data.relationships?["posts"]["data"] as List)) {
-        postsId.add(int.parse(data["id"]));
+        d.postsIdList.add(int.parse(data["id"]));
       }
     }
     if (base.data.relationships?.containsKey("firstPost") ?? false) {
-      postsId.add(
+      d.postsIdList.add(
         int.parse(base.data.relationships!["firstPost"]["data"]["id"] ?? "-1"),
       );
     }
 
-    for (var id in postsId) {
+    for (var id in d.postsIdList) {
       var p = allPosts[id];
       if (p != null) {
-        posts.addAll({id: p});
+        d.posts.addAll({id: p});
       }
     }
 
-    d.posts = posts;
-    d.postsIdList = postsId;
-    d.users = users;
-    d.tags = tags;
-    d.firstPostId = postsId.isEmpty ? -1 : postsId[0];
+    d.firstPostId = d.postsIdList.isEmpty ? -1 : d.postsIdList[0];
     return d;
   }
 }
 
 class Discussions {
-  List<DiscussionInfo> list;
-  Links links;
+  final List<DiscussionInfo> list;
+  final Links links;
 
-  Discussions(this.list, this.links);
+  Discussions({required this.list, required this.links});
 
-  factory Discussions.formJson(String data) {
-    return Discussions.formBase(BaseListBean.formJson(data));
+  factory Discussions.fromMap(Map map) {
+    return Discussions.fromBase(BaseListBean.fromMap(map));
   }
 
-  factory Discussions.formBase(BaseListBean base) {
-    List<DiscussionInfo> list = [];
-    Map<int, UserInfo> users = {};
-    Map<int, PostInfo> posts = {};
-    Map<int, TagInfo> tags = {};
-    if (base.included.data == null || base.data.list.isEmpty) {
-      return Discussions(list, base.links);
+  factory Discussions.fromBase(BaseListBean base) {
+    final List<DiscussionInfo> list = [];
+    final Map<int, UserInfo> users = {};
+    final Map<int, PostInfo> posts = {};
+    final Map<int, TagInfo> tags = {};
+
+    if (base.included.data.isEmpty || base.data.list.isEmpty) {
+      return Discussions(list: list, links: base.links);
     }
-    base.included.data?.forEach((data) {
+    for (var data in base.included.data) {
       switch (data.type) {
         case "users":
-          var u = UserInfo.formBaseData(data);
+          var u = UserInfo.fromBaseData(data);
           users.addAll({u.id: u});
           break;
         case "posts":
-          var p = PostInfo.formBaseData(data);
+          var p = PostInfo.fromBaseData(data);
           posts.addAll({p.id: p});
           break;
         case "tags":
-          var t = TagInfo.formBaseData(data);
+          var t = TagInfo.fromBaseData(data);
           tags.addAll({t.id: t});
           break;
       }
-    });
+    }
     for (var data in base.data.list) {
       var d = DiscussionInfo.formMaoAndId(data.attributes, data.id);
-      if (data.relationships?["user"] == null) {
+      if (data.relationships["user"] == null) {
         d.user = UserInfo.deletedUser;
       } else {
-        d.user = users[int.parse(data.relationships?["user"]["data"]["id"])];
+        d.user = users[int.parse(data.relationships["user"]["data"]["id"])];
       }
-      if (data.relationships?["lastPostedUser"] == null) {
+      if (data.relationships["lastPostedUser"] == null) {
         d.lastPostedUser = UserInfo.deletedUser;
       } else {
         d.lastPostedUser =
             users[int.parse(
-              data.relationships?["lastPostedUser"]["data"]["id"],
+              data.relationships["lastPostedUser"]["data"]["id"],
             )];
       }
 
-      /// in https://discuss.flarum.org/?sort=oldest , some old discussions not have firstPost .
-      if (data.relationships?["firstPost"] != null) {
+      if (data.relationships["firstPost"] != null) {
         d.firstPost =
-            posts[int.parse(data.relationships?["firstPost"]["data"]["id"])];
+            posts[int.parse(data.relationships["firstPost"]["data"]["id"])];
       } else {
         d.firstPost = null;
       }
 
-      List<TagInfo> t = [];
-      for (var m in (data.relationships?["tags"]["data"] as List)) {
+      d.tags.clear();
+      for (var m in (data.relationships["tags"]["data"] as List)) {
         Map map = m;
-        t.add(tags[int.parse(map["id"])]!);
+        d.tags.add(tags[int.parse(map["id"])]!);
       }
-      d.tags = t;
       list.add(d);
     }
-    return Discussions(list, base.links);
+    return Discussions(list: list, links: base.links);
   }
 }
 

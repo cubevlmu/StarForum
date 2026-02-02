@@ -95,16 +95,14 @@ class DiscussionRepository {
         return DbDiscussionsCompanion.insert(
           id: d.id,
           title: d.title,
-          slug: d.slug,
+          slug: "",
           commentCount: d.commentCount,
-          participantCount: d.participantCount,
+          participantCount: 0,
           viewCount: Value(d.views),
           authorName: Value(d.user?.displayName ?? ''),
           authorAvatar: Value(d.user?.avatarUrl ?? ''),
-          createdAt: DateTime.parse(d.createdAt),
-          lastPostedAt: Value(
-            d.lastPostedAt.isEmpty ? null : DateTime.parse(d.lastPostedAt),
-          ),
+          createdAt: d.createdAt,
+          lastPostedAt: Value(d.lastPostedAt),
           lastPostNumber: d.lastPostNumber,
           likeCount: Value(d.firstPost?.likes ?? -1),
           posterId: d.user?.id ?? -1,
@@ -117,9 +115,9 @@ class DiscussionRepository {
     if (offset == 0) {
       final minPostedAt = remote
           .map(
-            (d) => d.lastPostedAt.isNotEmpty
-                ? DateTime.parse(d.lastPostedAt)
-                : DateTime.parse(d.createdAt),
+            (d) => d.lastPostedAt != DateTime.utc(1980)
+                ? d.lastPostedAt
+                : d.createdAt,
           )
           .reduce((a, b) => a.isBefore(b) ? a : b);
 
@@ -150,16 +148,14 @@ class DiscussionRepository {
       DbDiscussionsCompanion.insert(
         id: d.id,
         title: d.title,
-        slug: d.slug,
+        slug: "",
         commentCount: 0,
-        participantCount: d.participantCount,
+        participantCount: 0,
         viewCount: Value(d.views),
         authorName: Value(d.user?.displayName ?? ''),
         authorAvatar: Value(d.user?.avatarUrl ?? ''),
-        createdAt: DateTime.parse(d.createdAt),
-        lastPostedAt: Value(
-          d.lastPostedAt.isEmpty ? null : DateTime.parse(d.lastPostedAt),
-        ),
+        createdAt: d.createdAt,
+        lastPostedAt: Value(d.lastPostedAt),
         lastPostNumber: d.lastPostNumber,
         likeCount: Value(-1),
         posterId: d.user?.id ?? -1,
@@ -167,7 +163,7 @@ class DiscussionRepository {
         lastSeenAt: DateTime.now(),
       ),
     );
-  
+
     var excerpt = htmlToPlainText(d.firstPost?.contentHtml ?? "");
     if (excerpt.length > 80) {
       excerpt = excerpt.substring(0, 80);

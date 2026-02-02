@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:forum/data/model/tags.dart';
 import 'package:forum/data/repository/tag_repo.dart';
 import 'package:forum/di/injector.dart';
-import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/snackbar_utils.dart';
 
 class CreateDiscussWidget extends StatefulWidget {

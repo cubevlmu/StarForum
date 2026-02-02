@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:forum/data/model/discussion_item.dart';
+import 'package:forum/data/model/posts.dart';
 import 'package:forum/pages/post_detail/controller.dart';
 import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/string_util.dart';
@@ -15,18 +16,35 @@ import 'package:get/get.dart';
 
 class PostMainWidget extends StatelessWidget {
   final DiscussionItem content;
+  final PostInfo? info;
 
-  const PostMainWidget({super.key, required this.content});
+  const PostMainWidget({super.key, required this.content, required this.info});
 
   @override
   Widget build(BuildContext context) {
+    // final like = info?.likes ?? -1;
+
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          UserBox(item: content),
-          IntroductionText(item: content),
+          _UserBox(item: content),
+          _MainContent(item: content),
+          // const SizedBox(height: 5),
+          // like == -1
+          //     ? const SizedBox.shrink()
+          //     : _ThumUpButton(
+          //         likeNum: like,
+          //         selected: false,
+          //         onPressed: () async {
+          //           if (info == null) return;
+          //           final r = await ReplyUtil.addLikeToPost(info!);
+          //           if (r != null) {
+          //             info?.likes = r.likes;
+          //           }
+          //         },
+          //       ),
           Divider(
             color: Theme.of(context).colorScheme.secondaryContainer,
             thickness: 1,
@@ -38,8 +56,8 @@ class PostMainWidget extends StatelessWidget {
   }
 }
 
-class UserBox extends StatelessWidget {
-  const UserBox({super.key, required this.item});
+class _UserBox extends StatelessWidget {
+  const _UserBox({required this.item});
   final DiscussionItem item;
 
   @override
@@ -115,8 +133,8 @@ class UserBox extends StatelessWidget {
   }
 }
 
-class IntroductionText extends StatelessWidget {
-  const IntroductionText({super.key, required this.item});
+class _MainContent extends StatelessWidget {
+  const _MainContent({required this.item});
   final DiscussionItem item;
 
   @override
@@ -137,6 +155,43 @@ class IntroductionText extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ThumUpButton extends StatelessWidget {
+  const _ThumUpButton({
+    required this.onPressed,
+    required this.likeNum,
+    this.selected = false,
+  });
+  final Function()? onPressed;
+  final bool selected;
+  final int likeNum;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ButtonStyle(
+        visualDensity: VisualDensity.comfortable,
+        padding: const WidgetStatePropertyAll(EdgeInsets.all(5)),
+        foregroundColor: selected == true
+            ? WidgetStatePropertyAll(Theme.of(context).colorScheme.onPrimary)
+            : null,
+        backgroundColor: selected == true
+            ? WidgetStatePropertyAll(Theme.of(context).colorScheme.primary)
+            : null,
+        elevation: const WidgetStatePropertyAll(0),
+        minimumSize: const WidgetStatePropertyAll(Size(10, 5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.thumb_up_rounded, size: 15),
+          const SizedBox(width: 5),
+          Text(StringUtil.numFormat(likeNum)),
+        ],
       ),
     );
   }

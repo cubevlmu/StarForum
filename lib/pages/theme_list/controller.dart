@@ -16,7 +16,7 @@ class ThemeListController extends GetxController {
   final repo = getIt<TagRepo>();
 
   final RxInt selectId = 0.obs;
-  final RxBool onLoading = false.obs;
+  final RxBool onLoading = true.obs;
   final RxList<TagInfo> primayTag = <TagInfo>[].obs;
   final RxList<TagInfo> tags = <TagInfo>[].obs;
   final RxList<DiscussionInfo> searchItems = <DiscussionInfo>[].obs;
@@ -39,7 +39,19 @@ class ThemeListController extends GetxController {
     primayTag.addAll(repo.getPrimaryTags());
     tags.addAll(repo.getTags());
 
+    if (primayTag.isNotEmpty) {
+      selectId.value = primayTag.first.id;
+      _doInitialRefresh();
+    }
     super.onInit();
+  }
+
+  Future<void> _doInitialRefresh() async {
+    try {
+      await onRefresh();
+    } finally {
+      onLoading.value = false;
+    }
   }
 
   void animateToTop() {

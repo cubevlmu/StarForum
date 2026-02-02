@@ -22,14 +22,13 @@ class _SearchPageState extends State<SearchPage> {
   late SearchPageController controller;
   @override
   void initState() {
-    controller = Get.put(SearchPageController());
     super.initState();
-  }
+    controller = Get.put(SearchPageController(), permanent: false);
 
-  @override
-  void dispose() {
-    Get.delete<SearchPageController>();
-    super.dispose();
+    controller.defaultSearchWord = "";
+    if (widget.defaultInputSearchWord != null) {
+      controller.textEditingController.text = widget.defaultInputSearchWord!;
+    }
   }
 
   Widget _defaultHintView() {
@@ -59,41 +58,30 @@ class _SearchPageState extends State<SearchPage> {
           ],
         ),
         const SizedBox(height: 8),
+
         Obx(
           () => Wrap(
+            // ⭐ 很适合 Chip
             spacing: 8,
             runSpacing: 8,
-            children: controller.historySearchedWords.value,
+            children: controller.historySearchedWords.map((word) {
+              return GestureDetector(
+                onTap: () {
+                  controller.search(word);
+                  controller.setTextFieldText(word);
+                },
+                child: Chip(
+                  label: Text(word),
+                  onDeleted: () {
+                    controller.deleteSearchedWord(word);
+                  },
+                ),
+              );
+            }).toList(),
           ),
         ),
       ],
     );
-  }
-
-  Widget _searchHintView() {
-    return Obx(() => ListView(children: controller.searchSuggestionItems));
-  }
-
-  Widget _viewSelecter() {
-    return Obx(() {
-      if (controller.showSearchSuggest.value) {
-        return _searchHintView();
-      } else {
-        return _defaultHintView();
-      }
-    });
-  }
-
-  void _init() {
-    controller.defaultSearchWord = "";
-    if (widget.defaultInputSearchWord != null) {
-      controller.textEditingController.text = widget.defaultInputSearchWord!;
-    }
-  }
-
-  Widget _buildView() {
-    _init();
-    return Container(child: _viewSelecter());
   }
 
   AppBar _appBar(BuildContext context) {
@@ -125,7 +113,6 @@ class _SearchPageState extends State<SearchPage> {
                             onPressed: () {
                               controller.textEditingController.clear();
                               controller.showEditDelete.value = false;
-                              controller.showSearchSuggest.value = false;
                             },
                           ),
                         ),
@@ -156,7 +143,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(context),
-      body: SafeArea(child: _buildView()),
+      body: SafeArea(child: Container(child: _defaultHintView())),
     );
   }
 }

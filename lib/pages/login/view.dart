@@ -55,6 +55,21 @@ class LoginPage extends GetView<LoginController> {
               );
             }),
             const SizedBox(height: 20),
+            Row(
+              children: [
+                Obx(
+                  () => Checkbox(
+                    value: controller.autoRelogin.value,
+                    onChanged: (b) {
+                      if (b == null) return;
+                      controller.autoRelogin.value = b;
+                    },
+                  ),
+                ),
+                const Text("记住我的密码(过期自动重新登录)"),
+              ],
+            ),
+            const SizedBox(height: 20),
             OutlinedButton(
               onPressed: controller.isLoading ? null : controller.startLogin,
               child: const Text("登录"),

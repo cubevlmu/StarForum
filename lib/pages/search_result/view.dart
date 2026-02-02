@@ -151,17 +151,7 @@ class _SearchResultPageState extends State<SearchResultPage>
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: PostCard(
-                          item: DiscussionItem(
-                            id: i.id,
-                            title: i.title,
-                            excerpt: i.firstPost?.contentHtml ?? "",
-                            lastPostedAt: DateTime.parse(i.lastPostedAt),
-                            authorAvatar: i.user?.avatarUrl ?? "",
-                            authorName: i.user?.displayName ?? "",
-                            viewCount: i.views,
-                            commentCount: i.commentCount,
-                            userId: i.users?.keys.first ?? -1
-                          ),
+                          item: i.toItem(),
                         ),
                       ),
                       if (index != controller.searchItems.length - 1)

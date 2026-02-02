@@ -4,8 +4,11 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'package:flutter/widgets.dart';
+
 import 'base.dart';
 
+@immutable
 class ForumInfo {
   final String title;
   final String description;
@@ -13,23 +16,35 @@ class ForumInfo {
   final String welcomeMessage;
   final String logoUrl;
 
-  static ForumInfo empty = ForumInfo(title: "", description: "", welcomeTitle: "", welcomeMessage: "", logoUrl: "");
-  ForumInfo({required this.title, required this.description, required this.welcomeTitle, required this.welcomeMessage, required this.logoUrl});
+  static ForumInfo empty = ForumInfo(
+    title: "",
+    description: "",
+    welcomeTitle: "",
+    welcomeMessage: "",
+    logoUrl: "",
+  );
+  
+  const ForumInfo({
+    required this.title,
+    required this.description,
+    required this.welcomeTitle,
+    required this.welcomeMessage,
+    required this.logoUrl,
+  });
 
-  factory ForumInfo.formJson(String data) {
-    var base = BaseBean.formJson(data);
-    return ForumInfo.formBase(base);
+  factory ForumInfo.fromMap(Map map) {
+    return ForumInfo.fromBase(BaseBean.fromMap(map));
   }
 
-  factory ForumInfo.formBase(BaseBean base) {
+  factory ForumInfo.fromBase(BaseBean base) {
     if (base.data.type == "forums") {
       Map info = base.data.attributes;
       return ForumInfo(
-        title: info["title"],
-        description: info["description"],
-        welcomeTitle: info["welcomeTitle"],
-        welcomeMessage: info["welcomeMessage"],
-        logoUrl: info["logoUrl"]
+        title: info["title"] ?? "",
+        description: info["description"] ?? "",
+        welcomeTitle: info["welcomeTitle"] ?? "",
+        welcomeMessage: info["welcomeMessage"] ?? "",
+        logoUrl: info["logoUrl"] ?? "",
       );
     }
     return empty;

@@ -7,15 +7,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forum/data/api/api.dart';
-import 'package:forum/data/model/discussion_item.dart';
-import 'package:forum/data/model/discussions.dart';
 import 'package:forum/data/repository/discussion_repo.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/pages/post_list/widgets/create_discuss.dart';
 import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/widgets/sheet_util.dart';
-import 'package:get/get.dart';
 
 import '../../di/injector.dart';
 
@@ -53,7 +50,7 @@ class CreateDiscussUtil {
           }
 
           r.user = repo.user;
-          r.firstPost = r.posts?.values.first;
+          r.firstPost = r.posts.values.first;
           if (r.firstPost == null) {
             LogUtil.error(
               "[PostList] Failed to fetch firstPost for the return from create discussion.",
