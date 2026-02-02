@@ -10,6 +10,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:forum/data/db/tables/discussion_table.dart';
 import 'package:forum/data/db/tables/first_table.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -28,29 +29,25 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
-  /// 数据库版本号（⚠️ 以后改表一定要 +1）
   @override
   int get schemaVersion => 5;
 
-  /// 迁移策略
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
     },
     onUpgrade: (m, from, to) async {
-      // ⚠️ 开发期：直接删库重建
-      // await m.deleteTable();
-      await m.createAll();
+      await m.recreateAllViews();
     },
   );
 }
 
-/// SQLite 打开方式
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dir = await getApplicationDocumentsDirectory();
+    final dir = await getApplicationSupportDirectory();
     final file = File(p.join(dir.path, 'forum.db'));
+    LogUtil.info("[Database] Sqlite file start at ${file.path}");
     return NativeDatabase(file);
   });
 }

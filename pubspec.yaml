@@ -57,6 +57,11 @@ flutter:
     #     - asset: fonts/Montserrat-Medium.ttf
     #     - asset: fonts/Montserrat-Regular.ttf 
 
+analyzer:
+  strong-mode:
+    implicit-casts: false
+    implicit-dynamic: false
+
 # 应用图标配置
 flutter_launcher_icons:
   # 为 Android 配置图标

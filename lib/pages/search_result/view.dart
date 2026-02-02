@@ -5,7 +5,6 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/main.dart';
 import 'package:forum/pages/search/view.dart';
 import 'package:forum/pages/search_result/controller.dart';

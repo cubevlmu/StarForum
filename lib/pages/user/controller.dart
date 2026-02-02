@@ -137,6 +137,8 @@ class UserPageController extends GetxController {
     } else {
       refreshController.finishRefresh(IndicatorResult.fail);
     }
+
+    _isSyncing = false;
   }
 
   Future<void> onLoad() async {

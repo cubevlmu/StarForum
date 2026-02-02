@@ -34,7 +34,7 @@ class LogUtil {
 
   // Logger init function
   static Future<void> init() async {
-    final dir = await getApplicationDocumentsDirectory();
+    final dir = await getApplicationSupportDirectory();
     _logDir = Directory('${dir.path}/logs');
 
     if (!_logDir.existsSync()) {

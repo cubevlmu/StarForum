@@ -45,7 +45,7 @@ void main() async {
   LogUtil.info("[Main] End sync tags.");
 
   WindowResizeObserver.instance.init();
-  runApp(const MyApp());
+  runApp(const StarForumApp());
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -58,8 +58,8 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class StarForumApp extends StatelessWidget {
+  const StarForumApp({super.key});
   @override
   Widget build(BuildContext context) {
     return DynamicColorBuilder(

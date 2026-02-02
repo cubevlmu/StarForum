@@ -86,7 +86,7 @@ class DiscussionInfo {
     Map<int, PostInfo> allPosts = {};
     var d = DiscussionInfo.formMaoAndId(base.data.attributes, base.data.id);
 
-    for (var data in base.included) {
+    for (var data in base.included.data) {
       switch (data.type) {
         case "posts":
           var p = PostInfo.fromBaseData(data);
@@ -102,14 +102,14 @@ class DiscussionInfo {
           break;
       }
     }
-    if (base.data.relationships?.containsKey("posts") ?? false) {
-      for (var data in (base.data.relationships?["posts"]["data"] as List)) {
+    if (base.data.relationships.containsKey("posts")) {
+      for (var data in (base.data.relationships["posts"]["data"] as List)) {
         d.postsIdList.add(int.parse(data["id"]));
       }
     }
-    if (base.data.relationships?.containsKey("firstPost") ?? false) {
+    if (base.data.relationships.containsKey("firstPost")) {
       d.postsIdList.add(
-        int.parse(base.data.relationships!["firstPost"]["data"]["id"] ?? "-1"),
+        int.parse(base.data.relationships["firstPost"]["data"]["id"] ?? "-1"),
       );
     }
 

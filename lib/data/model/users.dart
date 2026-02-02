@@ -50,7 +50,7 @@ class UserInfo {
   }
 
   factory UserInfo.fromMap(Map data) {
-    return UserInfo.fromBaseData(BaseData.formMap(BaseBean.fromMap(data).data));
+    return UserInfo.fromBaseData(BaseBean.fromMap(data).data);
   }
 
   factory UserInfo.fromBaseData(BaseData data) {
