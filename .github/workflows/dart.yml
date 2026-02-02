@@ -102,13 +102,13 @@ jobs:
         with:
           name: build_env_files
 
-      - name: Replace pubspec.yaml
-        run: |
-          ls
-          cat pubspec.yaml
-          pwd
-          cat _build_env.config
-        shell: bash
+      # - name: Replace pubspec.yaml
+      #   run: |
+      #     ls
+      #     cat pubspec.yaml
+      #     pwd
+      #     cat _build_env.config
+      #   shell: bash
 
       - name: Read FULL_VERSION from _build_env.config
         id: read_build_env
