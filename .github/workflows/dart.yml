@@ -36,11 +36,11 @@ jobs:
           sed -i "s/^version: .*/version: ${FULL_VERSION}/" pubspec.yaml
 
           cat <<EOF > _build_env.config
-MAIN_VERSION=${MAIN_VERSION}
-BUILD_VERSION=${COMMIT_COUNT}
-FULL_VERSION=${FULL_VERSION}
-SHORT_HASH=${SHORT_HASH}
-EOF
+          MAIN_VERSION=${MAIN_VERSION}
+          BUILD_VERSION=${COMMIT_COUNT}
+          FULL_VERSION=${FULL_VERSION}
+          SHORT_HASH=${SHORT_HASH}
+          EOF
 
           echo "Updated pubspec.yaml:"
           grep "^version:" pubspec.yaml
