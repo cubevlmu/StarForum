@@ -152,13 +152,17 @@ jobs:
           FULL_VERSION=$(grep 'FULL_VERSION=' _build_env.config | cut -d '=' -f2)
 
            if [ "${{ matrix.name }}" = "android" ]; then
-              APK=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+              APK_DIR=build/app/outputs/flutter-apk
+              echo "APK dir content:"
+              ls "$APK_DIR"
+
+              APK=$(ls $APK_DIR/*.apk | head -n 1)
               if [ ! -f "$APK" ]; then
-                echo "APK not found: $APK"
+                echo "No APK found!"
                 exit 1
               fi
-              mv "$APK" app-arm64-v8a-${FULL_VERSION}.apk
-
+              mv "$APK" app-${FULL_VERSION}.apk
+              
           elif [ "${{ matrix.name }}" = "linux" ]; then
             zip -r linux-${FULL_VERSION}.zip build/linux/x64/release/bundle
           elif [ "${{ matrix.name }}" = "windows" ]; then

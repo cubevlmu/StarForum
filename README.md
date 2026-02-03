@@ -1,6 +1,6 @@
 # StarForum
 
-A cross-platform **Flutter** forum client application, targeting **Android, iOS, and Desktop (Windows / macOS / Linux)**.
+A cross-platform **Flutter** flarum forum client application, targeting **Android, iOS, and Desktop (Windows / macOS / Linux)**.
 
 This project focuses on:
 
@@ -73,6 +73,7 @@ flutter doctor
 
 ```bash
 flutter pub get
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ---
@@ -110,23 +111,21 @@ flutter run -d linux
 ### Android
 
 ```bash
-flutter build apk --release
-# Recommended
-flutter build appbundle --release
+flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
 ### iOS
 
 ```bash
-flutter build ios --release
+flutter build ios --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
 ### Desktop
 
 ```bash
-flutter build windows --release
-flutter build macos --release
-flutter build linux --release
+flutter build windows --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
+flutter build macos --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
+flutter build linux --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
 ---
