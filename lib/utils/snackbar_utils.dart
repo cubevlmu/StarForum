@@ -7,17 +7,9 @@
 import 'package:get/get.dart';
 
 class SnackbarUtils {
-  
-  static void showMessageWithTitle(
-    String msg,
-    String? title, 
-  ) {
+  static void showMessage({required String msg, String title = ""}) {
     if (Get.overlayContext != null) {
-      Get.rawSnackbar(title: title, message: msg);
+      Get.rawSnackbar(title: title.isEmpty ? null : title, message: msg);
     }
-  }
-
-  static void showMessage(String msg) {
-    showMessageWithTitle(msg, null);
   }
 }

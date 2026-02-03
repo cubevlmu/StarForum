@@ -55,7 +55,7 @@ class UserInfo {
 
   factory UserInfo.fromBaseData(BaseData data) {
     Map m = data.attributes;
-    final ifo = ExpInfo.fromBaseData(data);
+    final ifo = _parseExpInfo(data);
 
     final u = UserInfo(
       data.id,
@@ -70,9 +70,7 @@ class UserInfo {
       m["groups"],
       m["bio"] ?? "",
     );
-    if (ifo != ExpInfo.empty) {
-      u.expInfo = ifo;
-    }
+    u.expInfo = ifo;
     return u;
   }
 
@@ -103,6 +101,20 @@ class UserInfo {
     null,
     "",
   );
+
+  static ExpInfo? _parseExpInfo(BaseData data) {
+    Map m = data.attributes;
+    if (!data.attributes.containsKey("expLevel")) {
+      return null;
+    }
+    return ExpInfo(
+      m["expLevel"] ?? "",
+      m["expTotal"] ?? 0,
+      m["expPercent"] ?? 0,
+      m["expNext"] ?? "",
+      m["expNextNeed"] ?? 0,
+    );
+  }
 }
 
 class ExpInfo {
@@ -119,17 +131,6 @@ class ExpInfo {
     this.expNext,
     this.expNextNeed,
   );
-
-  factory ExpInfo.fromBaseData(BaseData data) {
-    Map m = data.attributes;
-    return ExpInfo(
-      m["expLevel"] ?? "",
-      m["expTotal"] ?? 0,
-      m["expPercent"] ?? 0,
-      m["expNext"] ?? "",
-      m["expNextNeed"] ?? 0,
-    );
-  }
 
   static ExpInfo empty = ExpInfo("", 0, 0, "", 0);
 }

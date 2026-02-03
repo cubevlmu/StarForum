@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:forum/data/model/tags.dart';
 import 'package:forum/data/repository/tag_repo.dart';
 import 'package:forum/di/injector.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/snackbar_utils.dart';
 
 class CreateDiscussWidget extends StatefulWidget {
@@ -41,12 +42,12 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
     final content = _contentCtrl.text.trim();
 
     if (title.isEmpty || content.isEmpty) {
-      SnackbarUtils.showMessage("标题和正文不能为空");
+      SnackbarUtils.showMessage(msg: "标题和正文不能为空");
       return;
     }
 
     if (title.length < 6) {
-      SnackbarUtils.showMessage("标题至少6个字.");
+      SnackbarUtils.showMessage(msg: "标题至少6个字.");
       return;
     }
 
@@ -54,7 +55,7 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
     if (_primaryTag != null) {
       lst.add(_primaryTag!.id);
     } else {
-      SnackbarUtils.showMessage("主题标签必须选择一个！");
+      SnackbarUtils.showMessage(msg: "主题标签必须选择一个！");
       return;
     }
 
@@ -124,7 +125,13 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
     );
   }
 
-  void _selectTags() {
+  void _selectTags() async {
+    if (!repo.isReady) {
+      await repo.syncTags();
+    }
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -176,7 +183,7 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
                 TextButton(
                   onPressed: () {
                     if (_primaryTag == null) {
-                      SnackbarUtils.showMessage("主题标签必须选择一个!");
+                      SnackbarUtils.showMessage(msg: "主题标签必须选择一个!");
                       return;
                     }
                     setState(() {});
@@ -206,10 +213,7 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
         onChanged: (v) {
           if (v == true) {
             if (!_selectedTags.contains(tag)) {
-              if (_selectedTags.length == 3) {
-                SnackbarUtils.showMessage("最多三个普通标签.");
-                return;
-              }
+              if (_selectedTags.length == 3) _selectedTags.removeAt(0);
               _selectedTags.add(tag);
             }
           } else {
@@ -237,6 +241,6 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
   }
 
   void _onCustomTag() {
-    SnackbarUtils.showMessage("自定义标签功能待实现");
+    SnackbarUtils.showMessage(msg: "自定义标签功能待实现");
   }
 }

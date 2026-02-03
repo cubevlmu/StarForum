@@ -26,6 +26,7 @@ class UserRepo {
   UserInfo? get user => _user;
 
   bool _setupCalled = false;
+  bool _isHandling = false;
 
   int get userId => int.parse(storge.userId ?? "-1");
 
@@ -108,7 +109,13 @@ class UserRepo {
   }
 
   Future<void> logout() async {
+    if (_isHandling) return;
+    _isHandling = true;
+    
+    storge.clearAutoLogin();
     await _clearLogin();
+
+    _isHandling = false;
   }
 
   Future<void> _clearLogin() async {

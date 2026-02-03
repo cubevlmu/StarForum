@@ -47,7 +47,7 @@ class PostPageController extends GetxController {
           "[PostDetail] Failed to fetch post content (content is null).",
         );
         content.value = "<p>内容无法获取到...可能是网络问题</p>";
-        SnackbarUtils.showMessage("无法获取到贴文内容");
+        SnackbarUtils.showMessage(msg: "无法获取到贴文内容");
         return;
       }
       firstPost.value = r;

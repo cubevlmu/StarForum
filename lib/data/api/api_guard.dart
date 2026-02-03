@@ -35,6 +35,42 @@ class ApiGuard {
     }
   }
 
+  static Future<T> runExtra<T>({
+    required String name,
+    required String method,
+    required Future<T> Function() call,
+    String? extra,
+    required T fallback,
+    Function(int, T)? onFinished,
+    Function(int, DioException)? onFailed,
+  }) async {
+    final sw = Stopwatch()..start();
+    try {
+      final result = await call();
+      sw.stop();
+
+      if(onFinished != null) onFinished(sw.elapsedMilliseconds, result);
+      ApiLog.ok(name, "[$method] cost=${sw.elapsedMilliseconds}ms", extra);
+
+      return result;
+    } on DioException catch(e) {
+      sw.stop();
+      if (onFailed != null) onFailed(sw.elapsedMilliseconds, e);
+
+      rethrow;
+    } catch (e, s) {
+      sw.stop();
+
+      ApiLog.exception(
+        name,
+        "[$method] cost=${sw.elapsedMilliseconds}ms",
+        e,
+        s,
+      );
+      return fallback;
+    }
+  }
+
   static Future<(T, bool)> runWithToken<T>({
     required String name,
     required String method,

@@ -33,7 +33,7 @@ class TagInfo {
     this.parent,
     this.isChild,
     this.parentId,
-    this.canStartDiscussion
+    this.canStartDiscussion,
   );
 
   factory TagInfo.fromBaseData(BaseData data) {
@@ -41,7 +41,9 @@ class TagInfo {
 
     int? parentId;
     if (m["isChild"] == true) {
-      parentId = int.parse(data.relationships["parent"]["data"]["id"]);
+      if (data.relationships.containsKey("parent")) {
+        parentId = int.parse(data.relationships["parent"]["data"]["id"]);
+      }
     }
 
     return TagInfo(
@@ -56,7 +58,7 @@ class TagInfo {
       -1,
       m["isChild"] ?? false,
       parentId,
-      m["canStartDiscussion"] ?? false
+      m["canStartDiscussion"] as bool? ?? true,
     );
   }
 

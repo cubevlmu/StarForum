@@ -18,7 +18,7 @@ import '../../di/injector.dart';
 class ReplyUtil {
   static bool _checkLogin(UserRepo repo) {
     if (!repo.isLogin) {
-      SnackbarUtils.showMessage("请先登录!");
+      SnackbarUtils.showMessage(msg: "请先登录!");
       return false;
     }
     return true;
@@ -40,12 +40,12 @@ class ReplyUtil {
 
           if (!rs) {
             repo.logout();
-            SnackbarUtils.showMessage("登录过期!");
+            SnackbarUtils.showMessage(msg: "登录过期!");
             return false;
           }
 
           if (r == null) {
-            SnackbarUtils.showMessageWithTitle("发表失败", "可能是网络问题");
+            SnackbarUtils.showMessage(title: "发表失败", msg: "可能是网络问题");
             return false;
           }
 
@@ -59,7 +59,7 @@ class ReplyUtil {
             curve: Curves.linear,
           );
 
-          SnackbarUtils.showMessage("发表成功");
+          SnackbarUtils.showMessage(msg: "发表成功");
           return true;
         },
       ),
@@ -89,12 +89,12 @@ class ReplyUtil {
 
           if (!rs) {
             repo.logout();
-            SnackbarUtils.showMessage("登录过期!");
+            SnackbarUtils.showMessage(msg: "登录过期!");
             return false;
           }
 
           if (r == null) {
-            SnackbarUtils.showMessageWithTitle("发表失败", "可能是网络问题");
+            SnackbarUtils.showMessage(title: "发表失败", msg: "可能是网络问题");
             return false;
           }
 
@@ -108,7 +108,7 @@ class ReplyUtil {
             curve: Curves.linear,
           );
 
-          SnackbarUtils.showMessage("发表成功");
+          SnackbarUtils.showMessage(msg: "发表成功");
           return true;
         },
       ),
@@ -118,7 +118,7 @@ class ReplyUtil {
   static Future<PostInfo?> addLikeToPost(PostInfo item) async {
     final repo = getIt<UserRepo>();
     if (!repo.isLogin) {
-      SnackbarUtils.showMessage("请先登录!");
+      SnackbarUtils.showMessage(msg: "请先登录!");
       return null;
     }
 
@@ -126,17 +126,17 @@ class ReplyUtil {
       final (r, rs) = await Api.likePost(item.id.toString(), true);
       if (!rs) {
         repo.logout();
-        SnackbarUtils.showMessage("登录过期!");
+        SnackbarUtils.showMessage(msg: "登录过期!");
         return null;
       }
 
       if (r == null) {
         LogUtil.error("[PostPage] failed to like post with empty response");
-        SnackbarUtils.showMessageWithTitle("点赞失败", "可能是网络错误");
+        SnackbarUtils.showMessage(title: "点赞失败", msg: "可能是网络错误");
         return null;
       }
 
-      SnackbarUtils.showMessage(r.likes < item.likes ? "取消点赞成功!" : "点赞成功!");
+      SnackbarUtils.showMessage(msg: r.likes < item.likes ? "取消点赞成功!" : "点赞成功!");
       return r;
     } catch (e, s) {
       LogUtil.errorE(

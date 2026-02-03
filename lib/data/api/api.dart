@@ -1,36 +1,89 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/data/api/api_guard.dart';
 import 'package:forum/data/api/api_log.dart';
 import 'package:forum/data/model/notifications.dart';
 import 'package:forum/utils/http_utils.dart';
 import 'package:forum/utils/log_util.dart';
+import 'package:forum/utils/storage_utils.dart';
 import '../model/discussions.dart';
-import '../model/fourm_info.dart';
+import '../model/forum_info.dart';
 import '../model/login_result.dart';
 import '../model/posts.dart';
 import '../model/tags.dart';
 import '../model/users.dart';
 
-enum PostSort {
-  time, // 按时间
-  number, // 按楼层（正常阅读）
-}
+enum PostSort { time, number }
 
 class Api {
   static final HttpUtils _utils = HttpUtils();
+  static ForumInfo? _buffered;
+  static String _baseUrl = "";
 
-  static Future<ForumInfo?> getForumInfo(String url) async {
-    return ApiGuard.run(
-      name: "getForumInfo",
-      method: "GET",
-      call: () async {
-        return ForumInfo.fromMap((await Dio().get(url)).data);
-      },
-      fallback: null,
-    );
+  static String get getBaseUrl => _baseUrl;
+
+  static Future<bool> setup() async {
+    final r = StorageUtils.networkData.get(SettingsStorageKeys.apiBaseUrl) as String?;
+    if (r == null) return false;
+    if (r.isEmpty) return false;
+    final (rr, _) = await getForumInfo(r);
+    if (rr == null) return false;
+
+    _baseUrl = r;
+    return true;
+  }
+
+  static void setUrl(String url) {
+    _baseUrl = url;
+    StorageUtils.networkData.put(SettingsStorageKeys.apiBaseUrl, url);
+  }
+
+  static Future<(ForumInfo?, int)> getForumInfo(String url) async {
+    if (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1);
+    }
+    if (_buffered != null && _buffered?.url == url) {
+      ApiLog.ok("getForumInfo", "GET", "Local buffered. Url $url");
+      return (_buffered, 0);
+    }
+
+    final sw = Stopwatch()..start();
+    try {
+      final result = ForumInfo.fromMap((await Dio().get("$url/api")).data);
+      sw.stop();
+
+      final time = sw.elapsedMilliseconds;
+      int lagLevel = 0;
+      if (time <= 500) {
+        lagLevel = 0;
+      } else if (time <= 1000) {
+        lagLevel = 1;
+      } else if (time <= 2000) {
+        lagLevel = 2;
+      } else if (time <= 5000) {
+        lagLevel = 3;
+      } else if (time < 10000) {
+        lagLevel = 4;
+      } else {
+        lagLevel = 5;
+      }
+      ApiLog.ok("getForumInfo", "[GET] cost=${sw.elapsedMilliseconds}ms");
+
+      _buffered = result;
+      return (result, lagLevel);
+    } catch (e, s) {
+      sw.stop();
+
+      ApiLog.exception(
+        "getForumInfo",
+        "[GET] cost=${sw.elapsedMilliseconds}ms",
+        e,
+        s,
+      );
+      _buffered = null;
+      return (null, -1);
+    }
   }
 
   static Future<Tags?> getTags() async {
@@ -39,7 +92,7 @@ class Api {
       method: "GET",
       call: () async {
         return TagInfo.getListFormMap(
-          (await _utils.get(ApiConstants.tags)).data,
+          (await _utils.get("$_baseUrl/api/tags")).data,
         );
       },
       fallback: null,
@@ -53,7 +106,7 @@ class Api {
       call: () async {
         return DiscussionInfo.fromMap(
           (await _utils.get(
-            "${ApiConstants.apiBase}/api/discussions/$id?include=user,firstPost",
+            "$_baseUrl/api/discussions/$id?include=user,firstPost",
           )).data,
         );
       },
@@ -83,7 +136,7 @@ class Api {
       method: "GET",
       call: () async {
         final uri = Uri.parse(
-          "${ApiConstants.apiBase}/api/discussions",
+          "$_baseUrl/api/discussions",
         ).replace(queryParameters: params);
         final resp = await _utils.get(uri.toString());
         final data = Discussions.fromMap(resp.data);
@@ -108,7 +161,7 @@ class Api {
         : "$key tag:${Uri.encodeComponent(tagSlug)}";
 
     final url =
-        "${ApiConstants.apiBase}/api/discussions"
+        "$_baseUrl/api/discussions"
         "?include=user,lastPostedUser,mostRelevantPost,mostRelevantPost.user,firstPost,tags"
         "&filter[q]=${Uri.encodeComponent(q)}"
         "&page[offset]=$offset"
@@ -130,7 +183,7 @@ class Api {
     int limit = 20,
   }) async {
     final url =
-        "${ApiConstants.apiBase}/api/discussions"
+        "$_baseUrl/api/discussions"
         "?include=user,lastPostedUser,mostRelevantPost,mostRelevantPost.user,firstPost,tags"
         "&filter[tag]=$tag"
         "&page[offset]=$offset"
@@ -148,7 +201,7 @@ class Api {
 
   static Future<PostInfo?> getFirstPost(String discussionId) async {
     final url =
-        "${ApiConstants.apiBase}/api/posts"
+        "$_baseUrl/api/posts"
         "?filter[discussion]=$discussionId"
         "&sort=number"
         "&page[limit]=1";
@@ -192,7 +245,7 @@ class Api {
       method: "POST",
       call: () async {
         var r = await _utils.post(
-          "${ApiConstants.apiBase}/api/discussions",
+          "$_baseUrl/api/discussions",
           data: m,
           options: Options(contentType: 'application/vnd.api+json'),
         );
@@ -218,7 +271,7 @@ class Api {
     };
 
     final url =
-        "${ApiConstants.apiBase}/api/posts"
+        "$_baseUrl/api/posts"
         "?filter[discussion]=$discussionId"
         "&sort=$sortKey"
         "&page[offset]=$offset"
@@ -235,7 +288,7 @@ class Api {
   }
 
   static Future<Posts?> getPostsById(List<int> l) async {
-    var url = "${ApiConstants.apiBase}/api/posts?filter[id]=${l.join(",")}";
+    var url = "$_baseUrl/api/posts?filter[id]=${l.join(",")}";
 
     return ApiGuard.run(
       name: "getPostsById",
@@ -248,7 +301,7 @@ class Api {
   }
 
   static Future<Posts?> getPost(String id) async {
-    var url = "${ApiConstants.apiBase}/api/posts?filter[id]=$id";
+    var url = "$_baseUrl/api/posts?filter[id]=$id";
 
     return ApiGuard.run(
       name: "getPostsById",
@@ -282,7 +335,7 @@ class Api {
       call: () async {
         return PostInfo.fromMap(
           (await _utils.post(
-            "${ApiConstants.apiBase}/api/posts",
+            "$_baseUrl/api/posts",
             data: m,
           ))?.data,
         );
@@ -316,7 +369,7 @@ class Api {
       call: () async {
         return PostInfo.fromMap(
           (await _utils.patch(
-            "${ApiConstants.apiBase}/api/posts/$id",
+            "$_baseUrl/api/posts/$id",
             data: m,
           )).data,
         );
@@ -331,7 +384,7 @@ class Api {
       method: "PATCH",
       call: () async {
         var r = await _utils.patch(
-          "${ApiConstants.apiBase}/api/discussions/$postId",
+          "$_baseUrl/api/discussions/$postId",
           data: {
             "data": {
               "type": "discussions",
@@ -359,12 +412,12 @@ class Api {
   }
 
   static Future<UserInfo?> getUserInfoByNameOrId(String nameOrId) async {
-    return getUserByUrl("${ApiConstants.apiBase}/api/users/$nameOrId");
+    return getUserByUrl("$_baseUrl/api/users/$nameOrId");
   }
 
   static Future<bool> isTokenValid() async {
     try {
-      await _utils.get("${ApiConstants.apiBase}/api/users?page[limit]=1");
+      await _utils.get("$_baseUrl/api/users?page[limit]=1");
       ApiLog.ok("isTokenValid", "Token varified.");
       return true;
     } on DioException catch (e) {
@@ -390,15 +443,13 @@ class Api {
     String? url,
   }) async {
     final reqUrl =
-        url ?? "${ApiConstants.apiBase}/api/notifications?page[limit]=20";
+        url ?? "$_baseUrl/api/notifications?page[limit]=20";
 
     return ApiGuard.runWithToken(
       name: "getNotification",
       method: "GET",
       call: () async {
-        return NotificationInfoList.fromMap(
-          (await _utils.get(reqUrl)).data,
-        );
+        return NotificationInfoList.fromMap((await _utils.get(reqUrl)).data);
       },
       fallback: null,
     );
@@ -427,7 +478,7 @@ class Api {
       method: "PATCH",
       call: () async => NotificationsInfo.fromMap(
         (await _utils.patch(
-          "${ApiConstants.apiBase}/api/notifications/$id",
+          "$_baseUrl/api/notifications/$id",
           data: m,
         )).data,
       ),
@@ -441,7 +492,7 @@ class Api {
       method: "GET",
       call: () async {
         var r = await _utils.post(
-          "${ApiConstants.apiBase}/api/notifications/read",
+          "$_baseUrl/api/notifications/read",
         );
         if (r?.statusCode == 204) {
           return true;
@@ -458,7 +509,7 @@ class Api {
       method: "GET",
       call: () async {
         final r = await _utils.delete(
-          "${ApiConstants.apiBase}/api/notifications",
+          "$_baseUrl/api/notifications",
         );
 
         if (r.statusCode == 204) {
@@ -490,7 +541,7 @@ class Api {
         };
 
         final uri = Uri.parse(
-          "${ApiConstants.apiBase}/api/posts",
+          "$_baseUrl/api/posts",
         ).replace(queryParameters: params);
 
         final resp = await _utils.get(uri.toString());
@@ -518,8 +569,9 @@ class Api {
       method: "POST",
       call: () async {
         Response<dynamic>? result;
+        LogUtil.debug("$_baseUrl/api/token");
         result = (await _utils.post(
-          "${ApiConstants.apiBase}/api/token",
+          "$_baseUrl/api/token",
           data: {"identification": username, "password": password},
         ));
         var d = result?.data;

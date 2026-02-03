@@ -81,6 +81,7 @@ class _UserBox extends StatelessWidget {
               avatarUrl: item.authorAvatar,
               radius: 20,
               cacheWidthHeight: 200,
+              placeholder: item.authorName.isEmpty ? "" : item.authorName[0],
             ),
           ),
           Column(

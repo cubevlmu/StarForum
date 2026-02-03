@@ -306,16 +306,18 @@ class _UserIdentityCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(controller.buildExpString(), style: textStyle),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: controller.getExpPercent(),
-                      minHeight: 6,
+                  if (controller.hasExpData) ...[
+                    Text(controller.buildExpString(), style: textStyle),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: controller.getExpPercent(),
+                        minHeight: 6,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 12),
+                  ],
 
                   /// Bio
                   Container(

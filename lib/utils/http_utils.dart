@@ -4,8 +4,11 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:forum/data/api/api_constants.dart';
+import 'package:forum/utils/log_util.dart';
+import 'package:forum/utils/snackbar_utils.dart';
 
 class HttpUtils {
   static final HttpUtils _instance = HttpUtils._internal();
@@ -74,12 +77,10 @@ class HttpUtils {
     dio = Dio(options);
     dio.transformer = BackgroundTransformer();
 
-    // dio.interceptors.add(AuthInterceptor()); // ⭐ 新增
-    // dio.interceptors.add(ErrorInterceptor());
+    dio.interceptors.add(ErrorInterceptor());
   }
 
-  Future<void> init() async {
-  }
+  Future<void> init() async {}
 
   void cancelRequests({required CancelToken token}) {
     _cancelToken.cancel("cancelled");
@@ -119,39 +120,36 @@ class HttpUtils {
   }
 }
 
-// class ErrorInterceptor extends Interceptor {
-//   Future<bool> isConnected() async {
-//     var connectivityResult = await (Connectivity().checkConnectivity());
-//     return connectivityResult != ConnectivityResult.none;
-//   }
+class ErrorInterceptor extends Interceptor {
+  Future<bool> isConnected() async {
+    try {
+      var connectivityResult = await (Connectivity().checkConnectivity());
+      return connectivityResult != ConnectivityResult.none;
+    } catch (e, s) {
+      LogUtil.errorE(
+        "[Http] Failed to fetch system connectivity status.",
+        e,
+        s,
+      );
+      rethrow;
+    }
+  }
 
-//   @override
-//   Future<void> onError(
-//     DioException err,
-//     ErrorInterceptorHandler handler,
-//   ) async {
-//     switch (err.type) {
-//       case DioExceptionType.unknown:
-//         if (!await isConnected()) {
-//           Get.rawSnackbar(title: '网络未连接 ', message: '请检查网络状态');
-//           handler.reject(err);
-//         }
-//         break;
-//       default:
-//     }
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    switch (err.type) {
+      case DioExceptionType.unknown:
+        if (!await isConnected()) {
+          SnackbarUtils.showMessage(title: '网络未连接 ', msg: '请检查网络状态');
+          handler.reject(err);
+        }
+        break;
+      default:
+    }
 
-//     return super.onError(err, handler);
-//   }
-// }
-
-// class AuthInterceptor extends Interceptor {
-//   @override
-//   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-//     final token = AuthStorage.accessToken;
-//     if (token != null && token.isNotEmpty) {
-//       options.headers['Authorization'] = 'Token $token';
-//     }
-
-//     handler.next(options);
-//   }
-// }
+    return super.onError(err, handler);
+  }
+}

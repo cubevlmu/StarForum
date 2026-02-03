@@ -19,7 +19,7 @@ import '../../di/injector.dart';
 class CreateDiscussUtil {
   static bool _checkLogin(UserRepo repo) {
     if (!repo.isLogin) {
-      SnackbarUtils.showMessage("请先登录!");
+      SnackbarUtils.showMessage(msg: "请先登录!");
       return false;
     }
     return true;
@@ -40,12 +40,12 @@ class CreateDiscussUtil {
 
           if (!rs) {
             repo.logout();
-            SnackbarUtils.showMessage("登录过期!");
+            SnackbarUtils.showMessage(msg: "登录过期!");
             return false;
           }
 
           if (r == null) {
-            SnackbarUtils.showMessageWithTitle("发表失败", "可能是网络问题");
+            SnackbarUtils.showMessage(title: "发表失败", msg: "可能是网络问题");
             return false;
           }
 
@@ -55,7 +55,7 @@ class CreateDiscussUtil {
             LogUtil.error(
               "[PostList] Failed to fetch firstPost for the return from create discussion.",
             );
-            SnackbarUtils.showMessage("数据异常");
+            SnackbarUtils.showMessage(msg: "数据异常");
             return true;
           }
 
@@ -69,7 +69,7 @@ class CreateDiscussUtil {
             curve: Curves.linear,
           );
 
-          SnackbarUtils.showMessage("发表成功");
+          SnackbarUtils.showMessage(msg: "发表成功");
           return true;
         },
       ),

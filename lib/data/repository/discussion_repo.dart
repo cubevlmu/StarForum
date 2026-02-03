@@ -208,4 +208,9 @@ class DiscussionRepository {
       sourceUpdatedAt: editedAt,
     );
   }
+
+  Future<void> clearAll() async {
+    await discussionsDao.clearAll();
+    await excerptDao.clearAll();
+  }
 }

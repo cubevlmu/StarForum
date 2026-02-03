@@ -5,10 +5,10 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/main.dart';
 import 'package:forum/pages/search/view.dart';
 import 'package:forum/pages/search_result/controller.dart';
 import 'package:forum/widgets/post_card.dart';
+import 'package:forum/widgets/shared_notice.dart';
 import 'package:forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
@@ -35,42 +35,6 @@ class _SearchResultPageState extends State<SearchResultPage>
   void dispose() {
     Get.delete<SearchResultController>();
     super.dispose();
-  }
-
-  Widget _onEmptySearch(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            isStarFourmForATC
-                ? Obx(() {
-                    return Text(
-                      controller.emojiText.value,
-                      style: TextStyle(fontSize: 64),
-                    );
-                  })
-                : const Text("🔍", style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 16),
-            Text(
-              "没有找到相关内容",
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "换个关键词试试吧",
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   AppBar _appBar(BuildContext context, SearchResultController controller) {
@@ -137,7 +101,11 @@ class _SearchResultPageState extends State<SearchResultPage>
                   child: Obx(() {
                     return controller.isSearching.value
                         ? const SizedBox.shrink()
-                        : _onEmptySearch(context);
+                        : NoticeWidget(
+                            emoji: "🔍",
+                            title: "没有找到相关内容",
+                            tips: "换个关键词试试吧",
+                          );
                   }),
                 ),
               )
@@ -149,9 +117,7 @@ class _SearchResultPageState extends State<SearchResultPage>
                     children: [
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: PostCard(
-                          item: i.toItem(),
-                        ),
+                        child: PostCard(item: i.toItem()),
                       ),
                       if (index != controller.searchItems.length - 1)
                         const Divider(

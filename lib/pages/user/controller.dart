@@ -6,7 +6,6 @@
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/data/model/discussions.dart';
@@ -28,7 +27,7 @@ class UserPageController extends GetxController {
     controlFinishLoad: true,
     controlFinishRefresh: true,
   );
-  CacheManager cacheManager = CacheUtils.avatarCacheManager;
+  final cacheManager = CacheUtils.avatarCacheManager;
   ScrollController scrollController = ScrollController();
 
   final List<PostInfo> items = [];
@@ -45,6 +44,8 @@ class UserPageController extends GetxController {
   final int userId;
   int currentPage = 1;
   UserInfo? info;
+
+  bool get hasExpData => info?.expInfo != null;
 
   Future<void> loadUserData() async {
     try {
@@ -225,23 +226,13 @@ class UserPageController extends GetxController {
     try {
       final r = await Api.getDiscussionById(discussion.toString());
       if (r == null) {
-        SnackbarUtils.showMessage("获取帖子信息失败");
+        SnackbarUtils.showMessage(msg: "获取帖子信息失败");
         return null;
       }
       r.firstPost = r.posts[r.firstPostId];
       r.firstPost?.user = r.users.values.first;
-      return DiscussionItem(
-        id: r.id,
-        title: r.title,
-        excerpt: r.firstPost?.contentHtml ?? "",
-        lastPostedAt: r.lastPostedAt,
-        authorAvatar: r.firstPost?.user?.avatarUrl ?? "",
-        authorName: r.firstPost?.user?.displayName ?? "",
-        viewCount: r.views,
-        likeCount: r.firstPost?.likes ?? 0,
-        commentCount: r.commentCount,
-        userId: r.users.keys.first,
-      );
+      r.user = r.users.values.first;
+      return r.toItem();
     } catch (e, s) {
       LogUtil.errorE(
         "[UserPage] Failed to fetch discussion information with id: $discussion with error:",

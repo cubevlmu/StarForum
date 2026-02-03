@@ -1,4 +1,5 @@
 import 'package:forum/data/model/discussion_item.dart';
+import 'package:forum/utils/log_util.dart';
 
 import 'base.dart';
 import 'posts.dart';
@@ -145,19 +146,25 @@ class Discussions {
       return Discussions(list: list, links: base.links);
     }
     for (var data in base.included.data) {
-      switch (data.type) {
-        case "users":
-          var u = UserInfo.fromBaseData(data);
-          users.addAll({u.id: u});
-          break;
-        case "posts":
-          var p = PostInfo.fromBaseData(data);
-          posts.addAll({p.id: p});
-          break;
-        case "tags":
-          var t = TagInfo.fromBaseData(data);
-          tags.addAll({t.id: t});
-          break;
+      try {
+        switch (data.type) {
+          case "users":
+            var u = UserInfo.fromBaseData(data);
+            users.addAll({u.id: u});
+            break;
+          case "posts":
+            var p = PostInfo.fromBaseData(data);
+            posts.addAll({p.id: p});
+            break;
+          case "tags":
+            var t = TagInfo.fromBaseData(data);
+            tags.addAll({t.id: t});
+            break;
+        }
+      } catch (e) {
+        LogUtil.error(
+          "[Parser] Failed to parse discussion item at base.include.data $e",
+        );
       }
     }
     for (var data in base.data.list) {
@@ -185,8 +192,15 @@ class Discussions {
 
       d.tags.clear();
       for (var m in (data.relationships["tags"]["data"] as List)) {
-        Map map = m;
-        d.tags.add(tags[int.parse(map["id"])]!);
+        try {
+          final id = int.parse(m["id"] ?? "0");
+          if (!tags.containsKey(id)) continue;
+          d.tags.add(tags[id]!);
+        } catch (e) {
+          LogUtil.error(
+            "[Parser] Failed to parse discussion item at d.tags.add $e",
+          );
+        }
       }
       list.add(d);
     }

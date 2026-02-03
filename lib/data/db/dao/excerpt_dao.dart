@@ -7,6 +7,7 @@
 import 'package:drift/drift.dart';
 import 'package:forum/data/db/app_database.dart';
 import 'package:forum/data/db/tables/discussion_excerpt_cache.dart';
+import 'package:forum/utils/log_util.dart';
 
 part 'excerpt_dao.g.dart';
 
@@ -34,4 +35,10 @@ class ExcerptDao extends DatabaseAccessor<AppDatabase> with _$ExcerptDaoMixin {
       generatedAt: Value(DateTime.now()),
     ),
   );
+
+  
+  Future<void> clearAll() async {
+    final r = await delete(dbDiscussionExcerptCache).go();
+    LogUtil.debug("[Db] Excerpts delete $r rows");
+  }
 }

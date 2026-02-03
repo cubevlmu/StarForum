@@ -76,7 +76,7 @@ class UserDialogWidget extends StatelessWidget {
         e,
         s,
       );
-      SnackbarUtils.showMessage("打开失败");
+      SnackbarUtils.showMessage(msg: "打开失败");
     }
   }
 

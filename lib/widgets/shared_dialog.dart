@@ -57,6 +57,28 @@ class SharedDialog {
       ),
     );
   }
+
+  static void showInputDialog(
+    BuildContext context,
+    String title,
+    String content,
+    String aText,
+    VoidCallback aAction,
+    String bText,
+    Function(String) bAction,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => _InputDialog(
+        title: title,
+        content: content,
+        aText: aText,
+        aAction: aAction,
+        bText: bText,
+        bAction: bAction,
+      ),
+    );
+  }
 }
 
 class _SimpleDialog extends StatelessWidget {
@@ -152,7 +174,7 @@ class _LogoutDialog extends StatelessWidget {
   void _onSubmit(BuildContext context) async {
     final repo = getIt<UserRepo>();
     await repo.logout();
-    SnackbarUtils.showMessage("登出成功!");
+    SnackbarUtils.showMessage(msg: "登出成功!");
     if (!context.mounted) return;
     Navigator.pop(context, 'OK');
   }
@@ -170,6 +192,61 @@ class _LogoutDialog extends StatelessWidget {
         TextButton(
           onPressed: () => _onSubmit(context),
           child: const Text("确认"),
+        ),
+      ],
+    );
+  }
+}
+
+class _InputDialog extends StatelessWidget {
+  final String title;
+  final String content;
+  final String aText;
+  final Function() aAction;
+  final String bText;
+  final Function(String) bAction;
+
+  const _InputDialog({
+    required this.title,
+    required this.content,
+    required this.aText,
+    required this.aAction,
+    required this.bText,
+    required this.bAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = TextEditingController();
+
+    return AlertDialog(
+      title: Text(title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(content),
+          const SizedBox(height: 12),
+          TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: '请输入文字'),
+          ),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+            aAction();
+          },
+          child: Text(aText),
+        ),
+        TextButton(
+          onPressed: () {
+            final value = controller.text;
+            Navigator.pop(context);
+            bAction(value);
+          },
+          child: Text(bText),
         ),
       ],
     );

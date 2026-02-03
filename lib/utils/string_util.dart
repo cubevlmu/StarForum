@@ -1,7 +1,6 @@
 import 'package:get/get_utils/src/extensions/export.dart';
 
 class StringUtil {
-  
   static String numFormat(int num) {
     double num1 = num / 10000;
     if (num1 >= 1) {
@@ -156,6 +155,44 @@ class StringUtil {
         query.write(Uri.encodeQueryComponent(params[key]?.toString() ?? ''));
       });
     return query.toString();
+  }
+
+  static String ensureNotNegative(int i) {
+    if (i < 0) return "0";
+    return i.toString();
+  }
+
+  static String? normalizeSiteUrl(String input) {
+    var url = input.trim();
+
+    if (url.isEmpty) return null;
+
+    if (!url.contains('://')) {
+      url = 'https://$url';
+    }
+
+    Uri uri;
+    try {
+      uri = Uri.parse(url);
+    } catch (_) {
+      return null;
+    }
+
+    if (!uri.hasAuthority) return null;
+    uri = uri.replace(scheme: 'https');
+    var path = uri.path.replaceAll(RegExp(r'/+'), '/');
+
+    if (path.endsWith('/') && path.length > 1) {
+      path = path.substring(0, path.length - 1);
+    }
+
+    uri = uri.replace(
+      path: path == '/' ? '' : path,
+      query: null,
+      fragment: null,
+    );
+
+    return uri.toString();
   }
 }
 

@@ -33,14 +33,14 @@ class SettingsUtil {
 
   static AppTheme get currentTheme {
     var index = getValue(
-      SettingsStorageKeys.biliTheme,
+      SettingsStorageKeys.appTheme,
       defaultValue: AppTheme.dynamic.index,
     );
     return AppTheme.values[index];
   }
 
   static void changeTheme(AppTheme theme) {
-    setValue(SettingsStorageKeys.biliTheme, theme.index);
+    setValue(SettingsStorageKeys.appTheme, theme.index);
     Get.forceAppUpdate();
   }
 }

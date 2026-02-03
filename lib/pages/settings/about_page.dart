@@ -3,9 +3,11 @@
  * @LastEditors: cubevlmu khfahqp@gmail.com
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forum/pages/settings/dev_page.dart';
+import 'package:forum/utils/log_util.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -24,7 +26,7 @@ class AboutPage extends StatelessWidget {
         children: [
           ListTile(
             title: const Text("版本"),
-            onTap: () {
+            onTap: kDebugMode ? () {
               tapTimes += 1;
               if (tapTimes == 5) {
                 tapTimes = 0;
@@ -34,7 +36,7 @@ class AboutPage extends StatelessWidget {
                 );
                 return;
               }
-            },
+            } : null,
             subtitle: Text("1.0.0"),
             trailing: TextButton(
               child: const Text("检查更新"),
@@ -84,6 +86,13 @@ class AboutPage extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+          const Divider(height: 1, thickness: 0.5),
+          ListTile(
+            title: Text("程序日志"),
+            onTap: () {
+              LogUtil.shareLog(day: DateTime.now());
+            },
           ),
         ],
       ),

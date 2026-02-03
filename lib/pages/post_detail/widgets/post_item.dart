@@ -55,6 +55,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                       );
                     },
                     cacheWidthHeight: 200,
+                    placeholder: widget.reply.user?.displayName[0] ?? "",
                   ),
                   const SizedBox(height: 10),
                 ],

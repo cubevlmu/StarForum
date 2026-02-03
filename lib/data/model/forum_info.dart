@@ -10,6 +10,7 @@ import 'base.dart';
 
 @immutable
 class ForumInfo {
+  final String url;
   final String title;
   final String description;
   final String welcomeTitle;
@@ -17,6 +18,7 @@ class ForumInfo {
   final String logoUrl;
 
   static ForumInfo empty = ForumInfo(
+    url: "",
     title: "",
     description: "",
     welcomeTitle: "",
@@ -25,6 +27,7 @@ class ForumInfo {
   );
   
   const ForumInfo({
+    required this.url,
     required this.title,
     required this.description,
     required this.welcomeTitle,
@@ -41,6 +44,7 @@ class ForumInfo {
       Map info = base.data.attributes;
       return ForumInfo(
         title: info["title"] ?? "",
+        url: info["baseUrl"],
         description: info["description"] ?? "",
         welcomeTitle: info["welcomeTitle"] ?? "",
         welcomeMessage: info["welcomeMessage"] ?? "",

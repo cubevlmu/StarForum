@@ -54,16 +54,10 @@ class _ContentViewState extends State<ContentView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final e in children) _buildBlock(context, e),
-        ],
+        children: [for (final e in children) _buildBlock(context, e)],
       ),
     );
   }
-
-  // =========================
-  // Block level
-  // =========================
 
   Widget _buildBlock(BuildContext context, dom.Element element) {
     final theme = Theme.of(context);
@@ -75,7 +69,10 @@ class _ContentViewState extends State<ContentView> {
         return _padding(
           RichText(
             text: TextSpan(
-              style: TextStyle(fontSize: ContentView.textSize, color: textColor),
+              style: TextStyle(
+                fontSize: ContentView.textSize,
+                color: textColor,
+              ),
               children: _buildInline(context, element.nodes),
             ),
           ),
@@ -101,9 +98,7 @@ class _ContentViewState extends State<ContentView> {
             style: TextStyle(
               fontSize: size,
               fontWeight: FontWeight.bold,
-              color: element.localName == "h6"
-                  ? theme.dividerColor
-                  : null,
+              color: element.localName == "h6" ? theme.dividerColor : null,
             ),
           ),
         );
@@ -125,8 +120,10 @@ class _ContentViewState extends State<ContentView> {
             padding: const EdgeInsets.all(15),
             child: RichText(
               text: TextSpan(
-                style:
-                    TextStyle(fontSize: ContentView.textSize, color: textColor),
+                style: TextStyle(
+                  fontSize: ContentView.textSize,
+                  color: textColor,
+                ),
                 children: _buildInline(context, element.nodes),
               ),
             ),
@@ -168,8 +165,10 @@ class _ContentViewState extends State<ContentView> {
               for (final c in element.children)
                 Text(
                   isOrdered ? "${index++}. ${c.text}" : "• ${c.text}",
-                  style:
-                      TextStyle(fontSize: ContentView.textSize, color: textColor),
+                  style: TextStyle(
+                    fontSize: ContentView.textSize,
+                    color: textColor,
+                  ),
                 ),
             ],
           ),
@@ -179,7 +178,17 @@ class _ContentViewState extends State<ContentView> {
         return const SizedBox();
 
       case "div":
-        return Text(element.outerHtml.replaceAll("<div", "<p"));
+        return _padding(
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: ContentView.textSize,
+                color: textColor,
+              ),
+              children: _buildInline(context, element.nodes),
+            ),
+          ),
+        );
 
       default:
         if (kDebugMode) {
@@ -188,8 +197,10 @@ class _ContentViewState extends State<ContentView> {
         return _padding(
           RichText(
             text: TextSpan(
-              style:
-                  TextStyle(fontSize: ContentView.textSize, color: textColor),
+              style: TextStyle(
+                fontSize: ContentView.textSize,
+                color: textColor,
+              ),
               children: _buildInline(context, element.nodes),
             ),
           ),
@@ -197,12 +208,7 @@ class _ContentViewState extends State<ContentView> {
     }
   }
 
-  // =========================
-  // Inline level
-  // =========================
-
-  List<InlineSpan> _buildInline(
-      BuildContext context, dom.NodeList nodes) {
+  List<InlineSpan> _buildInline(BuildContext context, dom.NodeList nodes) {
     final spans = <InlineSpan>[];
     _walkInline(context, nodes, spans);
     return spans;
@@ -233,33 +239,43 @@ class _ContentViewState extends State<ContentView> {
       switch (parent) {
         case "b":
         case "strong":
-          spans.add(TextSpan(
+          spans.add(
+            TextSpan(
               text: n.text,
-              style: const TextStyle(fontWeight: FontWeight.bold)));
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          );
           break;
 
         case "em":
-          spans.add(TextSpan(
+          spans.add(
+            TextSpan(
               text: n.text,
-              style: const TextStyle(fontStyle: FontStyle.italic)));
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
+          );
           break;
 
         case "code":
-          spans.add(TextSpan(
-            text: n.text,
-            style: TextStyle(
-              color: scheme.onSurfaceVariant,
-              backgroundColor: scheme.surfaceContainerHighest,
+          spans.add(
+            TextSpan(
+              text: n.text,
+              style: TextStyle(
+                color: scheme.onSurfaceVariant,
+                backgroundColor: scheme.surfaceContainerHighest,
+              ),
             ),
-          ));
+          );
           break;
 
         case "s":
         case "del":
-          spans.add(TextSpan(
+          spans.add(
+            TextSpan(
               text: n.text,
-              style: const TextStyle(
-                  decoration: TextDecoration.lineThrough)));
+              style: const TextStyle(decoration: TextDecoration.lineThrough),
+            ),
+          );
           break;
 
         case "br":
@@ -267,11 +283,15 @@ class _ContentViewState extends State<ContentView> {
           break;
 
         default:
-          spans.add(TextSpan(
-            text: n.text,
-            style:
-                TextStyle(fontSize: ContentView.textSize, color: textColor),
-          ));
+          spans.add(
+            TextSpan(
+              text: n.text,
+              style: TextStyle(
+                fontSize: ContentView.textSize,
+                color: textColor,
+              ),
+            ),
+          );
           break;
       }
     }
@@ -315,10 +335,13 @@ class _ContentViewState extends State<ContentView> {
     switch (className) {
       case "UserMention":
         type = ContentLikeType.kUserMention;
-        child = Text(text,
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary));
+        child = Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        );
         break;
 
       case "PostMention":
@@ -326,24 +349,31 @@ class _ContentViewState extends State<ContentView> {
         child = Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.reply,
-                size: ContentView.textSize,
-                color: Theme.of(context).colorScheme.primary),
-            Text(text,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary)),
+            Icon(
+              Icons.reply,
+              size: ContentView.textSize,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            Text(
+              text,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
           ],
         );
         break;
 
       default:
-        child = Text(text,
-            style: TextStyle(
-                decoration: TextDecoration.underline,
-                fontWeight: FontWeight.bold,
-                color:
-                    Theme.of(context).textTheme.bodyMedium?.color));
+        child = Text(
+          text,
+          style: TextStyle(
+            decoration: TextDecoration.underline,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
+        );
         break;
     }
 
@@ -357,17 +387,13 @@ class _ContentViewState extends State<ContentView> {
     );
   }
 
-  // =========================
-  // Utils
-  // =========================
-
   Widget _padding(Widget child) =>
       Padding(padding: const EdgeInsets.all(5), child: child);
 
   void _previewImage(BuildContext context, String url) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ImagePreviewWidget(url: url)),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => ImagePreviewWidget(url: url)));
   }
 
   void _onLinkTap(BuildContext context, String s, ContentLikeType type) {
@@ -377,25 +403,20 @@ class _ContentViewState extends State<ContentView> {
           launchUrlString(s);
           break;
         case ContentLikeType.kUserMention:
-          final id =
-              int.parse(s.replaceAll("${ApiConstants.apiBase}/u/", ""));
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => UserPage(userId: id)),
-          );
+          final id = int.parse(s.replaceAll("${ApiConstants.apiBase}/u/", ""));
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => UserPage(userId: id)));
           break;
         case ContentLikeType.kReply:
-          SnackbarUtils.showMessage("功能开发中");
+          SnackbarUtils.showMessage(msg: "功能开发中");
           break;
         default:
           break;
       }
     } catch (e, st) {
-      LogUtil.errorE(
-        "[ContentView] Failed to open link: $s",
-        e,
-        st,
-      );
-      SnackbarUtils.showMessage("链接打开失败");
+      LogUtil.errorE("[ContentView] Failed to open link: $s", e, st);
+      SnackbarUtils.showMessage(msg: "链接打开失败");
     }
   }
 }

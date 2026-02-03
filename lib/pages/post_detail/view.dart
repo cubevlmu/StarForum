@@ -7,7 +7,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api_constants.dart';
+import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/pages/post_detail/controller.dart';
 import 'package:forum/pages/post_detail/widgets/post_item.dart';
@@ -52,7 +52,7 @@ class _PostPageState extends State<PostPage>
       floatingActionButton: FloatingActionButton(
         onPressed: controller.showAddReplySheet,
         tooltip: '发表评论',
-        child: Icon(Icons.reply),
+        child: Icon(Icons.reply_all_outlined),
       ),
       appBar: _DetailTitleBar(item: widget.item),
       body: Padding(
@@ -73,10 +73,8 @@ class _SortReplyItemWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 12, right: 12),
-          child: Obx(
-            () => Text(
-              "回复: ${StringUtil.numFormat(replyController.replyCount.value)}",
-            ),
+          child: Text(
+            "回复: ${StringUtil.ensureNotNegative(replyController.discussion.commentCount-1)}",
           ),
         ),
         const Spacer(),
@@ -130,7 +128,7 @@ class _DetailTitleBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   void _onShareClick() async {
-    await Share.shareUri(Uri.parse("${ApiConstants.apiBase}/d/${item.id}"));
+    await Share.shareUri(Uri.parse("${Api.getBaseUrl}/d/${item.id}"));
   }
 }
 
@@ -156,7 +154,14 @@ class _DetailPageReplies extends StatelessWidget {
             controller: controller.scrollController,
             physics: physics,
             slivers: [
-              SliverToBoxAdapter(child: Obx(() => PostMainWidget(content: item, info: controller.firstPost.value))),
+              SliverToBoxAdapter(
+                child: Obx(
+                  () => PostMainWidget(
+                    content: item,
+                    info: controller.firstPost.value,
+                  ),
+                ),
+              ),
 
               SliverToBoxAdapter(
                 child: _SortReplyItemWidget(replyController: controller),

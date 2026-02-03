@@ -4,13 +4,18 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 import 'package:flutter/material.dart';
+import 'package:forum/data/api/api.dart';
 import 'package:forum/pages/login/controller.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class LoginPage extends GetView<LoginController> {
   const LoginPage({super.key});
 
   Widget _buildView(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     var outlineInputBorder = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(10)),
       borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
@@ -73,6 +78,21 @@ class LoginPage extends GetView<LoginController> {
             OutlinedButton(
               onPressed: controller.isLoading ? null : controller.startLogin,
               child: const Text("登录"),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () => launchUrlString(Api.getBaseUrl),
+              child: Text(
+                "注册账号(前往web端)",
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.primary,
+                ),
+              ),
             ),
           ],
         ),

@@ -15,7 +15,7 @@ class AvatarWidget extends StatelessWidget {
     required this.radius,
     this.onPressed,
     this.cacheWidthHeight,
-    this.placeholder = "U",
+    this.placeholder = "",
   });
   final String avatarUrl;
   final String placeholder;

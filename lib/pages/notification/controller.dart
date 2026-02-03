@@ -80,7 +80,7 @@ class NotificationPageController extends GetxController {
       if (!repo.isLogin) {
         LogUtil.error("[NotifyPage] refresh failed, user not login.");
         if (!isFirstSync) {
-          SnackbarUtils.showMessage("用户未登录");
+          SnackbarUtils.showMessage(msg: "用户未登录");
         }
         refreshController.finishRefresh(IndicatorResult.fail);
         refreshController.finishLoad(IndicatorResult.fail);
@@ -99,7 +99,7 @@ class NotificationPageController extends GetxController {
             "[NotifyPage] Notification api return 401 for token expired error.",
           );
           repo.logout();
-          SnackbarUtils.showMessage("登录状态过期，请重新登录");
+          SnackbarUtils.showMessage(msg: "登录状态过期，请重新登录");
         } else {
           LogUtil.debug(
             "[NotifyPage] Notification api return 401 but in firstSync.",
@@ -159,7 +159,7 @@ class NotificationPageController extends GetxController {
 
       if (!repo.isLogin) {
         LogUtil.error("[NotifyPage] refresh failed, user not login.");
-        SnackbarUtils.showMessage("用户未登录");
+        SnackbarUtils.showMessage(msg: "用户未登录");
         refreshController.finishRefresh(IndicatorResult.fail);
         refreshController.finishLoad(IndicatorResult.fail);
 
@@ -173,7 +173,7 @@ class NotificationPageController extends GetxController {
           "[NotifyPage] Notification api return 401 for token expired error.",
         );
         repo.logout();
-        SnackbarUtils.showMessage("登录状态过期，请重新登录");
+        SnackbarUtils.showMessage(msg: "登录状态过期，请重新登录");
         refreshController.finishLoad(IndicatorResult.fail);
         return;
       }
@@ -203,11 +203,11 @@ class NotificationPageController extends GetxController {
       final r = await Api.setNotificationIsRead(id.toString());
       if (r == null) {
         LogUtil.error("[NotifyPage] Failed to check as read for $id");
-        SnackbarUtils.showMessage("标记已读失败！");
+        SnackbarUtils.showMessage(msg: "标记已读失败！");
         return false;
       }
 
-      SnackbarUtils.showMessage("标记已读成功！");
+      SnackbarUtils.showMessage(msg: "标记已读成功！");
       final item = items.firstWhere((i) {
         return i.id == id;
       });
@@ -292,7 +292,7 @@ class NotificationPageController extends GetxController {
         LogUtil.error(
           "[NotifyPage] Failed to get discussion detail by discussion id : $discussion",
         );
-        SnackbarUtils.showMessage("获取帖子信息失败");
+        SnackbarUtils.showMessage(msg: "获取帖子信息失败");
         return null;
       }
       r.firstPost = r.posts[r.firstPostId];

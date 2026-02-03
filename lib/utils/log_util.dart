@@ -36,27 +36,23 @@ class LogUtil {
   static Future<void> init() async {
     final dir = await getApplicationSupportDirectory();
     _logDir = Directory('${dir.path}/logs');
-
     if (!_logDir.existsSync()) {
-      _logDir.createSync(recursive: true);
+      await _logDir.create(recursive: true);
     }
 
     _cleanOldLogs();
 
     _logFile = File('${_logDir.path}/${_todayFileName()}');
+    if (!_logFile.existsSync()) {
+      await _logFile.create();
+    }
+
     _logger = Logger(
       printer: FileLogPrinter(),
       output: MultiOutput([ConsoleOutput(), FileOutput(_logFile)]),
     );
 
-    _logger.i('Logger initialized');
-    _logFile.writeAsStringSync(
-      '\n\n'
-      '========== APP START ==========\n'
-      'Time: ${DateTime.now().toIso8601String()}\n'
-      '================================\n',
-      mode: FileMode.append,
-    );
+    _logger.i('Logger initialized at ${_logFile.path}');
   }
 
   // Share util
@@ -124,8 +120,8 @@ class FileOutput extends LogOutput {
 
   @override
   void output(OutputEvent event) {
-    final text = event.lines.join('\n');
-    file.writeAsStringSync('$text\n', mode: FileMode.append, flush: true);
+    final text = '${event.lines.join('\n')}\n';
+    file.writeAsString(text, mode: FileMode.append, flush: true);
   }
 }
 

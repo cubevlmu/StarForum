@@ -48,7 +48,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('海星论坛'),
+        title: Obx(() => Text(controller.info.value?.title ?? "")),
         actions: [
           IconButton(
             onPressed: () {

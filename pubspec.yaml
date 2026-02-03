@@ -34,6 +34,7 @@ dependencies:
   share_plus: ^7.2.1
   hive: ^2.2.3
   flutter_secure_storage: ^10.0.0
+  flutter_cache_manager: ^3.4.1
   
 dev_dependencies:
   flutter_test:
@@ -50,25 +51,16 @@ flutter:
 
   assets:
    - assets/images/icon.png
-
-  # fonts:
-    # - family: Montserrat
-    #   fonts:
-    #     - asset: fonts/Montserrat-Medium.ttf
-    #     - asset: fonts/Montserrat-Regular.ttf 
+   - assets/licenses/GPL-2.0.txt
 
 analyzer:
   strong-mode:
     implicit-casts: false
     implicit-dynamic: false
 
-# 应用图标配置
 flutter_launcher_icons:
-  # 为 Android 配置图标
   android: true
-  # 为 iOS 配置图标
   ios: true
-  # 指定图标图片路径
+  windows: true
+  macos: true
   image_path: "assets/images/icon.png"
-  # android min sdk min:16, default 21
-  # min_sdk_android: 21

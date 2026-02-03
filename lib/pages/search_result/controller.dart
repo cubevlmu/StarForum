@@ -4,13 +4,10 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-
-
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/discussions.dart';
-import 'package:forum/main.dart';
 import 'package:forum/utils/log_util.dart';
 import 'package:get/get.dart';
 
@@ -35,29 +32,9 @@ class SearchResultController extends GetxController
   bool _hasMore = true;
   RxBool isSearching = false.obs;
 
-//////////////////////////////////////////////////////////////////////
-/// Designed for 海星论坛
-  void _updateEmojiByKwd() {
-    if (keyWord.contains("鸽子")) {
-      emojiText.value = "🕊";
-    } else if (keyWord.contains("海星") || keyWord.contains("草方块")) {
-      emojiText.value = "⭐";
-    } else if (keyWord.contains("土拔鼠")) {
-      emojiText.value = "🐁";
-    } else {
-      if (emojiText.value == "🔍") return;
-      emojiText.value = "🔍";
-    }
-  }
-//////////////////////////////////////////////////////////////////////
-
   Future<bool> _loadSearchResult() async {
     if (!_hasMore) return true;
     isSearching.value = true;
-
-    if (isStarFourmForATC) {
-      _updateEmojiByKwd();
-    }
 
     try {
       final data = await Api.searchDiscuss(

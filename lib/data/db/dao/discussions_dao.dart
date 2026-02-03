@@ -7,6 +7,7 @@
 import 'package:drift/drift.dart';
 import 'package:forum/data/db/app_database.dart';
 import 'package:forum/data/db/tables/discussion_table.dart';
+import 'package:forum/utils/log_util.dart';
 
 part 'discussions_dao.g.dart';
 
@@ -69,4 +70,18 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
   Future<void> upsert(DbDiscussionsCompanion dbDiscussionsCompanion) async {
     return upsertAll([dbDiscussionsCompanion]);
   }
+
+  Future<void> clearAll() async {
+    final r = await delete(dbDiscussions).go();
+    LogUtil.debug("[Db] Dicussion delete $r rows");
+  }
+
+  Future<List<String>> getAllTitle() async {
+    final rows = await select(dbDiscussions).get();
+    return rows.map((row) => row.title).toList();
+  }
+
+  Future<int> deleteItem(String title) {
+    return (delete(dbDiscussions)..where((t) => t.title.equals(title))).go();
+  } 
 }

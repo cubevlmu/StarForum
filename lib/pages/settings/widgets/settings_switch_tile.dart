@@ -14,7 +14,6 @@ class SettingsSwitchTile extends StatelessWidget {
   final String settingsKey;
   final bool defualtValue;
 
-  ///在开关切换且设置保存后进行调用，提供给外部进行应用该设置项
   final Function()? apply;
 
   @override
@@ -25,11 +24,12 @@ class SettingsSwitchTile extends StatelessWidget {
       trailing: StatefulBuilder(builder: (context, setState) {
         return Switch(
           value: SettingsUtil.getValue(settingsKey, defaultValue: defualtValue),
-          onChanged: (value) async {
-            await SettingsUtil.setValue(settingsKey, value);
-            setState(() {});
-            apply?.call();
-          },
+          onChanged: null
+          //  (value) async {
+          //   await SettingsUtil.setValue(settingsKey, value);
+          //   setState(() {});
+          //   apply?.call();
+          // },
         );
       }),
     );

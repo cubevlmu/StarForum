@@ -101,11 +101,32 @@ jobs:
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs
 
+      - name: Setup Android signing
+        if: matrix.name == 'android'
+        run: |
+          set -e
+
+          echo "Setting up Android keystore..."
+
+          mkdir -p android/keystore
+
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/keystore/release.jks
+
+          cat <<EOF > android/app/keystore.properties
+          storeFile=../keystore/release.jks
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+          echo "Keystore setup complete."
+
+
       - name: Build Android APK
         if: matrix.name == 'android'
         run: |
           flutter build apk --release --target-platform android-arm64 \
-            --obfuscate --split-debug-info=./symbols
+            --obfuscate --tree-shake-icons --split-debug-info=./symbols
 
       # - name: Build Linux
       #   if: matrix.name == 'linux'
@@ -124,16 +145,20 @@ jobs:
 
       - name: Build macOS
         if: matrix.name == 'macos'
-        run: flutter build macos
+        run: flutter build macos --release --tree-shake-icons --obfuscate --split-debug-info=./symbols 
 
       - name: Compress build
         run: |
           FULL_VERSION=$(grep 'FULL_VERSION=' _build_env.config | cut -d '=' -f2)
 
-          if [ "${{ matrix.name }}" = "android" ]; then
-            mv build/app/outputs/flutter-apk/app-release.apk app-${FULL_VERSION}.apk
-            mv build/app/outputs/flutter-apk/app-release.apk ./app-release-all-${FULL_VERSION}.apk
-            mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ./app-release-arm64-v8a-${FULL_VERSION}.apk
+           if [ "${{ matrix.name }}" = "android" ]; then
+              APK=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+              if [ ! -f "$APK" ]; then
+                echo "APK not found: $APK"
+                exit 1
+              fi
+              mv "$APK" app-arm64-v8a-${FULL_VERSION}.apk
+
           elif [ "${{ matrix.name }}" = "linux" ]; then
             zip -r linux-${FULL_VERSION}.zip build/linux/x64/release/bundle
           elif [ "${{ matrix.name }}" = "windows" ]; then

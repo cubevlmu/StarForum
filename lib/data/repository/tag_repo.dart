@@ -105,4 +105,9 @@ class TagRepo {
     if (!_tags!.all.containsKey(value)) return null;
     return _tags!.all[value];
   }
+
+  void clear() {
+    _tags = null;
+    _syncing = false;
+  }
 }

@@ -1,6 +1,5 @@
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:forum/data/api/api.dart';
 import 'package:forum/data/model/discussions.dart';
 import 'package:forum/data/model/tags.dart';
@@ -27,7 +26,7 @@ class ThemeListController extends GetxController {
     controlFinishRefresh: true,
   );
   int refreshIdx = 0;
-  CacheManager cacheManager = CacheUtils.avatarCacheManager;
+  final cacheManager = CacheUtils.avatarCacheManager;
 
   static const int pageSize = 20;
   int offset = 0;
@@ -70,7 +69,7 @@ class ThemeListController extends GetxController {
       final r = repo.getTagById(selectId.value);
       if (r == null) {
         LogUtil.error("[ThemePage] Empty tag info.");
-        SnackbarUtils.showMessage("请选择一个标签.");
+        SnackbarUtils.showMessage(msg: "请选择一个标签.");
         return false;
       }
 

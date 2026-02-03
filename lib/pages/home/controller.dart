@@ -6,7 +6,8 @@
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:forum/data/api/api.dart';
+import 'package:forum/data/model/forum_info.dart';
 import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
 import 'package:forum/utils/cache_utils.dart';
@@ -17,7 +18,7 @@ import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 
 class HomeController extends GetxController {
   HomeController();
-  CacheManager cacheManager = CacheUtils.avatarCacheManager;
+  final cacheManager = CacheUtils.avatarCacheManager;
 
   final List<Map<String, String>> tabsList = [
     {'text': '贴文', 'id': '', 'controller': 'PostListController'},
@@ -25,6 +26,7 @@ class HomeController extends GetxController {
   ];
   late TabController? tabController;
   final int tabInitIndex = 0;
+  final info = Rxn<ForumInfo>();
 
   final EasyRefreshController refreshController = EasyRefreshController(
     controlFinishRefresh: true,
@@ -40,6 +42,7 @@ class HomeController extends GetxController {
     super.onInit();
 
     LogUtil.info("[HomePage] Setting up user repo, checking user login status");
+    _restoreInfo();
     _restoreLoginUser();
   }
 
@@ -50,7 +53,7 @@ class HomeController extends GetxController {
     switch (state) {
       case .unknown:
         LogUtil.error("[HomePage] User repo init failed.");
-        SnackbarUtils.showMessage("用户服务初始化失败");
+        SnackbarUtils.showMessage(msg: "用户服务初始化失败");
         return;
       case .loggedIn:
         isLogin.value = true;
@@ -62,7 +65,7 @@ class HomeController extends GetxController {
         break;
       case .expired:
         LogUtil.error("[HomePage] User login is expired.");
-        SnackbarUtils.showMessage("用户登录状态过期!请重新登录");
+        SnackbarUtils.showMessage(msg: "用户登录状态过期!请重新登录");
         userRepo.logout();
         return;
     }
@@ -74,5 +77,15 @@ class HomeController extends GetxController {
     LogUtil.info(
       "[HomePage] Fetched user info, nickname :${userRepo.user!.displayName} avatar url:${avatarUrl.value}",
     );
+  }
+  
+  void _restoreInfo() async {
+    final (r, l) = await Api.getForumInfo(Api.getBaseUrl);
+    if (r == null) {
+      SnackbarUtils.showMessage(msg: "论坛信息获取失败...");
+      return;
+    }
+    info.value = r;
+    LogUtil.info("[HomePage] Forum latency $l");
   }
 }

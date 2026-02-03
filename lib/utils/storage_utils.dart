@@ -32,19 +32,12 @@ class UserStorageKeys {
 }
 
 class SettingsStorageKeys {
-  /// Theme settings.
   static const String themeMode = "themeMode";
-  static const String biliTheme = "biliTheme";
+  static const String appTheme = "appTheme";
 
-  /// Auto update from github repo's release.
   static const String autoCheckUpdate = "autoCheckUpdate";
-
-  /// Show search history.
   static const String showSearchHistory = "showSearchHistory";
   
-  /// Enabled functions for StarFish Forum.
-  static const String appForATC = "appForATC";
-
-  /// Text scaling.
   static const String textScaleFactor = 'textScaleFactor';
+  static const String apiBaseUrl = 'apiBaseUrl';
 }
