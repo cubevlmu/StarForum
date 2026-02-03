@@ -187,42 +187,42 @@ jobs:
             *.zip
           if-no-files-found: error
 
-  release:
-    needs: build_app
-    runs-on: ubuntu-latest
+  # release:
+  #   needs: build_app
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
+  #   steps:
+      # - name: Download all artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     path: artifacts
 
-      - name: Read version
-        id: read_version
-        run: |
-          FULL_VERSION=$(grep 'FULL_VERSION=' artifacts/build_env_files/_build_env.config | cut -d '=' -f2)
-          echo "FULL_VERSION=${FULL_VERSION}" >> $GITHUB_OUTPUT
+      # - name: Read version
+      #   id: read_version
+      #   run: |
+      #     FULL_VERSION=$(grep 'FULL_VERSION=' artifacts/build_env_files/_build_env.config | cut -d '=' -f2)
+      #     echo "FULL_VERSION=${FULL_VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.read_version.outputs.FULL_VERSION }}
-          release_name: Release ${{ steps.read_version.outputs.FULL_VERSION }}
-          prerelease: false
+      # - name: Create GitHub Release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: v${{ steps.read_version.outputs.FULL_VERSION }}
+      #     release_name: Release ${{ steps.read_version.outputs.FULL_VERSION }}
+      #     prerelease: false
 
-      - name: Upload release assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          for f in artifacts/*/*.{apk,aab,ipa,zip}; do
-            [ -f "$f" ] || continue
-            name=$(basename "$f")
-            echo "Uploading $name"
-            curl --fail -X POST \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: $(file -b --mime-type "$f")" \
-              --data-binary @"$f" \
-              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ github.run_id }}/assets?name=$name"
-          done
+      # - name: Upload release assets
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     for f in artifacts/*/*.{apk,aab,ipa,zip}; do
+      #       [ -f "$f" ] || continue
+      #       name=$(basename "$f")
+      #       echo "Uploading $name"
+      #       curl --fail -X POST \
+      #         -H "Authorization: token $GITHUB_TOKEN" \
+      #         -H "Content-Type: $(file -b --mime-type "$f")" \
+      #         --data-binary @"$f" \
+      #         "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ github.run_id }}/assets?name=$name"
+      #     done

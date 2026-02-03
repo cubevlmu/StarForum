@@ -4,18 +4,29 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
-	<key>com.apple.security.cs.allow-jit</key>
+	<key>com.apple.security.assets.movies.read-write</key>
+	<true/>
+	<key>com.apple.security.assets.music.read-write</key>
+	<true/>
+	<key>com.apple.security.assets.pictures.read-write</key>
+	<true/>
+	<key>com.apple.security.files.downloads.read-write</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+	<key>com.apple.security.keychain-access</key>
+	<true/>
+	<key>com.apple.security.keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	</array>
+	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
-
-  <key>com.apple.security.network.client</key>
-  <true/>
-
-  <key>com.apple.security.files.user-selected.read-write</key>
-  <true/>
-
-  <key>com.apple.security.personal-information.clipboard</key>
-  <true/>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)me.cubevlmu.starforum</string>
+	</array>
 </dict>
 </plist>

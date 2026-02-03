@@ -8,49 +8,22 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/repository/tag_repo.dart';
-import 'package:forum/data/repository/user_repo.dart';
 import 'package:forum/di/injector.dart';
-import 'package:forum/pages/main/view.dart';
-import 'package:forum/pages/setup/view.dart';
+import 'package:forum/pages/splash/view.dart';
 import 'package:forum/utils/http_utils.dart';
 import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/setting_util.dart';
 import 'package:forum/utils/storage_utils.dart';
 import 'package:forum/utils/window_util.dart';
+import 'package:forum/widgets/shared_notice.dart';
 import 'package:get/get.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:nil/nil.dart';
 
-bool _isApiSetup = false;
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageUtils.ensureInitialized();
-
-  setupInjector();
   await LogUtil.init();
-  await HttpUtils().init();
-  await StorageUtils.ensureInitialized();
-
-  LogUtil.info("[Main] Begin to setup api service.");
-  _isApiSetup = await Api.setup();
-  LogUtil.info("[Main] Begin to setup api service.");
-
-  if (_isApiSetup) {
-    final repo = getIt<UserRepo>();
-    LogUtil.info("[Main] Begin to setup user service.");
-    await repo.setup();
-    LogUtil.info("[Main] End setup user service.");
-
-    LogUtil.info("[Main] Begin sync tags.");
-    final tag = getIt<TagRepo>();
-    await tag.syncTags();
-    LogUtil.info("[Main] End sync tags.");
-  } else {
-    LogUtil.info("[Main] App api url is not setup. Call setup page.");
-  }
 
   WindowResizeObserver.instance.init();
   runApp(const StarForumApp());
@@ -74,7 +47,10 @@ class StarForumApp extends StatelessWidget {
       builder: ((lightDynamic, darkDynamic) {
         return GetMaterialApp(
           scrollBehavior: const _DesktopScrollBehavior(),
-          onInit: () async {},
+          onInit: () async {
+            setupInjector();
+            await HttpUtils().init();
+          },
           useInheritedMediaQuery: true,
           themeMode: SettingsUtil.currentThemeMode,
           theme: ThemeData(
@@ -89,7 +65,7 @@ class StarForumApp extends StatelessWidget {
                 : SettingsUtil.currentTheme.themeDataDark.colorScheme,
             useMaterial3: true,
           ),
-          home: _isApiSetup ? const MainPage() : const SetupPage(isSetup: true),
+          home: const SplashScreen(),
           builder: (context, child) => child == null
               ? nil
               : MediaQuery(

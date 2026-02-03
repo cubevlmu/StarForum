@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/data/model/posts.dart';
 import 'package:forum/pages/post_detail/controller.dart';
+import 'package:forum/pages/post_detail/reply_util.dart';
 import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/string_util.dart';
 import 'package:forum/widgets/avatar.dart';
@@ -22,29 +23,30 @@ class PostMainWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final like = info?.likes ?? -1;
+    final like = info?.likes ?? -1;
 
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: .min,
         children: [
           _UserBox(item: content),
           _MainContent(item: content),
-          // const SizedBox(height: 5),
-          // like == -1
-          //     ? const SizedBox.shrink()
-          //     : _ThumUpButton(
-          //         likeNum: like,
-          //         selected: false,
-          //         onPressed: () async {
-          //           if (info == null) return;
-          //           final r = await ReplyUtil.addLikeToPost(info!);
-          //           if (r != null) {
-          //             info?.likes = r.likes;
-          //           }
-          //         },
-          //       ),
+          const SizedBox(height: 5),
+          like == -1
+              ? const SizedBox.shrink()
+              : _ThumUpButton(
+                  likeNum: -1,
+                  selected: false,
+                  onPressed: () async {
+                    if (info == null) return;
+                    final r = await ReplyUtil.addLikeToPost(info!);
+                    if (r != null) {
+                      info?.likes = r.likes;
+                    }
+                  },
+                ),
           Divider(
             color: Theme.of(context).colorScheme.secondaryContainer,
             thickness: 1,
@@ -188,10 +190,11 @@ class _ThumUpButton extends StatelessWidget {
         minimumSize: const WidgetStatePropertyAll(Size(10, 5)),
       ),
       child: Row(
+        mainAxisSize: .min,
         children: [
           const Icon(Icons.thumb_up_rounded, size: 15),
           const SizedBox(width: 5),
-          Text(StringUtil.numFormat(likeNum)),
+          Text("点赞"), // StringUtil.numFormat(likeNum)
         ],
       ),
     );

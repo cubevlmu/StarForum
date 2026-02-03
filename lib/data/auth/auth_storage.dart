@@ -9,7 +9,11 @@ import 'package:forum/utils/storage_utils.dart';
 import 'package:hive/hive.dart';
 
 class AuthStorage {
-  final _secure = FlutterSecureStorage();
+  final _secure = FlutterSecureStorage(
+    mOptions: const MacOsOptions(
+      accessibility: KeychainAccessibility.first_unlock,
+    ),
+  );
   Box get _box => StorageUtils.networkData;
 
   String? _cachedToken;
