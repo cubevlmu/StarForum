@@ -5,11 +5,11 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/model/forum_info.dart';
-import 'package:forum/pages/setup/controller.dart';
-import 'package:forum/pages/setup/pages/finish_page.dart';
-import 'package:forum/pages/setup/pages/greeting_page.dart';
-import 'package:forum/pages/setup/pages/setup_site_page.dart';
+import 'package:star_forum/data/model/forum_info.dart';
+import 'package:star_forum/pages/setup/controller.dart';
+import 'package:star_forum/pages/setup/pages/finish_page.dart';
+import 'package:star_forum/pages/setup/pages/greeting_page.dart';
+import 'package:star_forum/pages/setup/pages/setup_site_page.dart';
 import 'package:get/get.dart';
 
 class SetupPage extends StatefulWidget {

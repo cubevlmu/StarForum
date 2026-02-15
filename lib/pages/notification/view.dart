@@ -11,11 +11,11 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/notification/controller.dart';
-import 'package:forum/pages/notification/widgets/notify_card.dart';
-import 'package:forum/pages/settings/settings_page.dart';
-import 'package:forum/widgets/shared_notice.dart';
-import 'package:forum/widgets/simple_easy_refresher.dart';
+import 'package:star_forum/pages/notification/controller.dart';
+import 'package:star_forum/pages/notification/widgets/notify_card.dart';
+import 'package:star_forum/pages/settings/settings_page.dart';
+import 'package:star_forum/widgets/shared_notice.dart';
+import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
 class NotificationPage extends StatefulWidget {

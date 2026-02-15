@@ -5,9 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/search_result/view.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/storage_utils.dart';
+import 'package:star_forum/pages/search_result/view.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/storage_utils.dart';
 import 'package:get/get.dart';
 
 class SearchPageController extends GetxController {

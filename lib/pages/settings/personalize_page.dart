@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:forum/utils/setting_util.dart';
-import 'package:forum/utils/storage_utils.dart';
-import 'package:forum/pages/settings/widgets/settings_label.dart';
+import 'package:star_forum/utils/setting_util.dart';
+import 'package:star_forum/utils/storage_utils.dart';
+import 'package:star_forum/pages/settings/widgets/settings_label.dart';
 import 'package:get/get.dart';
 
 class PersonalizeSettingsPage extends StatefulWidget {

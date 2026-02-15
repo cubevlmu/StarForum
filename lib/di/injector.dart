@@ -4,10 +4,10 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'package:forum/data/db/app_database.dart';
-import 'package:forum/data/repository/discussion_repo.dart';
-import 'package:forum/data/repository/tag_repo.dart';
-import 'package:forum/data/repository/user_repo.dart';
+import 'package:star_forum/data/db/app_database.dart';
+import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/tag_repo.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:get_it/get_it.dart';
 
 final getIt = GetIt.instance;

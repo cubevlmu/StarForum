@@ -5,8 +5,8 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/main/controller.dart';
-import 'package:forum/utils/cache_utils.dart';
+import 'package:star_forum/pages/main/controller.dart';
+import 'package:star_forum/utils/cache_utils.dart';
 import 'package:get/get.dart';
 
 class MainPage extends StatefulWidget {

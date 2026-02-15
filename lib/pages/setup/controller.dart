@@ -5,18 +5,18 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/model/forum_info.dart';
-import 'package:forum/data/repository/discussion_repo.dart';
-import 'package:forum/data/repository/tag_repo.dart';
-import 'package:forum/data/repository/user_repo.dart';
-import 'package:forum/di/injector.dart';
-import 'package:forum/pages/home/controller.dart';
-import 'package:forum/pages/post_list/controller.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/snackbar_utils.dart';
-import 'package:forum/utils/storage_utils.dart';
-import 'package:forum/utils/string_util.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/model/forum_info.dart';
+import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/tag_repo.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/pages/home/controller.dart';
+import 'package:star_forum/pages/post_list/controller.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
+import 'package:star_forum/utils/storage_utils.dart';
+import 'package:star_forum/utils/string_util.dart';
 import 'package:get/get.dart';
 
 class SetupPageController extends GetxController {

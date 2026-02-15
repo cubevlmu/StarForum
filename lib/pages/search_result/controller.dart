@@ -6,9 +6,9 @@
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/model/discussions.dart';
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/utils/log_util.dart';
 import 'package:get/get.dart';
 
 class SearchResultController extends GetxController

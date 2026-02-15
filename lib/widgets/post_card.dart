@@ -5,10 +5,10 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/model/discussion_item.dart';
-import 'package:forum/pages/post_detail/view.dart';
-import 'package:forum/utils/html_utils.dart';
-import 'package:forum/widgets/avatar.dart';
+import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/pages/post_detail/view.dart';
+import 'package:star_forum/utils/html_utils.dart';
+import 'package:star_forum/widgets/avatar.dart';
 
 class PostCard extends StatelessWidget {
   final DiscussionItem item;

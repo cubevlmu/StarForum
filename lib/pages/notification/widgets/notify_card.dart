@@ -5,13 +5,13 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/model/notifications.dart';
-import 'package:forum/pages/notification/controller.dart';
-import 'package:forum/pages/post_detail/view.dart';
-import 'package:forum/pages/user/view.dart';
-import 'package:forum/utils/html_utils.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/widgets/avatar.dart';
+import 'package:star_forum/data/model/notifications.dart';
+import 'package:star_forum/pages/notification/controller.dart';
+import 'package:star_forum/pages/post_detail/view.dart';
+import 'package:star_forum/pages/user/view.dart';
+import 'package:star_forum/utils/html_utils.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/widgets/avatar.dart';
 
 (String, String) buildMsg(NotificationsInfo info) {
   switch (info.contentType) {

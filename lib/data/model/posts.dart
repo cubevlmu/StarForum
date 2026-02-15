@@ -1,4 +1,4 @@
-import 'package:forum/data/model/discussions.dart';
+import 'package:star_forum/data/model/discussions.dart';
 
 import 'base.dart';
 import 'users.dart';

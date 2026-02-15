@@ -5,13 +5,13 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/post_detail/view.dart';
-import 'package:forum/pages/post_detail/widgets/post_item.dart';
-import 'package:forum/pages/user/controller.dart';
-import 'package:forum/utils/string_util.dart';
-import 'package:forum/widgets/avatar.dart';
-import 'package:forum/widgets/shared_notice.dart';
-import 'package:forum/widgets/simple_easy_refresher.dart';
+import 'package:star_forum/pages/post_detail/view.dart';
+import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
+import 'package:star_forum/pages/user/controller.dart';
+import 'package:star_forum/utils/string_util.dart';
+import 'package:star_forum/widgets/avatar.dart';
+import 'package:star_forum/widgets/shared_notice.dart';
+import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
 class UserPage extends StatefulWidget {

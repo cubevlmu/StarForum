@@ -5,16 +5,16 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/home/controller.dart';
-import 'package:forum/pages/home/widgets/user_dialog.dart';
-import 'package:forum/pages/post_list/controller.dart';
-import 'package:forum/pages/post_list/view.dart';
-import 'package:forum/pages/search/view.dart';
-import 'package:forum/pages/theme_list/controller.dart';
-import 'package:forum/pages/theme_list/view.dart';
-import 'package:forum/widgets/avatar.dart';
-import 'package:forum/widgets/shared_notice.dart';
-import 'package:forum/widgets/sheet_util.dart';
+import 'package:star_forum/pages/home/controller.dart';
+import 'package:star_forum/pages/home/widgets/user_dialog.dart';
+import 'package:star_forum/pages/post_list/controller.dart';
+import 'package:star_forum/pages/post_list/view.dart';
+import 'package:star_forum/pages/search/view.dart';
+import 'package:star_forum/pages/theme_list/controller.dart';
+import 'package:star_forum/pages/theme_list/view.dart';
+import 'package:star_forum/widgets/avatar.dart';
+import 'package:star_forum/widgets/shared_notice.dart';
+import 'package:star_forum/widgets/sheet_util.dart';
 import 'package:get/get.dart';
 
 class HomePage extends StatefulWidget {

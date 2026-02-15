@@ -5,13 +5,13 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/model/discussion_item.dart';
-import 'package:forum/pages/post_list/controller.dart';
-import 'package:forum/pages/post_list/create_discuss_util.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/widgets/post_card.dart';
-import 'package:forum/widgets/shared_notice.dart';
-import 'package:forum/widgets/simple_easy_refresher.dart';
+import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/pages/post_list/controller.dart';
+import 'package:star_forum/pages/post_list/create_discuss_util.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/widgets/post_card.dart';
+import 'package:star_forum/widgets/shared_notice.dart';
+import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
 class PostListPage extends StatefulWidget {

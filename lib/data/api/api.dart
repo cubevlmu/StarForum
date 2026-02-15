@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:forum/data/api/api_guard.dart';
-import 'package:forum/data/api/api_log.dart';
-import 'package:forum/data/model/notifications.dart';
-import 'package:forum/utils/http_utils.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/storage_utils.dart';
+import 'package:star_forum/data/api/api_guard.dart';
+import 'package:star_forum/data/api/api_log.dart';
+import 'package:star_forum/data/model/notifications.dart';
+import 'package:star_forum/utils/http_utils.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/storage_utils.dart';
 import '../model/discussions.dart';
 import '../model/forum_info.dart';
 import '../model/login_result.dart';

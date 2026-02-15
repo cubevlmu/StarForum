@@ -1,5 +1,5 @@
-import 'package:forum/data/model/discussion_item.dart';
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/utils/log_util.dart';
 
 import 'base.dart';
 import 'posts.dart';

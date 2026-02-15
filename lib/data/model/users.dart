@@ -3,7 +3,7 @@
  * @LastEditors: cubevlmu khfahqp@gmail.com
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
-import 'package:forum/utils/string_util.dart';
+import 'package:star_forum/utils/string_util.dart';
 
 import 'base.dart';
 import 'group_info.dart';

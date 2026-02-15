@@ -5,9 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/repository/user_repo.dart';
-import 'package:forum/di/injector.dart';
-import 'package:forum/utils/snackbar_utils.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
 
 class SharedDialog {
   static void showDialog2(

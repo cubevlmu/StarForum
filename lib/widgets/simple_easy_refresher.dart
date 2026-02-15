@@ -9,7 +9,7 @@ import 'dart:async';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/utils/log_util.dart';
 
 class SimpleEasyRefresher extends StatefulWidget {
   const SimpleEasyRefresher({

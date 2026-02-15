@@ -5,16 +5,16 @@
  */
 
 import 'package:drift/drift.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/model/discussions.dart';
-import 'package:forum/data/model/posts.dart';
-import 'package:forum/data/db/app_database.dart';
-import 'package:forum/data/db/dao/first_posts_dao.dart';
-import 'package:forum/data/db/dao/discussions_dao.dart';
-import 'package:forum/data/db/dao/excerpt_dao.dart';
-import 'package:forum/data/model/discussion_item.dart';
-import 'package:forum/utils/html_utils.dart';
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/data/model/posts.dart';
+import 'package:star_forum/data/db/app_database.dart';
+import 'package:star_forum/data/db/dao/first_posts_dao.dart';
+import 'package:star_forum/data/db/dao/discussions_dao.dart';
+import 'package:star_forum/data/db/dao/excerpt_dao.dart';
+import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/utils/html_utils.dart';
+import 'package:star_forum/utils/log_util.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DiscussionRepository {

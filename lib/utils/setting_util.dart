@@ -5,7 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/utils/storage_utils.dart';
+import 'package:star_forum/utils/storage_utils.dart';
 
 import 'package:get/get.dart';
 

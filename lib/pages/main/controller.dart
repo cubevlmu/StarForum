@@ -7,9 +7,9 @@
 
 import 'package:flutter/material.dart';
 
-import 'package:forum/pages/home/view.dart';
-import 'package:forum/pages/notification/view.dart';
-import 'package:forum/pages/account/view.dart';
+import 'package:star_forum/pages/home/view.dart';
+import 'package:star_forum/pages/notification/view.dart';
+import 'package:star_forum/pages/account/view.dart';
 import 'package:get/get.dart';
 
 class MainController extends GetxController {

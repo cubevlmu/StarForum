@@ -5,8 +5,8 @@
  */
 
 import 'package:drift/drift.dart';
-import 'package:forum/data/db/app_database.dart';
-import 'package:forum/data/db/tables/first_table.dart';
+import 'package:star_forum/data/db/app_database.dart';
+import 'package:star_forum/data/db/tables/first_table.dart';
 
 part 'first_posts_dao.g.dart';
 

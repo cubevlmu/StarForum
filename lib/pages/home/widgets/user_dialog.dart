@@ -5,13 +5,13 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/home/controller.dart';
-import 'package:forum/pages/login/view.dart';
-import 'package:forum/pages/main/controller.dart';
-import 'package:forum/pages/settings/settings_page.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/snackbar_utils.dart';
-import 'package:forum/widgets/shared_dialog.dart';
+import 'package:star_forum/pages/home/controller.dart';
+import 'package:star_forum/pages/login/view.dart';
+import 'package:star_forum/pages/main/controller.dart';
+import 'package:star_forum/pages/settings/settings_page.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
+import 'package:star_forum/widgets/shared_dialog.dart';
 import 'package:get/get.dart';
 
 class UserDialogWidget extends StatelessWidget {

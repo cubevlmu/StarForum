@@ -5,7 +5,7 @@
  */
 
 import 'package:dio/dio.dart';
-import 'package:forum/data/api/api_log.dart';
+import 'package:star_forum/data/api/api_log.dart';
 
 class ApiGuard {
   static Future<T> run<T>({

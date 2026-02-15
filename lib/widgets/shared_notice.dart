@@ -5,7 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/login/view.dart';
+import 'package:star_forum/pages/login/view.dart';
 
 class WorkInProgressNotice extends StatelessWidget {
   const WorkInProgressNotice({super.key});

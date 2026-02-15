@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:forum/utils/setting_util.dart';
+import 'package:star_forum/utils/setting_util.dart';
 
 class SettingsSwitchTile extends StatelessWidget {
   const SettingsSwitchTile(

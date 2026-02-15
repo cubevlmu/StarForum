@@ -6,8 +6,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:forum/pages/settings/dev_page.dart';
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/pages/settings/dev_page.dart';
+import 'package:star_forum/utils/log_util.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 

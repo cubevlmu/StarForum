@@ -7,14 +7,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/model/discussion_item.dart';
-import 'package:forum/pages/post_detail/controller.dart';
-import 'package:forum/pages/post_detail/widgets/post_item.dart';
-import 'package:forum/pages/post_detail/widgets/post_main.dart';
-import 'package:forum/utils/string_util.dart';
-import 'package:forum/widgets/shared_notice.dart';
-import 'package:forum/widgets/simple_easy_refresher.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/pages/post_detail/controller.dart';
+import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
+import 'package:star_forum/pages/post_detail/widgets/post_main.dart';
+import 'package:star_forum/utils/string_util.dart';
+import 'package:star_forum/widgets/shared_notice.dart';
+import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 

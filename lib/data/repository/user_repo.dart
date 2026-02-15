@@ -4,14 +4,14 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/model/users.dart';
-import 'package:forum/data/auth/auth_storage.dart';
-import 'package:forum/pages/account/controller.dart';
-import 'package:forum/pages/home/controller.dart';
-import 'package:forum/pages/notification/controller.dart';
-import 'package:forum/utils/http_utils.dart';
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/data/auth/auth_storage.dart';
+import 'package:star_forum/pages/account/controller.dart';
+import 'package:star_forum/pages/home/controller.dart';
+import 'package:star_forum/pages/notification/controller.dart';
+import 'package:star_forum/utils/http_utils.dart';
+import 'package:star_forum/utils/log_util.dart';
 import 'package:get/get.dart';
 
 enum UserRepoState { unknown, notLogin, checkingToken, loggedIn, expired }

@@ -5,9 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/search/controller.dart';
-import 'package:forum/utils/setting_util.dart';
-import 'package:forum/utils/storage_utils.dart';
+import 'package:star_forum/pages/search/controller.dart';
+import 'package:star_forum/utils/setting_util.dart';
+import 'package:star_forum/utils/storage_utils.dart';
 import 'package:get/get.dart';
 
 class SearchPage extends StatefulWidget {

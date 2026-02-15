@@ -4,8 +4,8 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'package:forum/data/model/posts.dart';
-import 'package:forum/data/model/users.dart';
+import 'package:star_forum/data/model/posts.dart';
+import 'package:star_forum/data/model/users.dart';
 
 import 'base.dart';
 

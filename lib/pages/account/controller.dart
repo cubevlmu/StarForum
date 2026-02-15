@@ -4,7 +4,7 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'package:forum/data/repository/user_repo.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:get/get.dart';
 
 import '../../di/injector.dart';

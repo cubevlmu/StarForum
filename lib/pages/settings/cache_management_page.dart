@@ -6,7 +6,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:forum/utils/string_util.dart';
+import 'package:star_forum/utils/string_util.dart';
 import 'package:path_provider/path_provider.dart';
 
 class CacheManagementPage extends StatefulWidget {

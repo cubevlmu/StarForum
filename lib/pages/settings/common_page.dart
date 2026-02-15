@@ -1,16 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/repository/discussion_repo.dart';
-import 'package:forum/di/injector.dart';
-import 'package:forum/pages/setup/view.dart';
-import 'package:forum/utils/snackbar_utils.dart';
-import 'package:forum/utils/storage_utils.dart';
-import 'package:forum/pages/settings/widgets/settings_label.dart';
-import 'package:forum/pages/settings/widgets/settings_switch_tile.dart';
-import 'package:forum/utils/string_util.dart';
-import 'package:forum/widgets/shared_dialog.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/pages/setup/view.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
+import 'package:star_forum/utils/storage_utils.dart';
+import 'package:star_forum/pages/settings/widgets/settings_label.dart';
+import 'package:star_forum/pages/settings/widgets/settings_switch_tile.dart';
+import 'package:star_forum/utils/string_util.dart';
+import 'package:star_forum/widgets/shared_dialog.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 

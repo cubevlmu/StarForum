@@ -6,14 +6,14 @@
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/model/discussion_item.dart';
-import 'package:forum/data/model/posts.dart';
-import 'package:forum/data/repository/discussion_repo.dart';
-import 'package:forum/di/injector.dart';
-import 'package:forum/pages/post_detail/reply_util.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/snackbar_utils.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/model/posts.dart';
+import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/pages/post_detail/reply_util.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:get/get.dart';
 
 enum ReplySort { like, time }

@@ -7,8 +7,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:forum/utils/cache_utils.dart';
-import 'package:forum/widgets/cached_network_image.dart';
+import 'package:star_forum/utils/cache_utils.dart';
+import 'package:star_forum/widgets/cached_network_image.dart';
 
 class ImagePreviewWidget extends StatefulWidget {
   final String url;

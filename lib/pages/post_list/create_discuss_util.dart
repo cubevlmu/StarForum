@@ -6,13 +6,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/repository/discussion_repo.dart';
-import 'package:forum/data/repository/user_repo.dart';
-import 'package:forum/pages/post_list/widgets/create_discuss.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/snackbar_utils.dart';
-import 'package:forum/widgets/sheet_util.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/pages/post_list/widgets/create_discuss.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
+import 'package:star_forum/widgets/sheet_util.dart';
 
 import '../../di/injector.dart';
 

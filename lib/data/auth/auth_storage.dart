@@ -4,8 +4,8 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:forum/data/auth/storage_keys.dart';
-import 'package:forum/utils/storage_utils.dart';
+import 'package:star_forum/data/auth/storage_keys.dart';
+import 'package:star_forum/utils/storage_utils.dart';
 import 'package:hive/hive.dart';
 
 class AuthStorage {

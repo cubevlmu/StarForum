@@ -5,11 +5,11 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/search/view.dart';
-import 'package:forum/pages/search_result/controller.dart';
-import 'package:forum/widgets/post_card.dart';
-import 'package:forum/widgets/shared_notice.dart';
-import 'package:forum/widgets/simple_easy_refresher.dart';
+import 'package:star_forum/pages/search/view.dart';
+import 'package:star_forum/pages/search_result/controller.dart';
+import 'package:star_forum/widgets/post_card.dart';
+import 'package:star_forum/widgets/shared_notice.dart';
+import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
 class SearchResultPage extends StatefulWidget {

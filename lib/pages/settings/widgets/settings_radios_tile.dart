@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:forum/widgets/radio_list_dialog.dart';
+import 'package:star_forum/widgets/radio_list_dialog.dart';
 
 class SettingsRadiosTile<T> extends StatefulWidget {
   const SettingsRadiosTile(

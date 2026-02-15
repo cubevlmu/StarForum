@@ -6,9 +6,9 @@
 
 import 'dart:collection';
 
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/model/tags.dart';
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/model/tags.dart';
+import 'package:star_forum/utils/log_util.dart';
 
 class TagRepo {
   Tags? _tags;

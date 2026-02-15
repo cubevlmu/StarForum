@@ -5,14 +5,14 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/model/posts.dart';
-import 'package:forum/pages/post_detail/controller.dart';
-import 'package:forum/pages/post_detail/reply_util.dart';
-import 'package:forum/pages/user/view.dart';
-import 'package:forum/utils/string_util.dart';
-import 'package:forum/widgets/avatar.dart';
-import 'package:forum/widgets/content_view.dart';
-import 'package:forum/widgets/icon_text_button.dart';
+import 'package:star_forum/data/model/posts.dart';
+import 'package:star_forum/pages/post_detail/controller.dart';
+import 'package:star_forum/pages/post_detail/reply_util.dart';
+import 'package:star_forum/pages/user/view.dart';
+import 'package:star_forum/utils/string_util.dart';
+import 'package:star_forum/widgets/avatar.dart';
+import 'package:star_forum/widgets/content_view.dart';
+import 'package:star_forum/widgets/icon_text_button.dart';
 import 'package:get/get.dart';
 
 class PostItemWidget extends StatefulWidget {

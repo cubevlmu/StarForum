@@ -5,9 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/settings/about_page.dart';
-import 'package:forum/pages/settings/personalize_page.dart';
-import 'package:forum/pages/settings/common_page.dart';
+import 'package:star_forum/pages/settings/about_page.dart';
+import 'package:star_forum/pages/settings/personalize_page.dart';
+import 'package:star_forum/pages/settings/common_page.dart';
 import 'package:get/get.dart';
 
 class SettingsPage extends StatelessWidget {

@@ -5,10 +5,10 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/model/users.dart';
-import 'package:forum/data/repository/user_repo.dart';
-import 'package:forum/di/injector.dart';
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/utils/log_util.dart';
 import 'package:get/get.dart';
 
 class LoginController extends GetxController {

@@ -1,11 +1,11 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
- * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+ * @LastEditors: cubevlmu khfahqp@gmail.com
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/splash/controller.dart';
+import 'package:star_forum/pages/splash/controller.dart';
 import 'package:get/get.dart';
 
 @immutable

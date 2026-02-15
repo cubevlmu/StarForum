@@ -4,8 +4,8 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/pages/login/controller.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/pages/login/controller.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 

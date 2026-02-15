@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:forum/utils/setting_util.dart';
-import 'package:forum/widgets/slider_dialog.dart';
+import 'package:star_forum/utils/setting_util.dart';
+import 'package:star_forum/widgets/slider_dialog.dart';
 
 class SettingsSliderTile extends StatefulWidget {
   const SettingsSliderTile(

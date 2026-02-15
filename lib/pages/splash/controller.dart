@@ -5,14 +5,14 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api.dart';
-import 'package:forum/data/repository/tag_repo.dart';
-import 'package:forum/data/repository/user_repo.dart';
-import 'package:forum/di/injector.dart';
-import 'package:forum/pages/main/view.dart';
-import 'package:forum/pages/setup/view.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/snackbar_utils.dart';
+import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/repository/tag_repo.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/pages/main/view.dart';
+import 'package:star_forum/pages/setup/view.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/state_manager.dart';
 

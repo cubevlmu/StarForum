@@ -5,10 +5,10 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/setup/controller.dart';
-import 'package:forum/pages/setup/widgets/setup_body_view.dart';
-import 'package:forum/pages/setup/widgets/setup_next_button.dart';
-import 'package:forum/widgets/license_view.dart';
+import 'package:star_forum/pages/setup/controller.dart';
+import 'package:star_forum/pages/setup/widgets/setup_body_view.dart';
+import 'package:star_forum/pages/setup/widgets/setup_next_button.dart';
+import 'package:star_forum/widgets/license_view.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 class GreetingPage extends StatelessWidget {

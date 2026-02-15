@@ -6,9 +6,9 @@
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:forum/data/api/api_constants.dart';
-import 'package:forum/utils/log_util.dart';
-import 'package:forum/utils/snackbar_utils.dart';
+import 'package:star_forum/data/api/api_constants.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
 
 class HttpUtils {
   static final HttpUtils _instance = HttpUtils._internal();

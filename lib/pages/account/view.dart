@@ -5,11 +5,11 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/pages/account/controller.dart';
-import 'package:forum/pages/settings/settings_page.dart';
-import 'package:forum/pages/user/view.dart';
-import 'package:forum/widgets/shared_dialog.dart';
-import 'package:forum/widgets/shared_notice.dart';
+import 'package:star_forum/pages/account/controller.dart';
+import 'package:star_forum/pages/settings/settings_page.dart';
+import 'package:star_forum/pages/user/view.dart';
+import 'package:star_forum/widgets/shared_dialog.dart';
+import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:get/get.dart';
 
 class AccountPage extends StatefulWidget {

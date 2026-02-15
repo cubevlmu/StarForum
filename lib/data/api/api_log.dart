@@ -4,7 +4,7 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/utils/log_util.dart';
 
 class ApiLog {
   static void ok(String api, String action, [String? extra]) {

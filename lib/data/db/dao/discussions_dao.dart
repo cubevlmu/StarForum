@@ -5,9 +5,9 @@
  */
 
 import 'package:drift/drift.dart';
-import 'package:forum/data/db/app_database.dart';
-import 'package:forum/data/db/tables/discussion_table.dart';
-import 'package:forum/utils/log_util.dart';
+import 'package:star_forum/data/db/app_database.dart';
+import 'package:star_forum/data/db/tables/discussion_table.dart';
+import 'package:star_forum/utils/log_util.dart';
 
 part 'discussions_dao.g.dart';
 

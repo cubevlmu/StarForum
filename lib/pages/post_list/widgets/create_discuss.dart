@@ -5,10 +5,10 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/model/tags.dart';
-import 'package:forum/data/repository/tag_repo.dart';
-import 'package:forum/di/injector.dart';
-import 'package:forum/utils/snackbar_utils.dart';
+import 'package:star_forum/data/model/tags.dart';
+import 'package:star_forum/data/repository/tag_repo.dart';
+import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
 
 class CreateDiscussWidget extends StatefulWidget {
   const CreateDiscussWidget({super.key, required this.onSubmit});

@@ -4,11 +4,11 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 import 'package:flutter/material.dart';
-import 'package:forum/pages/main/view.dart';
-import 'package:forum/pages/setup/controller.dart';
-import 'package:forum/pages/setup/widgets/setup_body_view.dart';
-import 'package:forum/pages/setup/widgets/setup_next_button.dart';
-import 'package:forum/utils/html_utils.dart';
+import 'package:star_forum/pages/main/view.dart';
+import 'package:star_forum/pages/setup/controller.dart';
+import 'package:star_forum/pages/setup/widgets/setup_body_view.dart';
+import 'package:star_forum/pages/setup/widgets/setup_next_button.dart';
+import 'package:star_forum/utils/html_utils.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 @immutable
