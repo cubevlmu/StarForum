@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:forum/data/api/api.dart';
-import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/data/repository/discussion_repo.dart';
 import 'package:forum/di/injector.dart';
 import 'package:forum/pages/setup/view.dart';
@@ -51,13 +50,11 @@ class CommonSettingsPage extends StatelessWidget {
           const Divider(height: 1, thickness: 0.5),
           ListTile(
             title: const Text("重新配置站点"),
-            onTap: ApiConstants.apiBase.isNotEmpty
-                ? null
-                : () {
-                    Navigator.of(context).push(
-                      GetPageRoute(page: () => const SetupPage(isSetup: false)),
-                    );
-                  },
+            onTap: () {
+              Navigator.of(
+                context,
+              ).push(GetPageRoute(page: () => const SetupPage(isSetup: false)));
+            },
           ),
         ],
       ),

@@ -16,7 +16,12 @@ class AvatarWidget extends StatelessWidget {
     this.onPressed,
     this.cacheWidthHeight,
     this.placeholder = "",
+    this.width,
+    this.height,
   });
+
+  final double? width;
+  final double? height;
   final String avatarUrl;
   final String placeholder;
   final double radius;
@@ -28,8 +33,8 @@ class AvatarWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: SizedBox(
-        width: radius * 2,
-        height: radius * 2,
+        width: width ?? radius * 2,
+        height: height ?? radius * 2,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -37,19 +42,21 @@ class AvatarWidget extends StatelessWidget {
               child: avatarUrl.isEmpty
                   ? CircleAvatar(
                       child: placeholder.isEmpty
-                          ? Center(child: Icon(Icons.person_outline_rounded))
+                          ? const Center(
+                              child: Icon(Icons.person_outline_rounded),
+                            )
                           : Text(placeholder[0]),
                     )
                   : CachedNetworkImage(
                       fit: BoxFit.cover,
                       cacheWidth:
-                          cacheWidthHeight ??
+                          (cacheWidthHeight ??
                           (MediaQuery.of(context).devicePixelRatio * radius * 2)
-                              .toInt(),
+                              .toInt()),
                       cacheHeight:
-                          cacheWidthHeight ??
+                          (cacheWidthHeight ??
                           (MediaQuery.of(context).devicePixelRatio * radius * 2)
-                              .toInt(),
+                              .toInt()),
                       placeholder: () => Container(
                         color: Theme.of(context).colorScheme.primaryContainer,
                       ),

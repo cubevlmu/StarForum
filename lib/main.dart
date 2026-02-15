@@ -15,7 +15,6 @@ import 'package:forum/utils/log_util.dart';
 import 'package:forum/utils/setting_util.dart';
 import 'package:forum/utils/storage_utils.dart';
 import 'package:forum/utils/window_util.dart';
-import 'package:forum/widgets/shared_notice.dart';
 import 'package:get/get.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:nil/nil.dart';

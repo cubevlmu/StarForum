@@ -8,9 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:forum/pages/post_detail/view.dart';
 import 'package:forum/pages/post_detail/widgets/post_item.dart';
 import 'package:forum/pages/user/controller.dart';
+import 'package:forum/utils/string_util.dart';
+import 'package:forum/widgets/avatar.dart';
 import 'package:forum/widgets/shared_notice.dart';
 import 'package:forum/widgets/simple_easy_refresher.dart';
-import 'package:forum/widgets/cached_network_image.dart';
 import 'package:get/get.dart';
 
 class UserPage extends StatefulWidget {
@@ -238,35 +239,30 @@ class _UserIdentityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.bodyMedium;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: .min,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              /// Avatar
-              ClipOval(
-                child: (controller.info?.avatarUrl ?? "").isEmpty
-                    ? SizedBox(
-                        width: 64,
-                        height: 64,
-                        child: Center(
-                          child: Icon(Icons.person_outline_rounded),
-                        ),
-                      )
-                    : CachedNetworkImage(
-                        width: 64,
-                        height: 64,
-                        imageUrl: controller.info?.avatarUrl ?? "",
-                        cacheManager: controller.cacheManager,
-                        placeholder: () =>
-                            Text((controller.info?.displayName ?? "U")[0]),
+              (controller.info?.avatarUrl ?? "").isEmpty
+                  ? const SizedBox(
+                      width: 64,
+                      height: 64,
+                      child: Center(child: Icon(Icons.person_outline_rounded)),
+                    )
+                  : AvatarWidget(
+                      avatarUrl: controller.info?.avatarUrl ?? "",
+                      radius: 22,
+                      placeholder: StringUtil.getAvatarFirstChar(
+                        controller.info?.displayName,
                       ),
-              ),
+                      width: 64,
+                      height: 64,
+                    ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -300,39 +296,21 @@ class _UserIdentityCard extends StatelessWidget {
               ),
             ],
           ),
-          if (controller.isMe())
-            Padding(
-              padding: EdgeInsetsGeometry.fromLTRB(5, 5, 5, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (controller.hasExpData) ...[
-                    Text(controller.buildExpString(), style: textStyle),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: controller.getExpPercent(),
-                        minHeight: 6,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+          if (controller.isMe()) ...[
+            if (controller.hasExpData) ...[
+              _UserExpWidget(controller: controller),
+              const SizedBox(height: 12),
+            ],
 
-                  /// Bio
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text("个人简介: ${controller.info?.bio}"),
-                  ),
-                ],
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
               ),
+              child: Text("个人简介: ${controller.info?.bio}"),
             ),
+          ],
         ],
       ),
     );
@@ -354,6 +332,37 @@ class _InfoRow extends StatelessWidget {
           Icon(icon, size: 16, color: Colors.grey),
           const SizedBox(width: 6),
           Text(text),
+        ],
+      ),
+    );
+  }
+}
+
+class _UserExpWidget extends StatelessWidget {
+  final UserPageController controller;
+
+  const _UserExpWidget({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.bodyMedium;
+
+    return Padding(
+      padding: EdgeInsetsGeometry.all(5),
+      child: Column(
+        mainAxisAlignment: .start,
+        crossAxisAlignment: .start,
+        mainAxisSize: .min,
+        children: [
+          Text(controller.buildExpString(), style: textStyle),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: controller.getExpPercent(),
+              minHeight: 6,
+            ),
+          ),
         ],
       ),
     );

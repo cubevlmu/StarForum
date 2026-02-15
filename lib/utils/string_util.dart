@@ -194,6 +194,12 @@ class StringUtil {
 
     return uri.toString();
   }
+
+  static String getAvatarFirstChar(String? displayName) {
+    if (displayName == null) return "";
+    if (displayName.isEmpty) return "";
+    return displayName[0];
+  }
 }
 
 final fallbackTime = DateTime.utc(1980);

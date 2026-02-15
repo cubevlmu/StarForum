@@ -6,7 +6,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:forum/data/api/api.dart';
-import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/data/model/forum_info.dart';
 import 'package:forum/data/repository/discussion_repo.dart';
 import 'package:forum/data/repository/tag_repo.dart';
@@ -127,11 +126,6 @@ class SetupPageController extends GetxController {
 
   void checkGreet() async {
     if (!pageController.hasClients) {
-      return;
-    }
-    if (ApiConstants.apiBase.isNotEmpty) {
-      siteUrl = ApiConstants.apiBase;
-      await setupUrl();
       return;
     }
     pageController.nextPage(

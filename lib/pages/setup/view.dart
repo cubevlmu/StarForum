@@ -5,7 +5,6 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/data/model/forum_info.dart';
 import 'package:forum/pages/setup/controller.dart';
 import 'package:forum/pages/setup/pages/finish_page.dart';
@@ -58,8 +57,7 @@ class _SetupPageState extends State<SetupPage> {
         physics: const NeverScrollableScrollPhysics(),
         children: [
           if (widget.isSetup) GreetingPage(controller: controller),
-          if (ApiConstants.apiBase.isEmpty)
-            SetupSitePage(controller: controller),
+          SetupSitePage(controller: controller),
           FinishPage(controller: controller),
         ],
       ),

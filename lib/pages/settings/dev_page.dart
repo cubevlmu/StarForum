@@ -5,13 +5,11 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api_constants.dart';
 import 'package:forum/data/model/discussion_item.dart';
 import 'package:forum/pages/post_detail/view.dart';
 import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/log_util.dart';
 import 'package:forum/pages/settings/widgets/settings_label.dart';
-import 'package:forum/utils/snackbar_utils.dart';
 import 'package:forum/widgets/shared_dialog.dart';
 import 'package:get/get.dart';
 
@@ -103,17 +101,17 @@ class DevSettingPage extends StatelessWidget {
   }
 
   void _onSetApibase(BuildContext context) {
-    SharedDialog.showInputDialog(
-      context,
-      "UserId",
-      "-1 for invalid -2 for not login",
-      "cancel",
-      () {},
-      "submit",
-      (i) {
-        ApiConstants.apiBase = i;
-        SnackbarUtils.showMessage(msg: "Set to ${ApiConstants.apiBase}", title: "Done.");
-      },
-    );
+    // SharedDialog.showInputDialog(
+    //   context,
+    //   "UserId",
+    //   "-1 for invalid -2 for not login",
+    //   "cancel",
+    //   () {},
+    //   "submit",
+    //   (i) {
+    //     ApiConstants.apiBase = i;
+    //     SnackbarUtils.showMessage(msg: "Set to ${ApiConstants.apiBase}", title: "Done.");
+    //   },
+    // );
   }
 }

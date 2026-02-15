@@ -6,7 +6,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:forum/data/api/api_constants.dart';
+import 'package:forum/data/api/api.dart';
 import 'package:forum/pages/user/view.dart';
 import 'package:forum/utils/cache_utils.dart';
 import 'package:forum/utils/log_util.dart';
@@ -403,7 +403,7 @@ class _ContentViewState extends State<ContentView> {
           launchUrlString(s);
           break;
         case ContentLikeType.kUserMention:
-          final id = int.parse(s.replaceAll("${ApiConstants.apiBase}/u/", ""));
+          final id = int.parse(s.replaceAll("${Api.getBaseUrl}/u/", ""));
           Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => UserPage(userId: id)));
