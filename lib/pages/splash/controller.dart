@@ -68,6 +68,14 @@ class SplashScreenController extends GetxController {
         MaterialPageRoute(builder: (_) => const MainPage()),
         (route) => false,
       );
+    } on StateError catch (ex) {
+      if (ex.message == l10n.splashErrorSiteNotConfigured) {
+        LogUtil.info("[Splash] App is not configured.");
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const SetupPage(isSetup: true)),
+          (route) => false,
+        );
+      }
     } catch (e, s) {
       LogUtil.errorE("[Splash] Failed to initialize application", e, s);
       stage.value = SplashStage.failed;

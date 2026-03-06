@@ -113,6 +113,10 @@ flutter run -d linux
 ### Android
 
 ```bash
+# Play Store (smaller download size per device)
+flutter build appbundle --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
+
+# Sideload APK (arm64 only)
 flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 

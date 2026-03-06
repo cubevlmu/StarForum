@@ -34,6 +34,11 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = false
+            excludes += setOf(
+                "**/armeabi-v7a/*.so",
+                "**/x86/*.so",
+                "**/x86_64/*.so",
+            )
         }
     }
 
@@ -43,6 +48,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resourceConfigurations.addAll(listOf("en", "zh"))
 
         ndk {
             abiFilters.clear()
@@ -71,6 +77,9 @@ android {
 
             isMinifyEnabled = true
             isShrinkResources = true
+            ndk {
+                debugSymbolLevel = "NONE"
+            }
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
