@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/model/posts.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/reply_util.dart';
 import 'package:star_forum/pages/user/view.dart';
@@ -18,8 +19,14 @@ import 'package:get/get.dart';
 class PostMainWidget extends StatelessWidget {
   final DiscussionItem content;
   final PostInfo? info;
+  final String controllerTag;
 
-  const PostMainWidget({super.key, required this.content, required this.info});
+  const PostMainWidget({
+    super.key,
+    required this.content,
+    required this.info,
+    required this.controllerTag,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +39,7 @@ class PostMainWidget extends StatelessWidget {
         mainAxisSize: .min,
         children: [
           _UserBox(item: content),
-          _MainContent(item: content),
+          _MainContent(item: content, controllerTag: controllerTag),
           const SizedBox(height: 5),
           like == -1
               ? const SizedBox.shrink()
@@ -120,7 +127,7 @@ class _UserBox extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    item.lastPostedAt.toString(),
+                    StringUtil.dateTimeToAgoDate(item.lastPostedAt),
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).hintColor,
@@ -137,12 +144,13 @@ class _UserBox extends StatelessWidget {
 }
 
 class _MainContent extends StatelessWidget {
-  const _MainContent({required this.item});
+  const _MainContent({required this.item, required this.controllerTag});
   final DiscussionItem item;
+  final String controllerTag;
 
   @override
   Widget build(BuildContext context) {
-    final model = Get.find<PostPageController>();
+    final model = Get.find<PostPageController>(tag: controllerTag);
     return SelectableRegion(
       magnifierConfiguration: const TextMagnifierConfiguration(),
       focusNode: FocusNode(),
@@ -175,11 +183,14 @@ class _ThumUpButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return ElevatedButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        visualDensity: VisualDensity.comfortable,
-        padding: const WidgetStatePropertyAll(EdgeInsets.all(5)),
+        visualDensity: VisualDensity.standard,
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        ),
         foregroundColor: selected == true
             ? WidgetStatePropertyAll(Theme.of(context).colorScheme.onPrimary)
             : null,
@@ -187,14 +198,18 @@ class _ThumUpButton extends StatelessWidget {
             ? WidgetStatePropertyAll(Theme.of(context).colorScheme.primary)
             : null,
         elevation: const WidgetStatePropertyAll(0),
-        minimumSize: const WidgetStatePropertyAll(Size(10, 5)),
+        minimumSize: const WidgetStatePropertyAll(Size(40, 36)),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       child: Row(
         mainAxisSize: .min,
         children: [
-          const Icon(Icons.thumb_up_rounded, size: 15),
-          const SizedBox(width: 5),
-          Text("点赞"), // StringUtil.numFormat(likeNum)
+          const Icon(Icons.thumb_up_rounded, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            AppLocalizations.of(context)!.commonLike,
+            style: textTheme.labelMedium,
+          ), // StringUtil.numFormat(likeNum)
         ],
       ),
     );

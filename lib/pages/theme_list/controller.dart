@@ -5,6 +5,7 @@ import 'package:star_forum/data/model/discussions.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
@@ -69,7 +70,9 @@ class ThemeListController extends GetxController {
       final r = repo.getTagById(selectId.value);
       if (r == null) {
         LogUtil.error("[ThemePage] Empty tag info.");
-        SnackbarUtils.showMessage(msg: "请选择一个标签.");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.themeSelectTagHint,
+        );
         return false;
       }
 

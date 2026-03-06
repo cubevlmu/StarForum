@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/theme_list/controller.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/widgets/post_card.dart';
@@ -58,6 +59,7 @@ class _ThemeListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SimpleEasyRefresher(
       easyRefreshController: controller.refreshController,
       onRefresh: controller.onRefresh,
@@ -73,7 +75,7 @@ class _ThemeListView extends StatelessWidget {
                 return const SliverToBoxAdapter(child: SizedBox.shrink());
               }
 
-              return const SliverFillRemaining(
+              return SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
                   child: Column(
@@ -81,7 +83,7 @@ class _ThemeListView extends StatelessWidget {
                     children: [
                       RefreshProgressIndicator(),
                       SizedBox(height: 8),
-                      Text('正在加载...'),
+                      Text(l10n.refreshLoading),
                     ],
                   ),
                 ),
@@ -95,12 +97,12 @@ class _ThemeListView extends StatelessWidget {
                 return const SliverToBoxAdapter(child: SizedBox.shrink());
               }
 
-              return const SliverFillRemaining(
+              return SliverFillRemaining(
                 hasScrollBody: false,
                 child: NoticeWidget(
                   emoji: '🧐',
-                  title: '这里还没有任何帖子',
-                  tips: '下拉刷新试试看',
+                  title: l10n.postListEmptyTitle,
+                  tips: l10n.postListEmptyTips,
                 ),
               );
             }),
@@ -111,8 +113,7 @@ class _ThemeListView extends StatelessWidget {
                 return const SliverToBoxAdapter(child: SizedBox.shrink());
               }
 
-              return SliverPrototypeExtentList(
-                prototypeItem: _ThemeListItem(item: items.first.toItem()),
+              return SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   return _ThemeListItem(item: items[index].toItem());
                 }, childCount: items.length),

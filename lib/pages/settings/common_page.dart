@@ -1,10 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/app/local_controller.dart';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/setup/view.dart';
+import 'package:star_forum/utils/app_language.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/storage_utils.dart';
 import 'package:star_forum/pages/settings/widgets/settings_label.dart';
@@ -20,43 +23,163 @@ class CommonSettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("通用")),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.settingsCommonTitle),
+      ),
       body: ListView(
         children: [
-          const SettingsSwitchTile(
-            title: '自动检查更新',
-            subTitle: '是否在启动app时检查更新',
+          SettingsSwitchTile(
+            title: AppLocalizations.of(context)!.settingsAutoCheckUpdate,
+            subTitle: AppLocalizations.of(context)!.settingsAutoCheckUpdateDesc,
             settingsKey: SettingsStorageKeys.autoCheckUpdate,
             defualtValue: false,
           ),
-          const SettingsLabel(text: '数据'),
           ListTile(
-            title: const Text("缓存管理"),
+            title: Text(AppLocalizations.of(context)!.settingsLanguage),
+            subtitle: Text(
+              AppLocalizations.of(context)!.settingsLanguageSelect,
+            ),
+            onTap: () => _showLanguageSelector(context),
+          ),
+          SettingsLabel(
+            text: AppLocalizations.of(context)!.settingsDataSection,
+          ),
+          ListTile(
+            title: Text(AppLocalizations.of(context)!.settingsCacheManagement),
             onTap: () {
               Navigator.of(
                 context,
-              ).push(GetPageRoute(page: () => const CacheManagementPage()));
+              ).push(
+                MaterialPageRoute(
+                  builder: (_) => const CacheManagementPage(),
+                ),
+              );
             },
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(
-            title: const Text("数据管理"),
+            title: Text(AppLocalizations.of(context)!.settingsDataManagement),
             onTap: () {
               Navigator.of(
                 context,
-              ).push(GetPageRoute(page: () => const DataBasePage()));
+              ).push(
+                MaterialPageRoute(
+                  builder: (_) => const DataBasePage(),
+                ),
+              );
             },
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(
-            title: const Text("重新配置站点"),
+            title: Text(AppLocalizations.of(context)!.settingsReconfigureSite),
             onTap: () {
               Navigator.of(
                 context,
-              ).push(GetPageRoute(page: () => const SetupPage(isSetup: false)));
+              ).push(
+                MaterialPageRoute(
+                  builder: (_) => const SetupPage(isSetup: false),
+                ),
+              );
             },
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLanguageSelector(BuildContext context) {
+    final controller = Get.find<LocaleController>();
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) {
+        final current = controller.locale;
+        return AlertDialog(
+          title: Text(l10n.settingsLanguageSelect),
+          contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int index = 0; index < languages.length; index++) ...[
+                  _LanguageOptionTile(
+                    label: languages[index].label(context),
+                    selected: _isSameLocale(current, languages[index].locale),
+                    onTap: () {
+                      controller.changeLocale(languages[index].locale);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  if (index != languages.length - 1)
+                    const Divider(height: 1, thickness: 0.5),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.commonActionCancel),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+bool _isSameLocale(Locale? a, Locale b) {
+  if (a == null) return false;
+  return a.languageCode == b.languageCode &&
+      a.scriptCode == b.scriptCode &&
+      a.countryCode == b.countryCode;
+}
+
+class _LanguageOptionTile extends StatelessWidget {
+  const _LanguageOptionTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: selected
+                  ? Icon(
+                      Icons.check_circle_rounded,
+                      key: const ValueKey("selected"),
+                      color: colorScheme.primary,
+                    )
+                  : Icon(
+                      Icons.circle_outlined,
+                      key: const ValueKey("unselected"),
+                      color: colorScheme.outline,
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -110,7 +233,9 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("缓存管理")),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.settingsCacheManagement),
+      ),
       body: FutureBuilder(
         future: buildItems(),
         builder: (context, snapshot) {
@@ -127,16 +252,18 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
   void _onTap(FileSystemEntity element) {
     SharedDialog.showDialog2(
       context,
-      "确认",
-      "是否删除该缓存?",
-      "否",
+      AppLocalizations.of(context)!.dialogConfirmTitle,
+      AppLocalizations.of(context)!.dialogDeleteCacheConfirm,
+      AppLocalizations.of(context)!.dialogNo,
       () => Navigator.of(context).pop(),
-      "是",
+      AppLocalizations.of(context)!.dialogYes,
       () {
         try {
           element.deleteSync(recursive: true);
         } catch (_) {
-          SnackbarUtils.showMessage(msg: "删除失败...");
+          SnackbarUtils.showMessage(
+            msg: AppLocalizations.of(context)!.commonNoticeDeleteFailed,
+          );
         }
         Navigator.of(context).pop();
         setState(() {});
@@ -175,7 +302,7 @@ class _DataBasePagePageState extends State<DataBasePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("缓存管理"),
+        title: Text(AppLocalizations.of(context)!.settingsCacheManagement),
         actions: [
           IconButton(
             onPressed: clearAll,
@@ -200,16 +327,18 @@ class _DataBasePagePageState extends State<DataBasePage> {
   void _onTap(String element) {
     SharedDialog.showDialog2(
       context,
-      "确认",
-      "是否删除该缓存?",
-      "否",
+      AppLocalizations.of(context)!.dialogConfirmTitle,
+      AppLocalizations.of(context)!.dialogDeleteCacheConfirm,
+      AppLocalizations.of(context)!.dialogNo,
       () => Navigator.of(context).pop(),
-      "是",
+      AppLocalizations.of(context)!.dialogYes,
       () async {
         try {
           await repo.discussionsDao.deleteItem(element);
         } catch (_) {
-          SnackbarUtils.showMessage(msg: "删除失败...");
+          SnackbarUtils.showMessage(
+            msg: AppLocalizations.of(context)!.commonNoticeDeleteFailed,
+          );
         }
         if (context.mounted) {
           Navigator.of(context).pop();
@@ -222,16 +351,18 @@ class _DataBasePagePageState extends State<DataBasePage> {
   void clearAll() {
     SharedDialog.showDialog2(
       context,
-      "确认",
-      "是否清空缓存?",
-      "否",
+      AppLocalizations.of(context)!.dialogConfirmTitle,
+      AppLocalizations.of(context)!.dialogClearCacheConfirm,
+      AppLocalizations.of(context)!.dialogNo,
       () => Navigator.of(context).pop(),
-      "是",
+      AppLocalizations.of(context)!.dialogYes,
       () async {
         try {
           await repo.clearAll();
         } catch (_) {
-          SnackbarUtils.showMessage(msg: "删除失败...");
+          SnackbarUtils.showMessage(
+            msg: AppLocalizations.of(context)!.commonNoticeDeleteFailed,
+          );
         }
         if (!context.mounted) return;
         Navigator.of(context).pop();

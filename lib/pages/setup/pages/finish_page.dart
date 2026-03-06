@@ -4,6 +4,7 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/main/view.dart';
 import 'package:star_forum/pages/setup/controller.dart';
 import 'package:star_forum/pages/setup/widgets/setup_body_view.dart';
@@ -23,20 +24,22 @@ class FinishPage extends StatelessWidget {
     return Colors.red;
   }
 
-  String _lagText() {
-    if (controller.forumLag.value <= 1) return "连接良好";
-    if (controller.forumLag.value <= 3) return "连接一般";
-    return "连接较慢";
+  String _lagText(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    if (controller.forumLag.value <= 1) return l10n.setupLagGood;
+    if (controller.forumLag.value <= 3) return l10n.setupLagFair;
+    return l10n.setupLagSlow;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return SetupBodyView(
-      title: "${controller.forumInfo.value?.title} 准备完成!",
-      secondaryTitle: "站点已就绪",
+      title: l10n.setupReadyTitle(controller.forumInfo.value?.title ?? ''),
+      secondaryTitle: l10n.setupReadySubtitle,
       leading: Icon(
         Icons.forum_outlined,
         size: 48,
@@ -57,8 +60,8 @@ class FinishPage extends StatelessWidget {
                       Icons.network_check,
                       color: _lagColor(context),
                     ),
-                    title: const Text("站点连接状态"),
-                    subtitle: Text(_lagText()),
+                    title: Text(l10n.setupSiteConnectionStatus),
+                    subtitle: Text(_lagText(context)),
                   ),
                   ListTile(
                     leading: Icon(Icons.info_outline),
@@ -95,7 +98,7 @@ class FinishPage extends StatelessWidget {
               SetupNextButton(
                 icon: Icons.check_circle_outline,
                 onTap: null,
-                text: "完成并进入",
+                text: l10n.commonActionFinishAndEnter,
               ),
             ],
           );
@@ -112,7 +115,7 @@ class FinishPage extends StatelessWidget {
               (route) => false,
             );
           },
-          text: "完成并进入",
+          text: l10n.commonActionFinishAndEnter,
         );
       }),
     );

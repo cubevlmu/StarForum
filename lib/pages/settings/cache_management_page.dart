@@ -6,6 +6,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -45,30 +46,36 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
         //我们只取保存在文件夹的缓存
         //如果是文件夹的话，就计算它的大小
         double size = await getTotalSizeOfFilesInDir(element);
-        items.add(ListTile(
-          title: Text(element.path.split('/').last),
-          subtitle: Text(StringUtil.byteNumToFileSize(size)),
-          onLongPress: () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text("是否删除该缓存？"),
-                actions: [
-                  TextButton(
+        items.add(
+          ListTile(
+            title: Text(element.path.split('/').last),
+            subtitle: Text(StringUtil.byteNumToFileSize(size)),
+            onLongPress: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(
+                    AppLocalizations.of(context)!.dialogDeleteCacheConfirm,
+                  ),
+                  actions: [
+                    TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text("否")),
-                  TextButton(
+                      child: Text(AppLocalizations.of(context)!.dialogNo),
+                    ),
+                    TextButton(
                       onPressed: () {
                         element.deleteSync(recursive: true);
                         Navigator.of(context).pop();
                         setState(() {});
                       },
-                      child: const Text("是")),
-                ],
-              ),
-            );
-          },
-        ));
+                      child: Text(AppLocalizations.of(context)!.dialogYes),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
       }
     }
   }
@@ -77,7 +84,7 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("缓存管理"),
+        title: Text(AppLocalizations.of(context)!.settingsCacheManagement),
       ),
       body: FutureBuilder(
         future: buildItems(),

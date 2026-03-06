@@ -73,6 +73,8 @@ flutter doctor
 
 ```bash
 flutter pub get
+flutter gen-l10n
+dart run flutter_launcher_icons
 dart run build_runner build --delete-conflicting-outputs
 ```
 
@@ -111,6 +113,10 @@ flutter run -d linux
 ### Android
 
 ```bash
+# Play Store (smaller download size per device)
+flutter build appbundle --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
+
+# Sideload APK (arm64 only)
 flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 

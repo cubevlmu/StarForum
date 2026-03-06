@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 
 class RadioListDialog<T> extends StatefulWidget {
-  const RadioListDialog(
-      {super.key,
-      required this.title,
-      required this.itemNameValueMap,
-      required this.groupValue,
-      this.onChanged});
+  const RadioListDialog({
+    super.key,
+    required this.title,
+    required this.itemNameValueMap,
+    required this.groupValue,
+    this.onChanged,
+  });
   final String title;
   final Map<String, T> itemNameValueMap;
   final T groupValue;
@@ -22,15 +24,17 @@ class _RadioListDialogState<T> extends State<RadioListDialog<T>> {
   void initState() {
     items = <Widget>[];
     widget.itemNameValueMap.forEach((title, value) {
-      items.add(RadioListTile(
-        value: value,
-        groupValue: widget.groupValue,
-        title: Text(title),
-        onChanged: (value) {
-          widget.onChanged?.call(value);
-          setState(() {});
-        },
-      ));
+      items.add(
+        RadioListTile(
+          value: value,
+          groupValue: widget.groupValue,
+          title: Text(title),
+          onChanged: (value) {
+            widget.onChanged?.call(value);
+            setState(() {});
+          },
+        ),
+      );
     });
     super.initState();
   }
@@ -43,8 +47,9 @@ class _RadioListDialogState<T> extends State<RadioListDialog<T>> {
       content: Column(children: items),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'))
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(AppLocalizations.of(context)!.commonActionCancel),
+        ),
       ],
     );
   }

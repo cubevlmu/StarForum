@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 
 class CreateDiscussWidget extends StatefulWidget {
@@ -30,8 +31,15 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
   final List<TagInfo> _selectedTags = [];
   bool _isSubmitting = false;
 
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _contentCtrl.dispose();
+    super.dispose();
+  }
+
   String get _tagText => _primaryTag == null
-      ? "主题标签必须选择一个!"
+      ? AppLocalizations.of(context)!.commonNoticePrimaryTagRequired
       : "${_primaryTag!.name}${_selectedTags.isEmpty ? "" : "/"}${_selectedTags.map((e) => e.name).join(", ")}";
 
   Future<void> _submit() async {
@@ -41,12 +49,16 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
     final content = _contentCtrl.text.trim();
 
     if (title.isEmpty || content.isEmpty) {
-      SnackbarUtils.showMessage(msg: "标题和正文不能为空");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(context)!.commonNoticeTitleContentEmpty,
+      );
       return;
     }
 
     if (title.length < 6) {
-      SnackbarUtils.showMessage(msg: "标题至少6个字.");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(context)!.commonNoticeTitleTooShort,
+      );
       return;
     }
 
@@ -54,7 +66,9 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
     if (_primaryTag != null) {
       lst.add(_primaryTag!.id);
     } else {
-      SnackbarUtils.showMessage(msg: "主题标签必须选择一个！");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(context)!.commonNoticePrimaryTagRequired,
+      );
       return;
     }
 
@@ -86,8 +100,8 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
             TextField(
               controller: _titleCtrl,
               enabled: !_isSubmitting,
-              decoration: const InputDecoration(
-                hintText: "标题",
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(context)!.postCreateTitleHint,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -99,8 +113,8 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
               enabled: !_isSubmitting,
               minLines: 3,
               maxLines: 6,
-              decoration: const InputDecoration(
-                hintText: "正文内容...",
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(context)!.postCreateContentHint,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -110,7 +124,7 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
             ElevatedButton.icon(
               onPressed: _isSubmitting ? null : _submit,
               icon: const Icon(Icons.send),
-              label: const Text("发表"),
+              label: Text(AppLocalizations.of(context)!.postCreateSubmit),
             ),
 
             if (_isSubmitting)
@@ -137,7 +151,7 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text("选择标签"),
+              title: Text(AppLocalizations.of(context)!.tagDialogTitle),
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView(
@@ -172,7 +186,9 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
                     const Divider(),
                     ListTile(
                       leading: const Icon(Icons.add),
-                      title: const Text("自定义标签"),
+                      title: Text(
+                        AppLocalizations.of(context)!.tagDialogCustomTag,
+                      ),
                       onTap: _onCustomTag,
                     ),
                   ],
@@ -182,13 +198,17 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
                 TextButton(
                   onPressed: () {
                     if (_primaryTag == null) {
-                      SnackbarUtils.showMessage(msg: "主题标签必须选择一个!");
+                      SnackbarUtils.showMessage(
+                        msg: AppLocalizations.of(
+                          context,
+                        )!.commonNoticePrimaryTagRequired,
+                      );
                       return;
                     }
                     setState(() {});
                     Navigator.pop(context);
                   },
-                  child: const Text("关闭"),
+                  child: Text(AppLocalizations.of(context)!.tagDialogClose),
                 ),
               ],
             );
@@ -240,6 +260,8 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
   }
 
   void _onCustomTag() {
-    SnackbarUtils.showMessage(msg: "自定义标签功能待实现");
+    SnackbarUtils.showMessage(
+      msg: AppLocalizations.of(context)!.commonNoticeCustomTagTodo,
+    );
   }
 }

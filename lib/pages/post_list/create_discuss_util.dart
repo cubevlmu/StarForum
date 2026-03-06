@@ -6,9 +6,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_list/widgets/create_discuss.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
@@ -19,13 +21,16 @@ import '../../di/injector.dart';
 class CreateDiscussUtil {
   static bool _checkLogin(UserRepo repo) {
     if (!repo.isLogin) {
-      SnackbarUtils.showMessage(msg: "请先登录!");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.authLoginRequired,
+      );
       return false;
     }
     return true;
   }
 
   static Future<void> showCreateDiscuss({
+    required BuildContext context,
     required Function()? updateWidget,
     required ScrollController? scrollController,
   }) async {
@@ -34,18 +39,24 @@ class CreateDiscussUtil {
     if (!_checkLogin(repo)) return;
 
     SheetUtil.newBottomSheet(
+      context: context,
       widget: CreateDiscussWidget(
         onSubmit: (tags, title, content) async {
           final (r, rs) = await Api.createDiscussion(tags, title, content);
 
           if (!rs) {
             repo.logout();
-            SnackbarUtils.showMessage(msg: "登录过期!");
+            SnackbarUtils.showMessage(
+              msg: AppLocalizations.of(Get.context!)!.authLoginExpired,
+            );
             return false;
           }
 
           if (r == null) {
-            SnackbarUtils.showMessage(title: "发表失败", msg: "可能是网络问题");
+            SnackbarUtils.showMessage(
+              title: AppLocalizations.of(Get.context!)!.postCreateFailedTitle,
+              msg: AppLocalizations.of(Get.context!)!.postCreateFailedNetwork,
+            );
             return false;
           }
 
@@ -55,7 +66,7 @@ class CreateDiscussUtil {
             LogUtil.error(
               "[PostList] Failed to fetch firstPost for the return from create discussion.",
             );
-            SnackbarUtils.showMessage(msg: "数据异常");
+            SnackbarUtils.showMessage(msg: AppLocalizations.of(Get.context!)!.postCreateDataError);
             return true;
           }
 
@@ -69,7 +80,7 @@ class CreateDiscussUtil {
             curve: Curves.linear,
           );
 
-          SnackbarUtils.showMessage(msg: "发表成功");
+          SnackbarUtils.showMessage(msg: AppLocalizations.of(Get.context!)!.postCreateSuccess);
           return true;
         },
       ),

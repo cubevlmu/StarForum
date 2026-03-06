@@ -1,0 +1,692 @@
+{
+  "@@locale": "zh_Hans_CN",
+  
+  "mainHomePage": "首頁",
+  "@mainHomePage": {},
+
+  "mainNotiPage": "通知",
+  "@mainNotiPage": {},
+
+  "mainUserPage": "我的",
+  "@mainUserPage": {},
+
+  "loginTitle": "帳戶登入",
+  "@loginTitle": {},
+
+  "loginAccountLabel": "電子郵件或使用者名稱",
+  "@loginAccountLabel": {},
+
+  "loginPasswordLabel": "密碼",
+  "@loginPasswordLabel": {},
+
+  "loginRememberMe": "記住我的密碼（逾期自動重新登入）",
+  "@loginRememberMe": {},
+
+  "loginButton": "登入",
+  "@loginButton": {},
+
+  "loginRegister": "註冊帳號（前往網頁版）",
+  "@loginRegister": {},
+
+  "notificationTitle": "通知",
+  "@notificationTitle": {},
+
+  "notificationEmptyTitle": "暫無通知",
+  "@notificationEmptyTitle": {},
+
+  "notificationEmptyTips": "這裡會顯示回覆、提及和系統訊息",
+  "@notificationEmptyTips": {},
+
+  "notificationNotLoginTitle": "您還沒有登入",
+  "@notificationNotLoginTitle": {},
+
+  "notificationNotLoginTips": "登入後即可查看訊息通知",
+  "@notificationNotLoginTips": {},
+
+  "postListEmptyTitle": "這裡還沒有任何貼文",
+  "@postListEmptyTitle": {},
+
+  "postListEmptyTips": "下拉重新整理試試看",
+  "@postListEmptyTips": {},
+
+  "postCreateTagRequiredInline": "必須選擇一個主題標籤！",
+  "@postCreateTagRequiredInline": {},
+
+  "postCreateTitleHint": "標題",
+  "@postCreateTitleHint": {},
+
+  "postCreateContentHint": "正文內容...",
+  "@postCreateContentHint": {},
+
+  "postCreateSubmit": "發表",
+  "@postCreateSubmit": {},
+
+  "tagDialogTitle": "選擇標籤",
+  "@tagDialogTitle": {},
+
+  "tagDialogCustomTag": "自訂標籤",
+  "@tagDialogCustomTag": {},
+
+  "tagDialogClose": "關閉",
+  "@tagDialogClose": {},
+
+  "commonNoticeTitleContentEmpty": "標題和正文不能為空",
+  "@commonNoticeTitleContentEmpty": {},
+
+  "commonNoticeTitleTooShort": "標題至少需要 6 個字",
+  "@commonNoticeTitleTooShort": {},
+
+  "commonNoticePrimaryTagRequired": "必須選擇一個主題標籤！",
+  "@commonNoticePrimaryTagRequired": {},
+
+  "commonNoticeCustomTagTodo": "自訂標籤功能待實現",
+  "@commonNoticeCustomTagTodo": {},
+
+  "authLoginRequired": "請先登入！",
+  "@authLoginRequired": {},
+
+  "authLoginExpired": "登入已逾期！",
+  "@authLoginExpired": {},
+
+  "postCreateFailedTitle": "發表失敗",
+  "@postCreateFailedTitle": {},
+
+  "postCreateFailedNetwork": "可能是網路問題",
+  "@postCreateFailedNetwork": {},
+
+  "postCreateDataError": "資料異常",
+  "@postCreateDataError": {},
+
+  "postCreateSuccess": "發表成功",
+  "@postCreateSuccess": {},
+
+  "splashTitle": "同步資料",
+  "@splashTitle": {},
+
+  "splashDescription": "用戶端正在從論壇伺服器同步資料，請稍後",
+  "@splashDescription": {},
+
+  "splashStateInitNetwork": "初始化網路中...",
+  "@splashStateInitNetwork": {},
+
+  "splashStateSyncUser": "同步使用者資料...",
+  "@splashStateSyncUser": {},
+
+  "splashStateSyncTags": "同步標籤資訊...",
+  "@splashStateSyncTags": {},
+
+  "splashStateFinished": "同步完畢",
+  "@splashStateFinished": {},
+  "splashErrorTitle": "同步失敗",
+  "@splashErrorTitle": {},
+  "splashErrorTips": "由於網路或站點配置問題，啟動同步未完成。",
+  "@splashErrorTips": {},
+  "splashErrorSiteNotConfigured": "尚未配置站點，請先設定論壇網址。",
+  "@splashErrorSiteNotConfigured": {},
+  "splashActionRetry": "重新載入",
+  "@splashActionRetry": {},
+  "splashActionGoSetup": "配置站點",
+  "@splashActionGoSetup": {},
+
+  "commonNoticeInitViewError": "初始化檢視錯誤",
+  "@commonNoticeInitViewError": {},
+
+  "userAppBarTitle": "使用者資料",
+  "@userAppBarTitle": {},
+
+  "userInvalidAccountTitle": "錯誤的帳號",
+  "@userInvalidAccountTitle": {},
+
+  "userInvalidAccountTips": "很抱歉，我們找不到這個帳戶",
+  "@userInvalidAccountTips": {},
+
+  "userNotLoginTitle": "帳號未登入",
+  "@userNotLoginTitle": {},
+
+  "userNotLoginTips": "請登入您的帳號來查看",
+  "@userNotLoginTips": {},
+
+  "userEmptyPostTitle": "這裡還沒有任何貼文",
+  "@userEmptyPostTitle": {},
+
+  "userEmptyPostTips": "下拉重新整理試試看",
+  "@userEmptyPostTips": {},
+
+  "userDiscussionHintPrefix": "於 ",
+  "@userDiscussionHintPrefix": {},
+
+  "userRegisterAtPrefix": "註冊於",
+  "@userRegisterAtPrefix": {},
+
+  "userLoading": "載入中...",
+  "@userLoading": {},
+
+  "userOnline": "線上",
+  "@userOnline": {},
+
+  "userBioPrefix": "個人簡介",
+  "@userBioPrefix": {},
+
+  "commonNoticeFetchPostFailed": "獲取貼文資訊失敗",
+  "@commonNoticeFetchPostFailed": {},
+
+  "accountAppBarTitle": "使用者",
+  "@accountAppBarTitle": {},
+
+  "authNotLoginTitle": "您還沒有登入",
+  "@authNotLoginTitle": {},
+
+  "authNotLoginTips": "請登入您的帳戶來查看個人資訊",
+  "@authNotLoginTips": {},
+
+  "commonActionLogout": "登出",
+  "@commonActionLogout": {},
+
+  "commonActionSettings": "設定",
+  "@commonActionSettings": {},
+
+  "homeTabPosts": "貼文",
+  "@homeTabPosts": {},
+
+  "homeTabThemes": "主題",
+  "@homeTabThemes": {},
+
+  "commonNoticeWorkInProgress": "功能正在開發中",
+  "@commonNoticeWorkInProgress": {},
+
+  "authLogin": "登入",
+  "@authLogin": {},
+
+  "authLogout": "登出",
+  "@authLogout": {},
+
+  "userCenter": "個人中心",
+  "@userCenter": {},
+
+  "commonNoticeOpenFailed": "開啟失敗",
+  "@commonNoticeOpenFailed": {},
+
+  "refreshPullToRefresh": "下拉重新整理",
+  "@refreshPullToRefresh": {},
+
+  "refreshReleaseToRefresh": "放開以重新整理",
+  "@refreshReleaseToRefresh": {},
+
+  "refreshRefreshing": "正在重新整理...",
+  "@refreshRefreshing": {},
+
+  "refreshRefreshSuccess": "重新整理成功",
+  "@refreshRefreshSuccess": {},
+
+  "refreshRefreshFailed": "重新整理失敗",
+  "@refreshRefreshFailed": {},
+
+  "refreshPullToLoad": "上拉載入更多",
+  "@refreshPullToLoad": {},
+
+  "refreshReleaseToLoad": "放開以載入更多",
+  "@refreshReleaseToLoad": {},
+
+  "refreshLoading": "載入中...",
+  "@refreshLoading": {},
+
+  "refreshLoadSuccess": "載入成功",
+  "@refreshLoadSuccess": {},
+
+  "refreshLoadFailed": "載入失敗",
+  "@refreshLoadFailed": {},
+
+  "refreshNoMore": "沒有更多內容",
+  "@refreshNoMore": {},
+
+  "aboutTitle": "關於",
+  "@aboutTitle": {},
+
+  "aboutVersion": "版本",
+  "@aboutVersion": {},
+
+  "aboutCheckUpdate": "檢查更新",
+  "@aboutCheckUpdate": {},
+
+  "aboutAuthor": "作者",
+  "@aboutAuthor": {},
+
+  "aboutProjectLink": "專案連結",
+  "@aboutProjectLink": {},
+
+  "aboutLicense": "授權條款",
+  "@aboutLicense": {},
+
+  "aboutAppLog": "程式日誌",
+  "@aboutAppLog": {},
+
+  "commonNoticeCopiedToClipboard": "已將 {content} 複製到剪貼簿",
+  "@commonNoticeCopiedToClipboard": {
+    "placeholders": {
+      "content": {}
+    }
+  },
+
+  "settingsPersonalizeTitle": "主題設定",
+  "@settingsPersonalizeTitle": {},
+
+  "settingsThemeSection": "主題",
+  "@settingsThemeSection": {},
+
+  "settingsThemeMode": "主題模式",
+  "@settingsThemeMode": {},
+
+  "settingsThemeColor": "主題顏色",
+  "@settingsThemeColor": {},
+
+  "settingsFontSection": "字型",
+  "@settingsFontSection": {},
+
+  "settingsFontSize": "字型大小",
+  "@settingsFontSize": {},
+
+  "commonActionCancel": "取消",
+  "@commonActionCancel": {},
+
+  "settingsCommonTitle": "一般",
+  "@settingsCommonTitle": {},
+
+  "settingsAutoCheckUpdate": "自動檢查更新",
+  "@settingsAutoCheckUpdate": {},
+
+  "settingsAutoCheckUpdateDesc": "是否在啟動 App 時檢查更新",
+  "@settingsAutoCheckUpdateDesc": {},
+
+  "settingsLanguage": "語言",
+  "@settingsLanguage": {},
+
+  "settingsLanguageSelect": "選擇語言",
+  "@settingsLanguageSelect": {},
+
+  "settingsDataSection": "資料",
+  "@settingsDataSection": {},
+  "settingsCacheManagement": "快取管理",
+  "@settingsCacheManagement": {},
+  "settingsDataManagement": "資料管理",
+  "@settingsDataManagement": {},
+  "settingsReconfigureSite": "重新設定站點",
+  "@settingsReconfigureSite": {},
+
+  "dialogConfirmTitle": "確認",
+  "@dialogConfirmTitle": {},
+  "dialogDeleteCacheConfirm": "是否刪除此快取？",
+  "@dialogDeleteCacheConfirm": {},
+
+  "dialogClearCacheConfirm": "是否清空快取？",
+  "@dialogClearCacheConfirm": {},
+
+  "dialogNo": "否",
+  "@dialogNo": {},
+
+  "dialogYes": "是",
+  "@dialogYes": {},
+
+  "commonNoticeDeleteFailed": "刪除失敗...",
+  "@commonNoticeDeleteFailed": {},
+
+  "authLoginTitle": "登入",
+  "@authLoginTitle": {},
+
+  "authEmptyCredential": "帳號或密碼不能為空",
+  "@authEmptyCredential": {},
+
+  "authLoginFailed": "網路錯誤或帳號密碼錯誤",
+  "@authLoginFailed": {},
+
+  "authUserInfoError": "獲取使用者資訊錯誤",
+  "@authUserInfoError": {},
+
+  "authLoginSuccess": "成功！使用者：{username}",
+  "@authLoginSuccess": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+
+  "notificationLevelUpdatedTitle": "等級達成 {levelName}",
+  "@notificationLevelUpdatedTitle": {
+    "placeholders": {
+      "levelName": {}
+    }
+  },
+
+  "notificationLevelUpdatedDesc": "等級高於 {minExp}",
+  "@notificationLevelUpdatedDesc": {
+    "placeholders": {
+      "minExp": {}
+    }
+  },
+
+  "notificationPostMentionedTitle": "回覆了您",
+  "@notificationPostMentionedTitle": {},
+
+  "notificationPostMentionedDesc": "貼文：{content}",
+  "@notificationPostMentionedDesc": {
+    "placeholders": {
+      "content": {}
+    }
+  },
+
+  "notificationPostLikedTitle": "按讚了您",
+  "@notificationPostLikedTitle": {},
+
+  "notificationPostLikedDesc": "貼文：{content}",
+  "@notificationPostLikedDesc": {
+    "placeholders": {
+      "content": {}
+    }
+  },
+
+  "notificationBadgeReceivedTitle": "獲得了一個徽章",
+  "@notificationBadgeReceivedTitle": {},
+  "notificationBadgeReceivedDesc": "用戶端暫不支援解析徽章內容",
+  "@notificationBadgeReceivedDesc": {},
+
+  "notificationWarningTitle": "收到 {username} 的警告",
+  "@notificationWarningTitle": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+
+  "notificationWarningDesc": "記 {strikes} 分：{comment}",
+  "@notificationWarningDesc": {
+    "placeholders": {
+      "strikes": {},
+      "comment": {}
+    }
+  },
+
+  "notificationUnsupportedTitle": "不支援的通知",
+  "@notificationUnsupportedTitle": {},
+
+  "notificationUnsupportedDesc": "請前往網頁版查看",
+  "@notificationUnsupportedDesc": {},
+
+  "authUserNotLogin": "使用者未登入",
+  "@authUserNotLogin": {},
+
+  "notificationMarkReadSuccess": "標記已讀成功！",
+  "@notificationMarkReadSuccess": {},
+
+  "notificationMarkReadFailed": "標記已讀失敗！",
+  "@notificationMarkReadFailed": {},
+
+  "notificationMarkAllReadFailed": "標記全部已讀失敗！",
+  "@notificationMarkAllReadFailed": {},
+
+  "notificationMarkAllReadNoNeed": "已經全部已讀。",
+  "@notificationMarkAllReadNoNeed": {},
+
+  "notificationClearAllFailed": "清除全部訊息失敗",
+  "@notificationClearAllFailed": {},
+
+  "notificationClearAllSuccess": "清除全部訊息成功！",
+  "@notificationClearAllSuccess": {},
+
+  "notificationFetchDiscussionFailed": "獲取貼文資訊失敗",
+  "@notificationFetchDiscussionFailed": {},
+
+  "commonLike": "按讚",
+  "@commonLike": {},
+
+  "replyInputHint": "寫下您的回覆…",
+  "@replyInputHint": {},
+
+  "imageSaveTooltip": "儲存圖片",
+  "@imageSaveTooltip": {},
+  "imageSaveSuccess": "圖片已儲存到 {savedPath}",
+  "@imageSaveSuccess": {
+    "placeholders": {
+      "savedPath": {}
+    }
+  },
+  "imageSaveFailed": "儲存失敗：{error}",
+  "@imageSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+
+  "postCardReplyCount": "{count} 則回覆",
+  "@postCardReplyCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "postCardViewCount": "{count} 次閱讀",
+  "@postCardViewCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+
+  "commonActionConfirm": "確認",
+  "@commonActionConfirm": {},
+  "commonActionDisagree": "不同意",
+  "@commonActionDisagree": {},
+  "commonActionAgree": "同意",
+  "@commonActionAgree": {},
+  "commonActionAgreeAndContinue": "同意並繼續",
+  "@commonActionAgreeAndContinue": {},
+  "commonActionFinishAndEnter": "完成並進入",
+  "@commonActionFinishAndEnter": {},
+
+  "dialogInputNumberHint": "請輸入數字",
+  "@dialogInputNumberHint": {},
+  "dialogInputTextHint": "請輸入文字",
+  "@dialogInputTextHint": {},
+
+  "authLogoutSuccess": "登出成功！",
+  "@authLogoutSuccess": {},
+  "authLogoutDialogTitle": "登出",
+  "@authLogoutDialogTitle": {},
+  "authLogoutDialogContent": "確定要登出帳號嗎？",
+  "@authLogoutDialogContent": {},
+
+  "noticeWorkInProgressTips": "功能還在開發中",
+  "@noticeWorkInProgressTips": {},
+
+  "searchStartHint": "開始搜尋吧 👀",
+  "@searchStartHint": {},
+  "searchHistoryTitle": "搜尋紀錄",
+  "@searchHistoryTitle": {},
+  "searchResultEmptyTitle": "沒有找到相關內容",
+  "@searchResultEmptyTitle": {},
+  "searchResultEmptyTips": "試試看其他關鍵字",
+  "@searchResultEmptyTips": {},
+
+  "networkNotConnectedTitle": "網路未連線",
+  "@networkNotConnectedTitle": {},
+  "networkNotConnectedMsg": "請檢查您的網路狀態",
+  "@networkNotConnectedMsg": {},
+
+  "homeUserServiceInitFailed": "使用者服務初始化失敗",
+  "@homeUserServiceInitFailed": {},
+  "homeUserLoginExpiredNeedRelogin": "使用者登入狀態已逾期！請重新登入",
+  "@homeUserLoginExpiredNeedRelogin": {},
+  "homeForumInfoFetchFailed": "論壇資訊獲取失敗...",
+  "@homeForumInfoFetchFailed": {},
+
+  "themeSelectTagHint": "請選擇一個標籤。",
+  "@themeSelectTagHint": {},
+
+  "postSortByHot": "按熱度",
+  "@postSortByHot": {},
+  "postSortByTime": "按時間",
+  "@postSortByTime": {},
+  "postContentLoadingHtml": "<p>載入中...</p>",
+  "@postContentLoadingHtml": {},
+  "postContentUnavailableHtml": "<p>無法取得內容...可能是網路問題</p>",
+  "@postContentUnavailableHtml": {},
+  "postContentUnavailable": "無法取得貼文內容",
+  "@postContentUnavailable": {},
+  "postActionComment": "發表評論",
+  "@postActionComment": {},
+  "postReplyPrefix": "回覆: {count}",
+  "@postReplyPrefix": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "postTitlePrefix": "貼文: {title}",
+  "@postTitlePrefix": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "postNoReplyTitle": "還沒有回覆",
+  "@postNoReplyTitle": {},
+  "postNoReplyTips": "成為第一個發表評論的人吧",
+  "@postNoReplyTips": {},
+  "replyToUserHint": "回覆 @{username}",
+  "@replyToUserHint": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "postLikeFailedTitle": "按讚失敗",
+  "@postLikeFailedTitle": {},
+  "postLikeFailedNetwork": "可能是網路錯誤",
+  "@postLikeFailedNetwork": {},
+  "postUnlikeSuccess": "取消按讚成功！",
+  "@postUnlikeSuccess": {},
+  "postLikeSuccess": "按讚成功！",
+  "@postLikeSuccess": {},
+
+  "setupInitDone": "初始化完畢！",
+  "@setupInitDone": {},
+  "setupSiteUrlEmpty": "站點網址不能為空！",
+  "@setupSiteUrlEmpty": {},
+  "setupSiteUrlInvalid": "請輸入有效的站點網址",
+  "@setupSiteUrlInvalid": {},
+  "setupNetworkError": "網路錯誤",
+  "@setupNetworkError": {},
+  "setupFetchSiteInfoFailed": "獲取站點資訊失敗",
+  "@setupFetchSiteInfoFailed": {},
+  "setupSiteConfigTitle": "設定站點",
+  "@setupSiteConfigTitle": {},
+  "setupSiteConfigDesc": "請輸入 Flarum 站點網址：",
+  "@setupSiteConfigDesc": {},
+  "setupSiteAddressLabel": "站點網址",
+  "@setupSiteAddressLabel": {},
+  "setupLicenseTitle": "GNU GPL v2 授權條款",
+  "@setupLicenseTitle": {},
+  "setupGreetingTitle": "歡迎！",
+  "@setupGreetingTitle": {},
+  "setupGreetingSubtitle": "歡迎使用 StarForumApp",
+  "@setupGreetingSubtitle": {},
+  "setupFeatureDiscuss": "參與討論，發現有價值的觀點",
+  "@setupFeatureDiscuss": {},
+  "setupFeatureNoti": "獲取回覆和通知",
+  "@setupFeatureNoti": {},
+  "setupFeatureBookmark": "收藏您感興趣的內容",
+  "@setupFeatureBookmark": {},
+  "setupLicenseReadAgreeTips": "在繼續之前，請閱讀並同意授權條款",
+  "@setupLicenseReadAgreeTips": {},
+  "setupViewLicense": "檢視授權條款",
+  "@setupViewLicense": {},
+  "setupLagGood": "連線良好",
+  "@setupLagGood": {},
+  "setupLagFair": "連線一般",
+  "@setupLagFair": {},
+  "setupLagSlow": "連線較慢",
+  "@setupLagSlow": {},
+  "setupReadyTitle": "{siteTitle} 準備完成！",
+  "@setupReadyTitle": {
+    "placeholders": {
+      "siteTitle": {}
+    }
+  },
+  "setupReadySubtitle": "站點已就緒",
+  "@setupReadySubtitle": {},
+  "setupSiteConnectionStatus": "站點連線狀態",
+  "@setupSiteConnectionStatus": {},
+
+  "devMenuTitle": "開發者選單",
+  "@devMenuTitle": {},
+
+  "languageEnglish": "English",
+  "@languageEnglish": {},
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {},
+  "languageTraditionalChinese": "繁體中文",
+  "@languageTraditionalChinese": {},
+
+  "themeModeSystem": "系統",
+  "@themeModeSystem": {},
+  "themeModeLight": "淺色",
+  "@themeModeLight": {},
+  "themeModeDark": "深色",
+  "@themeModeDark": {},
+
+  "themeColorDynamic": "動態",
+  "@themeColorDynamic": {},
+  "themeColorBlue": "藍色",
+  "@themeColorBlue": {},
+  "themeColorLightBlue": "淺藍色",
+  "@themeColorLightBlue": {},
+  "themeColorCyan": "青色",
+  "@themeColorCyan": {},
+  "themeColorTeal": "藍綠色",
+  "@themeColorTeal": {},
+  "themeColorGreen": "綠色",
+  "@themeColorGreen": {},
+  "themeColorLime": "黃綠色",
+  "@themeColorLime": {},
+  "themeColorYellow": "黃色",
+  "@themeColorYellow": {},
+  "themeColorAmber": "琥珀色",
+  "@themeColorAmber": {},
+  "themeColorOrange": "橙色",
+  "@themeColorOrange": {},
+  "themeColorDeepOrange": "深橙色",
+  "@themeColorDeepOrange": {},
+  "themeColorRed": "紅色",
+  "@themeColorRed": {},
+  "themeColorPink": "粉紅色",
+  "@themeColorPink": {},
+  "themeColorPurple": "紫色",
+  "@themeColorPurple": {},
+  "themeColorDeepPurple": "深紫色",
+  "@themeColorDeepPurple": {},
+  "themeColorIndigo": "靛藍色",
+  "@themeColorIndigo": {},
+  "themeColorBrown": "棕色",
+  "@themeColorBrown": {},
+  "themeColorBlueGrey": "藍灰色",
+  "@themeColorBlueGrey": {},
+  "themeColorGrey": "灰色",
+  "@themeColorGrey": {},
+
+  "commonCountTenThousandSuffix": "萬",
+  "@commonCountTenThousandSuffix": {},
+  "timeJustNow": "剛剛",
+  "@timeJustNow": {},
+  "timeMinutesAgo": "{minutes} 分鐘前",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "timeHoursAgo": "{hours} 小時前",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+
+  "mainDetailPlaceholderTitle": "請選擇一則貼文",
+  "@mainDetailPlaceholderTitle": {},
+  "mainDetailPlaceholderTips": "在中間清單選擇貼文後，這裡會顯示詳細內容",
+  "@mainDetailPlaceholderTips": {},
+  "mainDetailUnsupportedTitle": "目前頁面無詳細面板",
+  "@mainDetailUnsupportedTitle": {},
+  "mainDetailUnsupportedTips": "詳細並排瀏覽目前僅在首頁貼文串可用",
+  "@mainDetailUnsupportedTips": {}
+}

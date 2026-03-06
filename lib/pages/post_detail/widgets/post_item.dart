@@ -20,9 +20,11 @@ class PostItemWidget extends StatefulWidget {
     super.key,
     required this.reply,
     this.isUserPage = false,
+    this.controllerTag,
   });
   final PostInfo reply;
   final bool isUserPage;
+  final String? controllerTag;
 
   @override
   State<PostItemWidget> createState() => _PostItemWidgetState();
@@ -156,6 +158,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                           if (!widget.isUserPage)
                             _ReplyButton(
                               postItem: widget.reply,
+                              controllerTag: widget.controllerTag ?? "",
                               updateWidget: () {
                                 setState(() => ());
                               },
@@ -186,11 +189,14 @@ class _ThumUpButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return ElevatedButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        visualDensity: VisualDensity.comfortable,
-        padding: const WidgetStatePropertyAll(EdgeInsets.all(5)),
+        visualDensity: VisualDensity.standard,
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        ),
         foregroundColor: selected == true
             ? WidgetStatePropertyAll(Theme.of(context).colorScheme.onPrimary)
             : null,
@@ -198,13 +204,15 @@ class _ThumUpButton extends StatelessWidget {
             ? WidgetStatePropertyAll(Theme.of(context).colorScheme.primary)
             : null,
         elevation: const WidgetStatePropertyAll(0),
-        minimumSize: const WidgetStatePropertyAll(Size(10, 5)),
+        minimumSize: const WidgetStatePropertyAll(Size(40, 36)),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.thumb_up_rounded, size: 15),
-          const SizedBox(width: 5),
-          Text(StringUtil.numFormat(likeNum)),
+          const Icon(Icons.thumb_up_rounded, size: 16),
+          const SizedBox(width: 6),
+          Text(StringUtil.numFormat(likeNum), style: textTheme.labelMedium),
         ],
       ),
     );
@@ -214,17 +222,20 @@ class _ThumUpButton extends StatelessWidget {
 class _ReplyButton extends StatelessWidget {
   const _ReplyButton({
     required this.postItem,
+    required this.controllerTag,
     required this.updateWidget,
   });
   final PostInfo postItem;
+  final String controllerTag;
   final Function() updateWidget;
 
   @override
   Widget build(BuildContext context) {
     return IconTextButton(
       onPressed: () async {
-        final controller = Get.find<PostPageController>();
+        final controller = Get.find<PostPageController>(tag: controllerTag);
         ReplyUtil.showAddReplySheet2(
+          context: context,
           discussionId: controller.getId(),
           pi: postItem,
           newReplyItems: controller.newReplyItems,

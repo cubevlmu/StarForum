@@ -6,9 +6,13 @@
 
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:star_forum/app/local_controller.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/splash/view.dart';
 import 'package:star_forum/utils/http_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -18,17 +22,34 @@ import 'package:star_forum/utils/window_util.dart';
 import 'package:get/get.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:nil/nil.dart';
+import 'package:window_manager/window_manager.dart';
+
+final kIsDesktopPlatform =
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.linux);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageUtils.ensureInitialized();
   await LogUtil.init();
+  
+  if (kIsDesktopPlatform) {
+    await windowManager.ensureInitialized();
+  }
 
   WindowResizeObserver.instance.init();
   runApp(const StarForumApp());
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  final isMobilePlatform =
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+  if (isMobilePlatform) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       systemNavigationBarColor: Colors.transparent,
@@ -42,9 +63,39 @@ class StarForumApp extends StatelessWidget {
   const StarForumApp({super.key});
   @override
   Widget build(BuildContext context) {
+    final localeController = Get.put(LocaleController());
+
     return DynamicColorBuilder(
       builder: ((lightDynamic, darkDynamic) {
         return GetMaterialApp(
+          title: "StarForum",
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: localeController.locale,
+          localeResolutionCallback: (locale, supportedLocales) {
+            final selectedLocale = localeController.locale;
+            if (selectedLocale != null) {
+              return selectedLocale;
+            }
+            if (locale == null) {
+              return supportedLocales.first;
+            }
+            if (locale.languageCode == 'zh') {
+              // Default Chinese to Simplified unless user explicitly selects another locale.
+              return const Locale('zh');
+            }
+            for (final supported in supportedLocales) {
+              if (supported.languageCode == locale.languageCode) {
+                return supported;
+              }
+            }
+            return supportedLocales.first;
+          },
           scrollBehavior: const _DesktopScrollBehavior(),
           onInit: () async {
             setupInjector();

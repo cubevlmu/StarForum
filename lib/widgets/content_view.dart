@@ -7,6 +7,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -409,14 +410,18 @@ class _ContentViewState extends State<ContentView> {
           ).push(MaterialPageRoute(builder: (_) => UserPage(userId: id)));
           break;
         case ContentLikeType.kReply:
-          SnackbarUtils.showMessage(msg: "功能开发中");
+          SnackbarUtils.showMessage(
+            msg: AppLocalizations.of(context)!.commonNoticeWorkInProgress,
+          );
           break;
         default:
           break;
       }
     } catch (e, st) {
       LogUtil.errorE("[ContentView] Failed to open link: $s", e, st);
-      SnackbarUtils.showMessage(msg: "链接打开失败");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(context)!.commonNoticeOpenFailed,
+      );
     }
   }
 }

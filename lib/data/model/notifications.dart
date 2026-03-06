@@ -17,6 +17,8 @@ class NotificationsInfo {
 
   UserInfo? fromUser;
   NotificationSubject? subject;
+  String? cachedTitle;
+  String? cachedDesc;
 
   NotificationsInfo({
     required this.id,
@@ -25,6 +27,8 @@ class NotificationsInfo {
     required this.isRead,
     this.fromUser,
     this.subject,
+    this.cachedTitle,
+    this.cachedDesc,
   });
 
   factory NotificationsInfo.formMapAndId(Map map, int id) {

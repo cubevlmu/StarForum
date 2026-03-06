@@ -7,6 +7,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/widgets/cached_network_image.dart';
 
@@ -33,7 +34,7 @@ class ImagePreviewWidgetState extends State<ImagePreviewWidget> {
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: _saveImage,
-            tooltip: '保存图片',
+            tooltip: AppLocalizations.of(context)!.imageSaveTooltip,
           ),
         ],
       ),
@@ -61,14 +62,20 @@ class ImagePreviewWidgetState extends State<ImagePreviewWidget> {
       final savedPath = await _copyToPictures(file);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('图片已保存到 $savedPath')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.imageSaveSuccess(savedPath),
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('保存失败：$e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.imageSaveFailed(e)),
+        ),
+      );
     }
   }
 

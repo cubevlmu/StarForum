@@ -4,16 +4,11 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-/*
- * @Author: cubevlmu khfahqp@gmail.com
- * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
- */
-
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/notification/controller.dart';
 import 'package:star_forum/pages/notification/widgets/notify_card.dart';
-import 'package:star_forum/pages/settings/settings_page.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
@@ -53,12 +48,12 @@ class _NotificationPageState extends State<NotificationPage> {
           slivers: [
             Obx(() {
               if (items.isEmpty) {
-                return const SliverFillRemaining(
+                return SliverFillRemaining(
                   hasScrollBody: false,
                   child: NoticeWidget(
                     emoji: "📭",
-                    title: "暂无通知",
-                    tips: "这里会显示回复、提及和系统消息",
+                    title: AppLocalizations.of(context)!.notificationEmptyTitle,
+                    tips: AppLocalizations.of(context)!.notificationEmptyTips,
                   ),
                 );
               } else {
@@ -66,7 +61,7 @@ class _NotificationPageState extends State<NotificationPage> {
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final item = items[index];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: NotifyCard(item: item, controller: controller),
                     );
                   }, childCount: items.length),
@@ -86,14 +81,19 @@ class _NotificationPageState extends State<NotificationPage> {
         appBar: _buildAppBar(context),
         body: controller.isLogin.value
             ? _buildView(context)
-            : const NotLoginNotice(title: "你还没有登录", tipsText: "登录后即可查看消息通知"),
+            : NotLoginNotice(
+                title: AppLocalizations.of(context)!.notificationNotLoginTitle,
+                tipsText: AppLocalizations.of(
+                  context,
+                )!.notificationNotLoginTips,
+              ),
       );
     });
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      title: const Text("通知"),
+      title: Text(AppLocalizations.of(context)!.notificationTitle),
       actions: [
         if (controller.isLogin.value)
           IconButton(
@@ -111,10 +111,7 @@ class _NotificationPageState extends State<NotificationPage> {
           onPressed: controller.isInvoking.value
               ? null
               : () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SettingsPage()),
-                  );
+                  openSettingsAdaptive(context);
                 },
           icon: const Icon(Icons.settings_outlined),
         ),

@@ -6,7 +6,9 @@
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 import 'package:star_forum/data/api/api_constants.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 
@@ -69,8 +71,8 @@ class HttpUtils {
         'user-agent': ApiConstants.userAgent,
         'Accept-Encoding': 'gzip',
       },
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
       contentType: Headers.jsonContentType,
       persistentConnection: true,
     );
@@ -143,7 +145,18 @@ class ErrorInterceptor extends Interceptor {
     switch (err.type) {
       case DioExceptionType.unknown:
         if (!await isConnected()) {
-          SnackbarUtils.showMessage(title: '网络未连接 ', msg: '请检查网络状态');
+          AppLocalizations? l10n;
+          try {
+            l10n = lookupAppLocalizations(
+              WidgetsBinding.instance.platformDispatcher.locale,
+            );
+          } catch (_) {}
+          SnackbarUtils.showMessage(
+            title: l10n?.networkNotConnectedTitle ?? 'Network disconnected',
+            msg:
+                l10n?.networkNotConnectedMsg ??
+                'Please check your network connection',
+          );
           handler.reject(err);
         }
         break;

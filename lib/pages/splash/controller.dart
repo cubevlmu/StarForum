@@ -1,6 +1,6 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
- * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+ * @LastEditors: cubevlmu khfahqp@gmail.com
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
@@ -9,6 +9,7 @@ import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/main/view.dart';
 import 'package:star_forum/pages/setup/view.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -16,54 +17,82 @@ import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/state_manager.dart';
 
+enum SplashStage { loading, failed }
+
 class SplashScreenController extends GetxController {
   final state = "".obs;
-  bool _isHalt = false;
+  final stage = SplashStage.loading.obs;
+  final errorDetail = RxnString();
+  bool _isSyncing = false;
 
   @override
   void onInit() {
     super.onInit();
 
-    _init();
+    retry();
   }
 
-  void _init() async {
-    state.value = "初始化网络中...";
-    LogUtil.info("[Splash] Begin to setup api service.");
-    final isApiSetup = await Api.setup();
+  Future<void> retry() async {
+    if (_isSyncing) return;
+    final context = Get.context;
+    if (context == null) {
+      return;
+    }
 
-    if (isApiSetup) {
+    final l10n = AppLocalizations.of(context)!;
+    _isSyncing = true;
+    stage.value = SplashStage.loading;
+    errorDetail.value = null;
+
+    try {
+      state.value = l10n.splashStateInitNetwork;
+      LogUtil.info("[Splash] Begin to setup api service.");
+      final isApiSetup = await Api.setup();
+      if (!isApiSetup) {
+        throw StateError(l10n.splashErrorSiteNotConfigured);
+      }
+
       final repo = getIt<UserRepo>();
-      state.value = "同步用户数据...";
+      state.value = l10n.splashStateSyncUser;
       LogUtil.info("[Splash] Begin to setup user service.");
       await repo.setup();
 
-      state.value = "同步标签信息...";
+      state.value = l10n.splashStateSyncTags;
       LogUtil.info("[Splash] Begin sync tags.");
       final tag = getIt<TagRepo>();
       await tag.syncTags();
-    } else {
-      _isHalt = true;
-      LogUtil.info("[Splash] App api url is not setup. Call setup page.");
-    }
-    state.value = "同步完毕";
 
-    final context = Get.context;
-    if (context == null) {
-      SnackbarUtils.showMessage(msg: "初始化视图错误");
-      return;
-    }
-
-    if (!context.mounted) return;
-    if (_isHalt) {
+      state.value = l10n.splashStateFinished;
+      if (!context.mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const SetupPage(isSetup: true)),
+        MaterialPageRoute(builder: (_) => const MainPage()),
         (route) => false,
       );
+    } on StateError catch (ex) {
+      if (ex.message == l10n.splashErrorSiteNotConfigured) {
+        LogUtil.info("[Splash] App is not configured.");
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const SetupPage(isSetup: true)),
+          (route) => false,
+        );
+      }
+    } catch (e, s) {
+      LogUtil.errorE("[Splash] Failed to initialize application", e, s);
+      stage.value = SplashStage.failed;
+      errorDetail.value = state.value;
+      SnackbarUtils.showMessage(msg: l10n.refreshRefreshFailed);
+    } finally {
+      _isSyncing = false;
+    }
+  }
+
+  void openSetupPage() {
+    final context = Get.context;
+    if (context == null) {
       return;
     }
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MainPage()),
+      MaterialPageRoute(builder: (_) => const SetupPage(isSetup: true)),
       (route) => false,
     );
   }

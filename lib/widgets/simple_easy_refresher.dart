@@ -9,6 +9,7 @@ import 'dart:async';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/log_util.dart';
 
 class SimpleEasyRefresher extends StatefulWidget {
@@ -62,12 +63,12 @@ class _SimpleEasyRefresherState extends State<SimpleEasyRefresher> {
         showMessage: false,
         showText: true,
         position: widget.indicatorPosition,
-        processingText: "正在刷新...",
-        readyText: "正在刷新...",
-        armedText: "释放以刷新",
-        dragText: "下拉刷新",
-        processedText: "刷新成功",
-        failedText: "刷新失败",
+        processingText: AppLocalizations.of(context)!.refreshRefreshing,
+        readyText: AppLocalizations.of(context)!.refreshRefreshing,
+        armedText: AppLocalizations.of(context)!.refreshReleaseToRefresh,
+        dragText: AppLocalizations.of(context)!.refreshPullToRefresh,
+        processedText: AppLocalizations.of(context)!.refreshRefreshSuccess,
+        failedText: AppLocalizations.of(context)!.refreshRefreshFailed,
       ),
       footer: ClassicFooter(
         processedDuration: Duration.zero,
@@ -75,13 +76,13 @@ class _SimpleEasyRefresherState extends State<SimpleEasyRefresher> {
         showMessage: false,
         showText: true,
         position: widget.indicatorPosition,
-        processingText: "加载中...",
-        processedText: "加载成功",
-        readyText: "加载中...",
-        armedText: "释放以加载更多",
-        dragText: "上拉加载",
-        failedText: "加载失败",
-        noMoreText: "没有更多内容",
+        processingText: AppLocalizations.of(context)!.refreshLoading,
+        processedText: AppLocalizations.of(context)!.refreshLoadSuccess,
+        readyText: AppLocalizations.of(context)!.refreshLoading,
+        armedText: AppLocalizations.of(context)!.refreshReleaseToLoad,
+        dragText: AppLocalizations.of(context)!.refreshPullToLoad,
+        failedText: AppLocalizations.of(context)!.refreshLoadFailed,
+        noMoreText: AppLocalizations.of(context)!.refreshNoMore,
       ),
       controller: widget.easyRefreshController,
       childBuilder: widget.childBuilder,

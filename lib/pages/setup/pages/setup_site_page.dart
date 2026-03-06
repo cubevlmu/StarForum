@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/setup/controller.dart';
 import 'package:star_forum/pages/setup/widgets/setup_body_view.dart';
 import 'package:star_forum/pages/setup/widgets/setup_next_button.dart';
@@ -17,11 +18,12 @@ class SetupSitePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
     return SetupBodyView(
-      title: "配置站点",
-      secondaryTitle: "请输入Flarum站点网址:",
+      title: l10n.setupSiteConfigTitle,
+      secondaryTitle: l10n.setupSiteConfigDesc,
       leading: Icon(
         Icons.public,
         size: 48,
@@ -36,7 +38,7 @@ class SetupSitePage extends StatelessWidget {
             child: Obx(
               () => TextFormField(
                 decoration: InputDecoration(
-                  labelText: "站点地址",
+                  labelText: l10n.setupSiteAddressLabel,
                   border: const OutlineInputBorder(),
                   hintText: "https://example.com",
                 ),

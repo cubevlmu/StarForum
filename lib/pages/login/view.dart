@@ -5,6 +5,7 @@
  */
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/login/controller.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -31,7 +32,7 @@ class LoginPage extends GetView<LoginController> {
                 controller.account = value;
               },
               decoration: InputDecoration(
-                labelText: "邮箱或用户名",
+                labelText: AppLocalizations.of(context)!.loginAccountLabel,
                 border: outlineInputBorder,
               ),
             ),
@@ -43,7 +44,7 @@ class LoginPage extends GetView<LoginController> {
                   controller.password = value;
                 },
                 decoration: InputDecoration(
-                  labelText: "密码",
+                  labelText: AppLocalizations.of(context)!.loginPasswordLabel,
                   border: outlineInputBorder,
                   suffixIcon: Padding(
                     padding: EdgeInsetsGeometry.fromLTRB(0, 0, 5, 0),
@@ -61,23 +62,33 @@ class LoginPage extends GetView<LoginController> {
             }),
             const SizedBox(height: 20),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Obx(
-                  () => Checkbox(
-                    value: controller.autoRelogin.value,
-                    onChanged: (b) {
-                      if (b == null) return;
-                      controller.autoRelogin.value = b;
-                    },
+                  () => Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Checkbox(
+                      value: controller.autoRelogin.value,
+                      onChanged: (b) {
+                        if (b == null) return;
+                        controller.autoRelogin.value = b;
+                      },
+                    ),
                   ),
                 ),
-                const Text("记住我的密码(过期自动重新登录)"),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)!.loginRememberMe,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 20),
             OutlinedButton(
               onPressed: controller.isLoading ? null : controller.startLogin,
-              child: const Text("登录"),
+              child: Text(AppLocalizations.of(context)!.loginButton),
             ),
             const SizedBox(height: 10),
             TextButton(
@@ -88,7 +99,7 @@ class LoginPage extends GetView<LoginController> {
               ),
               onPressed: () => launchUrlString(Api.getBaseUrl),
               child: Text(
-                "注册账号(前往web端)",
+                AppLocalizations.of(context)!.loginRegister,
                 style: textTheme.bodySmall?.copyWith(
                   color: colorScheme.primary,
                 ),
@@ -110,7 +121,7 @@ class LoginPage extends GetView<LoginController> {
           canPop: !controller.isLoading,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text("账户登录"),
+              title: Text(AppLocalizations.of(context)!.loginTitle),
               bottom: controller.isLoading
                   ? const PreferredSize(
                       preferredSize: Size.fromHeight(2),

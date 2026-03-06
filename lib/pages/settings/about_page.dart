@@ -6,6 +6,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/settings/dev_page.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:get/get.dart';
@@ -21,25 +22,25 @@ class AboutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("关于")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.aboutTitle)),
       body: ListView(
         children: [
           ListTile(
-            title: const Text("版本"),
+            title: Text(AppLocalizations.of(context)!.aboutVersion),
             onTap: kDebugMode ? () {
               tapTimes += 1;
               if (tapTimes == 5) {
                 tapTimes = 0;
                 Navigator.push(
                   context,
-                  GetPageRoute(page: () => DevSettingPage()),
+                  MaterialPageRoute(builder: (_) => const DevSettingPage()),
                 );
                 return;
               }
             } : null,
-            subtitle: Text("1.0.0"),
+            subtitle: Text("1.1.0"),
             trailing: TextButton(
-              child: const Text("检查更新"),
+              child: Text(AppLocalizations.of(context)!.aboutCheckUpdate),
               onPressed: () {
                 // SettingsUtil.checkUpdate(context);
               },
@@ -47,7 +48,7 @@ class AboutPage extends StatelessWidget {
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(
-            title: const Text("作者"),
+            title: Text(AppLocalizations.of(context)!.aboutAuthor),
             subtitle: const Text("cubevlmu @ flybird studio"),
             onTap: () {
               launchUrlString(authorUrl);
@@ -55,12 +56,12 @@ class AboutPage extends StatelessWidget {
             onLongPress: () {
               Clipboard.setData(ClipboardData(text: authorUrl));
               ScaffoldMessenger.of(context);
-              Get.rawSnackbar(message: '已复制$authorUrl到剪切板');
+              Get.rawSnackbar(message: AppLocalizations.of(context)!.commonNoticeCopiedToClipboard(authorUrl));
             },
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(
-            title: const Text("项目链接"),
+            title: Text(AppLocalizations.of(context)!.aboutProjectLink),
             subtitle: Text(projectUrl),
             onTap: () {
               launchUrlString(projectUrl);
@@ -68,28 +69,33 @@ class AboutPage extends StatelessWidget {
             onLongPress: () {
               Clipboard.setData(ClipboardData(text: projectUrl));
               ScaffoldMessenger.of(context);
-              Get.rawSnackbar(message: '已复制$projectUrl到剪切板');
+              Get.rawSnackbar(message: AppLocalizations.of(context)!.commonNoticeCopiedToClipboard(projectUrl));
             },
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(
-            title: const Text("许可"),
+            title: Text(AppLocalizations.of(context)!.aboutLicense),
             onTap: () => Navigator.push(
               context,
-              GetPageRoute(
-                page: () => const LicensePage(
-                  applicationIcon: ImageIcon(
-                    AssetImage("assets/images/icon.png"),
-                    size: 200,
-                  ),
-                  applicationName: "StarForum",
+              MaterialPageRoute(
+                builder: (_) => const LicensePage(
+                      applicationIcon: Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Image(
+                          image: AssetImage("assets/images/icon.png"),
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      applicationName: "StarForum",
+                    ),
                 ),
               ),
-            ),
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(
-            title: Text("程序日志"),
+            title: Text(AppLocalizations.of(context)!.aboutAppLog),
             onTap: () {
               LogUtil.shareLog(day: DateTime.now());
             },
