@@ -5,6 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:star_forum/pages/main/adaptive_navigation.dart';
+import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/home/controller.dart';
 import 'package:star_forum/pages/home/widgets/user_dialog.dart';
 import 'package:star_forum/pages/post_list/controller.dart';
@@ -15,7 +18,6 @@ import 'package:star_forum/pages/theme_list/view.dart';
 import 'package:star_forum/widgets/avatar.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/sheet_util.dart';
-import 'package:get/get.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -52,9 +54,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         actions: [
           IconButton(
             onPressed: () {
+              if (isThreePaneLayout(context)) {
+                if (Get.isRegistered<MainController>()) {
+                  Get.find<MainController>().openHomeSearch();
+                }
+                return;
+              }
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => SearchPage()),
+                MaterialPageRoute(builder: (_) => const SearchPage()),
               );
             },
             icon: Icon(Icons.search_outlined),
@@ -68,7 +76,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               radius: 18,
               placeholder: "",
               onPressed: () {
-                SheetUtil.newBottomSheet(widget: UserDialogWidget(controller: controller));
+                SheetUtil.newBottomSheet(
+                  widget: UserDialogWidget(controller: controller),
+                );
               },
             );
           }),
@@ -76,6 +86,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ],
         bottom: TabBar(
           isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          padding: const EdgeInsets.only(left: 8),
           tabs: tabsList.map((e) => Tab(text: e['text'])).toList(),
           controller: controller.tabController,
           onTap: (index) {
@@ -92,14 +104,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           },
         ),
       ),
-      // body:
       body: TabBarView(
         controller: controller.tabController,
         children: tabsList.map((e) {
-          switch (e['text']) {
-            case '贴文':
+          switch (e['id']) {
+            case 'posts':
               return postListPage;
-            case '主题':
+            case 'theme':
               return themeListPage;
             default:
               return const WorkInProgressNotice();

@@ -73,6 +73,8 @@ flutter doctor
 
 ```bash
 flutter pub get
+flutter gen-l10n
+dart run flutter_launcher_icons
 dart run build_runner build --delete-conflicting-outputs
 ```
 

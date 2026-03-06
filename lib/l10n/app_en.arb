@@ -1,0 +1,701 @@
+{
+  "@@locale": "en",
+
+  "mainHomePage": "Home",
+  "@mainHomePage": {
+    "description": "Navigation tile title of home page"
+  },
+  "mainNotiPage": "Notification",
+  "@mainNotiPage": {
+    "description": "Navigation tile title of notification page"
+  },
+  "mainUserPage": "Me",
+  "@mainUserPage": {
+    "description": "Navigation tile title of user page"
+  },
+  
+  "loginTitle": "Account Login",
+  "@loginTitle": {},
+  
+  "loginAccountLabel": "Email or Username",
+  "@loginAccountLabel": {},
+  
+  "loginPasswordLabel": "Password",
+  "@loginPasswordLabel": {},
+  
+  "loginRememberMe": "Remember me (auto re-login when expired)",
+  "@loginRememberMe": {},
+  
+  "loginButton": "Login",
+  "@loginButton": {},
+  
+  "loginRegister": "Create Account (Go to Web)",
+  "@loginRegister": {},
+  
+  "notificationTitle": "Notifications",
+  "@notificationTitle": {},
+  
+  "notificationEmptyTitle": "No notifications",
+  "@notificationEmptyTitle": {},
+  
+  "notificationEmptyTips": "Replies, mentions and system messages will appear here",
+  "@notificationEmptyTips": {},
+  
+  "notificationNotLoginTitle": "You are not logged in",
+  "@notificationNotLoginTitle": {},
+  
+  "notificationNotLoginTips": "Log in to view your notifications",
+  "@notificationNotLoginTips": {},
+
+  "postListEmptyTitle": "No posts yet",
+  "@postListEmptyTitle": {},
+  
+  "postListEmptyTips": "Pull down to refresh",
+  "@postListEmptyTips": {},
+
+  "postCreateTagRequiredInline": "A primary tag must be selected!",
+  "@postCreateTagRequiredInline": {},
+  
+  "postCreateTitleHint": "Title",
+  "@postCreateTitleHint": {},
+  
+  "postCreateContentHint": "Content...",
+  "@postCreateContentHint": {},
+  
+  "postCreateSubmit": "Publish",
+  "@postCreateSubmit": {},
+
+  "tagDialogTitle": "Select Tags",
+  "@tagDialogTitle": {},
+  
+  "tagDialogCustomTag": "Custom Tag",
+  "@tagDialogCustomTag": {},
+  
+  "tagDialogClose": "Close",
+  "@tagDialogClose": {},
+
+  "commonNoticeTitleContentEmpty": "Title and content cannot be empty",
+  "@commonNoticeTitleContentEmpty": {},
+  
+  "commonNoticeTitleTooShort": "Title must be at least 6 characters",
+  "@commonNoticeTitleTooShort": {},
+  
+  "commonNoticePrimaryTagRequired": "A primary tag must be selected!",
+  "@commonNoticePrimaryTagRequired": {},
+  
+  "commonNoticeCustomTagTodo": "Custom tag feature is not implemented yet",
+  "@commonNoticeCustomTagTodo": {},
+
+  "authLoginRequired": "Please log in first!",
+  "@authLoginRequired": {},
+  
+  "authLoginExpired": "Session expired!",
+  "@authLoginExpired": {},
+
+  "postCreateFailedTitle": "Publish Failed",
+  "@postCreateFailedTitle": {},
+  
+  "postCreateFailedNetwork": "Possible network issue",
+  "@postCreateFailedNetwork": {},
+  
+  "postCreateDataError": "Data error",
+  "@postCreateDataError": {},
+  
+  "postCreateSuccess": "Published successfully",
+  "@postCreateSuccess": {},
+
+  "splashTitle": "Syncing Data",
+  "@splashTitle": {},
+  
+  "splashDescription": "The client is synchronizing data from the forum server. Please wait...",
+  "@splashDescription": {},
+  
+  "splashStateInitNetwork": "Initializing network...",
+  "@splashStateInitNetwork": {},
+  
+  "splashStateSyncUser": "Syncing user data...",
+  "@splashStateSyncUser": {},
+  
+  "splashStateSyncTags": "Syncing tags...",
+  "@splashStateSyncTags": {},
+
+  "splashStateFinished": "Synchronization complete",
+  "@splashStateFinished": {},
+  "splashErrorTitle": "Synchronization failed",
+  "@splashErrorTitle": {},
+  "splashErrorTips": "Unable to complete startup sync due to network or site issues.",
+  "@splashErrorTips": {},
+  "splashErrorSiteNotConfigured": "Site is not configured. Please set up a forum address first.",
+  "@splashErrorSiteNotConfigured": {},
+  "splashActionRetry": "Retry",
+  "@splashActionRetry": {},
+  "splashActionGoSetup": "Configure Site",
+  "@splashActionGoSetup": {},
+
+  "commonNoticeInitViewError": "Initialization view error",
+  "@commonNoticeInitViewError": {},
+
+  "userAppBarTitle": "User Profile",
+  "@userAppBarTitle": {},
+  
+  "userInvalidAccountTitle": "Invalid Account",
+  "@userInvalidAccountTitle": {},
+  
+  "userInvalidAccountTips": "Sorry, we cannot find this account",
+  "@userInvalidAccountTips": {},
+  
+  "userNotLoginTitle": "Not Logged In",
+  "@userNotLoginTitle": {},
+  
+  "userNotLoginTips": "Please log in to view this page",
+  "@userNotLoginTips": {},
+
+  "userEmptyPostTitle": "No posts yet",
+  "@userEmptyPostTitle": {},
+  
+  "userEmptyPostTips": "Pull down to refresh",
+  "@userEmptyPostTips": {},
+
+  "userDiscussionHintPrefix": "in ",
+  "@userDiscussionHintPrefix": {},
+  
+  "userRegisterAtPrefix": "Joined",
+  "@userRegisterAtPrefix": {},
+  
+  "userLoading": "Loading...",
+  "@userLoading": {},
+  
+  "userOnline": "Online",
+  "@userOnline": {},
+  
+  "userBioPrefix": "Bio",
+  "@userBioPrefix": {},
+
+  "commonNoticeFetchPostFailed": "Failed to fetch post information",
+  "@commonNoticeFetchPostFailed": {},
+
+  "accountAppBarTitle": "Account",
+  "@accountAppBarTitle": {},
+
+  "authNotLoginTitle": "You are not logged in",
+  "@authNotLoginTitle": {},
+  
+  "authNotLoginTips": "Please log in to view your profile information",
+  "@authNotLoginTips": {},
+
+  "commonActionLogout": "Log Out",
+  "@commonActionLogout": {},
+  
+  "commonActionSettings": "Settings",
+  "@commonActionSettings": {},
+  
+  "homeTabPosts": "Posts",
+  "@homeTabPosts": {},
+  
+  "homeTabThemes": "Themes",
+  "@homeTabThemes": {},
+
+  "commonNoticeWorkInProgress": "This feature is under development",
+  "@commonNoticeWorkInProgress": {},
+  
+  "authLogin": "Log In",
+  "@authLogin": {},
+  
+  "authLogout": "Log Out",
+  "@authLogout": {},
+
+  "userCenter": "Profile",
+  "@userCenter": {},
+
+  "commonNoticeOpenFailed": "Failed to open",
+  "@commonNoticeOpenFailed": {},
+
+  "refreshPullToRefresh": "Pull down to refresh",
+  "@refreshPullToRefresh": {},
+  
+  "refreshReleaseToRefresh": "Release to refresh",
+  "@refreshReleaseToRefresh": {},
+  
+  "refreshRefreshing": "Refreshing...",
+  "@refreshRefreshing": {},
+  
+  "refreshRefreshSuccess": "Refresh successful",
+  "@refreshRefreshSuccess": {},
+  
+  "refreshRefreshFailed": "Refresh failed",
+  "@refreshRefreshFailed": {},
+
+  "refreshPullToLoad": "Pull up to load more",
+  "@refreshPullToLoad": {},
+  
+  "refreshReleaseToLoad": "Release to load more",
+  "@refreshReleaseToLoad": {},
+  
+  "refreshLoading": "Loading...",
+  "@refreshLoading": {},
+  
+  "refreshLoadSuccess": "Load successful",
+  "@refreshLoadSuccess": {},
+  
+  "refreshLoadFailed": "Load failed",
+  "@refreshLoadFailed": {},
+  
+  "refreshNoMore": "No more content",
+  "@refreshNoMore": {},
+
+  "aboutTitle": "About",
+  "@aboutTitle": {},
+  
+  "aboutVersion": "Version",
+  "@aboutVersion": {},
+  
+  "aboutCheckUpdate": "Check for Updates",
+  "@aboutCheckUpdate": {},
+  
+  "aboutAuthor": "Author",
+  "@aboutAuthor": {},
+  
+  "aboutProjectLink": "Project Link",
+  "@aboutProjectLink": {},
+  
+  "aboutLicense": "License",
+  "@aboutLicense": {},
+  
+  "aboutAppLog": "App Logs",
+  "@aboutAppLog": {},
+
+  "commonNoticeCopiedToClipboard": "Copied {content} to clipboard",
+  "@commonNoticeCopiedToClipboard": {
+    "placeholders": {
+      "content": {}
+    }
+  },
+
+  "settingsPersonalizeTitle": "Appearance",
+  "@settingsPersonalizeTitle": {},
+
+  "settingsThemeSection": "Theme",
+  "@settingsThemeSection": {},
+  
+  "settingsThemeMode": "Theme Mode",
+  "@settingsThemeMode": {},
+  
+  "settingsThemeColor": "Theme Color",
+  "@settingsThemeColor": {},
+
+  "settingsFontSection": "Font",
+  "@settingsFontSection": {},
+  
+  "settingsFontSize": "Font Size",
+  "@settingsFontSize": {},
+
+  "commonActionCancel": "Cancel",
+  "@commonActionCancel": {},
+
+  "settingsCommonTitle": "General",
+  "@settingsCommonTitle": {},
+  
+  "settingsAutoCheckUpdate": "Auto Check for Updates",
+  "@settingsAutoCheckUpdate": {},
+  
+  "settingsAutoCheckUpdateDesc": "Check for updates when the app starts",
+  "@settingsAutoCheckUpdateDesc": {},
+
+  "settingsLanguage": "Language",
+  "@settingsLanguage": {},
+  
+  "settingsLanguageSelect": "Select Language",
+  "@settingsLanguageSelect": {},
+
+  "settingsDataSection": "Data",
+  "@settingsDataSection": {},
+  
+  "settingsCacheManagement": "Cache Management",
+  "@settingsCacheManagement": {},
+  
+  "settingsDataManagement": "Data Management",
+  "@settingsDataManagement": {},
+  
+  "settingsReconfigureSite": "Reconfigure Site",
+  "@settingsReconfigureSite": {},
+
+  "dialogConfirmTitle": "Confirm",
+  "@dialogConfirmTitle": {},
+  
+  "dialogDeleteCacheConfirm": "Delete this cache?",
+  "@dialogDeleteCacheConfirm": {},
+  
+  "dialogClearCacheConfirm": "Clear all cache?",
+  "@dialogClearCacheConfirm": {},
+  
+  "dialogNo": "No",
+  "@dialogNo": {},
+  
+  "dialogYes": "Yes",
+  "@dialogYes": {},
+
+  "commonNoticeDeleteFailed": "Delete failed...",
+  "@commonNoticeDeleteFailed": {},
+
+  "authLoginTitle": "Login",
+  "@authLoginTitle": {},
+
+  "authEmptyCredential": "Account or password cannot be empty",
+  "@authEmptyCredential": {},
+
+  "authLoginFailed": "Network error or incorrect account/password",
+  "@authLoginFailed": {},
+
+  "authUserInfoError": "Failed to retrieve user information",
+  "@authUserInfoError": {},
+
+  "authLoginSuccess": "Success! User: {username}",
+  "@authLoginSuccess": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+
+  "notificationLevelUpdatedTitle": "Level achieved: {levelName}",
+  
+  "notificationLevelUpdatedDesc": "Level above {minExp}",
+
+  "notificationPostMentionedTitle": "Replied to you",
+  
+  "@notificationPostMentionedTitle": {},
+  "notificationPostMentionedDesc": "Post: {content}",
+
+  "notificationPostLikedTitle": "Liked your post",
+  
+  "@notificationPostLikedTitle": {},
+  "notificationPostLikedDesc": "Post: {content}",
+
+  "notificationBadgeReceivedTitle": "Badge received",
+  "@notificationBadgeReceivedTitle": {},
+  
+  "notificationBadgeReceivedDesc": "Badge details are not supported yet",
+  "@notificationBadgeReceivedDesc": {},
+
+  "notificationWarningTitle": "Warning from {username}",
+  "notificationWarningDesc": "{strikes} strike(s): {comment}",
+
+  "notificationUnsupportedTitle": "Unsupported notification",
+  "@notificationUnsupportedTitle": {},
+  
+  "notificationUnsupportedDesc": "Please check it on the web version",
+  "@notificationUnsupportedDesc": {},
+
+  "@notificationLevelUpdatedTitle": {
+    "placeholders": {
+      "levelName": {}
+    }
+  },
+  "@notificationLevelUpdatedDesc": {
+    "placeholders": {
+      "minExp": {}
+    }
+  },
+  "@notificationPostMentionedDesc": {
+    "placeholders": {
+      "content": {}
+    }
+  },
+  "@notificationPostLikedDesc": {
+    "placeholders": {
+      "content": {}
+    }
+  },
+  "@notificationWarningTitle": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "@notificationWarningDesc": {
+    "placeholders": {
+      "strikes": {},
+      "comment": {}
+    }
+  },
+  
+  "authUserNotLogin": "User not logged in",
+  "@authUserNotLogin": {},
+
+  "notificationMarkReadSuccess": "Marked as read",
+  "@notificationMarkReadSuccess": {},
+  
+  "notificationMarkReadFailed": "Failed to mark as read",
+  "@notificationMarkReadFailed": {},
+
+  "notificationMarkAllReadFailed": "Failed to mark all as read",
+  "@notificationMarkAllReadFailed": {},
+
+  "notificationMarkAllReadNoNeed": "Already all read.",
+  "@notificationMarkAllReadNoNeed": {},
+  
+  "notificationClearAllFailed": "Failed to clear all notifications",
+  "@notificationClearAllFailed": {},
+  
+  "notificationClearAllSuccess": "All notifications cleared",
+  "@notificationClearAllSuccess": {},
+
+  "notificationFetchDiscussionFailed": "Failed to fetch discussion details",
+  "@notificationFetchDiscussionFailed": {},
+
+  "commonLike": "Like",
+  "@commonLike": {},
+
+  "replyInputHint": "Write your reply…",
+  "@replyInputHint": {},
+
+  "imageSaveTooltip": "Save Image",
+  "@imageSaveTooltip": {},
+  "imageSaveSuccess": "Image saved to {savedPath}",
+  "@imageSaveSuccess": {
+    "placeholders": {
+      "savedPath": {}
+    }
+  },
+  "imageSaveFailed": "Save failed: {error}",
+  "@imageSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+
+  "postCardReplyCount": "{count} replies",
+  "@postCardReplyCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "postCardViewCount": "{count} views",
+  "@postCardViewCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+
+  "commonActionConfirm": "Confirm",
+  "@commonActionConfirm": {},
+  "commonActionDisagree": "Disagree",
+  "@commonActionDisagree": {},
+  "commonActionAgree": "Agree",
+  "@commonActionAgree": {},
+  "commonActionAgreeAndContinue": "Agree and Continue",
+  "@commonActionAgreeAndContinue": {},
+  "commonActionFinishAndEnter": "Finish and Enter",
+  "@commonActionFinishAndEnter": {},
+
+  "dialogInputNumberHint": "Please enter a number",
+  "@dialogInputNumberHint": {},
+  "dialogInputTextHint": "Please enter text",
+  "@dialogInputTextHint": {},
+
+  "authLogoutSuccess": "Logged out successfully!",
+  "@authLogoutSuccess": {},
+  "authLogoutDialogTitle": "Log Out",
+  "@authLogoutDialogTitle": {},
+  "authLogoutDialogContent": "Do you want to log out?",
+  "@authLogoutDialogContent": {},
+
+  "noticeWorkInProgressTips": "This feature is still under development",
+  "@noticeWorkInProgressTips": {},
+
+  "searchStartHint": "Start searching 👀",
+  "@searchStartHint": {},
+  "searchHistoryTitle": "Search History",
+  "@searchHistoryTitle": {},
+  "searchResultEmptyTitle": "No related content found",
+  "@searchResultEmptyTitle": {},
+  "searchResultEmptyTips": "Try another keyword",
+  "@searchResultEmptyTips": {},
+
+  "networkNotConnectedTitle": "Network Disconnected",
+  "@networkNotConnectedTitle": {},
+  "networkNotConnectedMsg": "Please check your network connection",
+  "@networkNotConnectedMsg": {},
+
+  "homeUserServiceInitFailed": "Failed to initialize user service",
+  "@homeUserServiceInitFailed": {},
+  "homeUserLoginExpiredNeedRelogin": "Login has expired. Please log in again",
+  "@homeUserLoginExpiredNeedRelogin": {},
+  "homeForumInfoFetchFailed": "Failed to fetch forum information...",
+  "@homeForumInfoFetchFailed": {},
+
+  "themeSelectTagHint": "Please select a tag.",
+  "@themeSelectTagHint": {},
+
+  "postSortByHot": "By Hot",
+  "@postSortByHot": {},
+  "postSortByTime": "By Time",
+  "@postSortByTime": {},
+  "postContentLoadingHtml": "<p>Loading...</p>",
+  "@postContentLoadingHtml": {},
+  "postContentUnavailableHtml": "<p>Content unavailable... possible network issue</p>",
+  "@postContentUnavailableHtml": {},
+  "postContentUnavailable": "Unable to load post content",
+  "@postContentUnavailable": {},
+  "postActionComment": "Comment",
+  "@postActionComment": {},
+  "postReplyPrefix": "Replies: {count}",
+  "@postReplyPrefix": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "postTitlePrefix": "Post: {title}",
+  "@postTitlePrefix": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "postNoReplyTitle": "No replies yet",
+  "@postNoReplyTitle": {},
+  "postNoReplyTips": "Be the first to comment",
+  "@postNoReplyTips": {},
+  "replyToUserHint": "Reply @{username}",
+  "@replyToUserHint": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "postLikeFailedTitle": "Like Failed",
+  "@postLikeFailedTitle": {},
+  "postLikeFailedNetwork": "Possible network error",
+  "@postLikeFailedNetwork": {},
+  "postUnlikeSuccess": "Unliked successfully!",
+  "@postUnlikeSuccess": {},
+  "postLikeSuccess": "Liked successfully!",
+  "@postLikeSuccess": {},
+
+  "setupInitDone": "Initialization complete!",
+  "@setupInitDone": {},
+  "setupSiteUrlEmpty": "Site URL cannot be empty!",
+  "@setupSiteUrlEmpty": {},
+  "setupSiteUrlInvalid": "Please enter a valid site URL",
+  "@setupSiteUrlInvalid": {},
+  "setupNetworkError": "Network error",
+  "@setupNetworkError": {},
+  "setupFetchSiteInfoFailed": "Failed to fetch site info",
+  "@setupFetchSiteInfoFailed": {},
+  "setupSiteConfigTitle": "Configure Site",
+  "@setupSiteConfigTitle": {},
+  "setupSiteConfigDesc": "Please enter your Flarum site URL:",
+  "@setupSiteConfigDesc": {},
+  "setupSiteAddressLabel": "Site URL",
+  "@setupSiteAddressLabel": {},
+  "setupLicenseTitle": "GNU GPL v2 License",
+  "@setupLicenseTitle": {},
+  "setupGreetingTitle": "Welcome!",
+  "@setupGreetingTitle": {},
+  "setupGreetingSubtitle": "Welcome to StarForumApp",
+  "@setupGreetingSubtitle": {},
+  "setupFeatureDiscuss": "Join discussions and discover valuable ideas",
+  "@setupFeatureDiscuss": {},
+  "setupFeatureNoti": "Get replies and notifications",
+  "@setupFeatureNoti": {},
+  "setupFeatureBookmark": "Bookmark content you care about",
+  "@setupFeatureBookmark": {},
+  "setupLicenseReadAgreeTips": "Before continuing, please read and agree to the license",
+  "@setupLicenseReadAgreeTips": {},
+  "setupViewLicense": "View License",
+  "@setupViewLicense": {},
+  "setupLagGood": "Good connection",
+  "@setupLagGood": {},
+  "setupLagFair": "Average connection",
+  "@setupLagFair": {},
+  "setupLagSlow": "Slow connection",
+  "@setupLagSlow": {},
+  "setupReadyTitle": "{siteTitle} is almost ready!",
+  "@setupReadyTitle": {
+    "placeholders": {
+      "siteTitle": {}
+    }
+  },
+  "setupReadySubtitle": "Site is ready",
+  "@setupReadySubtitle": {},
+  "setupSiteConnectionStatus": "Site connection status",
+  "@setupSiteConnectionStatus": {},
+
+  "devMenuTitle": "Developer Menu",
+  "@devMenuTitle": {},
+
+  "languageEnglish": "English",
+  "@languageEnglish": {},
+  "languageSimplifiedChinese": "Simplified Chinese",
+  "@languageSimplifiedChinese": {},
+  "languageTraditionalChinese": "Traditional Chinese",
+  "@languageTraditionalChinese": {},
+
+  "themeModeSystem": "System",
+  "@themeModeSystem": {},
+  "themeModeLight": "Light",
+  "@themeModeLight": {},
+  "themeModeDark": "Dark",
+  "@themeModeDark": {},
+
+  "themeColorDynamic": "Dynamic",
+  "@themeColorDynamic": {},
+  "themeColorBlue": "Blue",
+  "@themeColorBlue": {},
+  "themeColorLightBlue": "Light Blue",
+  "@themeColorLightBlue": {},
+  "themeColorCyan": "Cyan",
+  "@themeColorCyan": {},
+  "themeColorTeal": "Teal",
+  "@themeColorTeal": {},
+  "themeColorGreen": "Green",
+  "@themeColorGreen": {},
+  "themeColorLime": "Lime",
+  "@themeColorLime": {},
+  "themeColorYellow": "Yellow",
+  "@themeColorYellow": {},
+  "themeColorAmber": "Amber",
+  "@themeColorAmber": {},
+  "themeColorOrange": "Orange",
+  "@themeColorOrange": {},
+  "themeColorDeepOrange": "Deep Orange",
+  "@themeColorDeepOrange": {},
+  "themeColorRed": "Red",
+  "@themeColorRed": {},
+  "themeColorPink": "Pink",
+  "@themeColorPink": {},
+  "themeColorPurple": "Purple",
+  "@themeColorPurple": {},
+  "themeColorDeepPurple": "Deep Purple",
+  "@themeColorDeepPurple": {},
+  "themeColorIndigo": "Indigo",
+  "@themeColorIndigo": {},
+  "themeColorBrown": "Brown",
+  "@themeColorBrown": {},
+  "themeColorBlueGrey": "Blue Grey",
+  "@themeColorBlueGrey": {},
+  "themeColorGrey": "Grey",
+  "@themeColorGrey": {},
+
+  "commonCountTenThousandSuffix": "w",
+  "@commonCountTenThousandSuffix": {},
+  "timeJustNow": "just now",
+  "@timeJustNow": {},
+  "timeMinutesAgo": "{minutes}m ago",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "timeHoursAgo": "{hours}h ago",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+
+  "mainDetailPlaceholderTitle": "Select a post",
+  "@mainDetailPlaceholderTitle": {},
+  "mainDetailPlaceholderTips": "Choose a post from the middle list to preview details here",
+  "@mainDetailPlaceholderTips": {},
+  "mainDetailUnsupportedTitle": "No detail pane on this page",
+  "@mainDetailUnsupportedTitle": {},
+  "mainDetailUnsupportedTips": "Split detail view is currently available for Home posts only",
+  "@mainDetailUnsupportedTips": {}
+}

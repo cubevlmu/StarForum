@@ -41,7 +41,7 @@ class IconTextButton extends StatelessWidget {
       child: FittedBox(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [icon, if (text != null) text!],
+          children: [icon, ?text],
         ),
       ),
     );

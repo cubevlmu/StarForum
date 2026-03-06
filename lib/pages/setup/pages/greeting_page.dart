@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/setup/controller.dart';
 import 'package:star_forum/pages/setup/widgets/setup_body_view.dart';
 import 'package:star_forum/pages/setup/widgets/setup_next_button.dart';
@@ -22,21 +23,21 @@ class GreetingPage extends StatelessWidget {
       builder: (context) {
         return AlertDialog(
           icon: const Icon(Icons.balance),
-          title: const Text("GNU GPL v2 许可协议"),
+          title: Text(AppLocalizations.of(context)!.setupLicenseTitle),
           content: const LicenseView(),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text("不同意"),
+              child: Text(AppLocalizations.of(context)!.commonActionDisagree),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 controller.checkGreet();
               },
-              child: const Text("同意"),
+              child: Text(AppLocalizations.of(context)!.commonActionAgree),
             ),
-          ]
+          ],
         );
       },
     );
@@ -44,24 +45,31 @@ class GreetingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return SetupBodyView(
-      title: "欢迎!",
-      secondaryTitle: "欢迎使用 StarForumApp",
+      title: l10n.setupGreetingTitle,
+      secondaryTitle: l10n.setupGreetingSubtitle,
       body: Column(
         children: [
           Column(
-            children: const [
+            children: [
               _FeatureItem(
                 icon: Icons.chat_bubble_outline,
-                text: "参与讨论，发现有价值的观点",
+                text: l10n.setupFeatureDiscuss,
               ),
-              SizedBox(height: 12),
-              _FeatureItem(icon: Icons.notifications_none, text: "获取回复和通知"),
-              SizedBox(height: 12),
-              _FeatureItem(icon: Icons.bookmark_border, text: "收藏你感兴趣的内容"),
+              const SizedBox(height: 12),
+              _FeatureItem(
+                icon: Icons.notifications_none,
+                text: l10n.setupFeatureNoti,
+              ),
+              const SizedBox(height: 12),
+              _FeatureItem(
+                icon: Icons.bookmark_border,
+                text: l10n.setupFeatureBookmark,
+              ),
             ],
           ),
 
@@ -77,7 +85,7 @@ class GreetingPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "在继续之前，请阅读并同意许可协议",
+                      l10n.setupLicenseReadAgreeTips,
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.outline,
                       ),
@@ -91,7 +99,7 @@ class GreetingPage extends StatelessWidget {
                       ),
                       onPressed: () => _showTosDialog(context),
                       child: Text(
-                        "查看许可协议",
+                        l10n.setupViewLicense,
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.primary,
                         ),
@@ -114,7 +122,7 @@ class GreetingPage extends StatelessWidget {
               const SizedBox(width: 5),
               SetupNextButton(
                 icon: Icons.check_circle_outline,
-                text: "同意并继续",
+                text: l10n.commonActionAgreeAndContinue,
                 onTap: null,
               ),
             ],
@@ -123,7 +131,7 @@ class GreetingPage extends StatelessWidget {
 
         return SetupNextButton(
           icon: Icons.check_circle_outline,
-          text: "同意并继续",
+          text: l10n.commonActionAgreeAndContinue,
           onTap: () async => controller.checkGreet(),
         );
       }),

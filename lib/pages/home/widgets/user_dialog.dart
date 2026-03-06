@@ -5,10 +5,11 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/home/controller.dart';
 import 'package:star_forum/pages/login/view.dart';
+import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/main/controller.dart';
-import 'package:star_forum/pages/settings/settings_page.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/widgets/shared_dialog.dart';
@@ -33,24 +34,24 @@ class UserDialogWidget extends StatelessWidget {
         if (!controller.isLogin.value)
           ListTile(
             leading: const Icon(Icons.logout_outlined),
-            title: const Text("登录"),
+            title: Text(AppLocalizations.of(context)!.authLogin),
             onTap: () => _onLoginBtn(context),
           ),
         if (controller.isLogin.value)
           ListTile(
             leading: const Icon(Icons.account_circle_outlined),
-            title: const Text("个人中心"),
+            title: Text(AppLocalizations.of(context)!.userCenter),
             onTap: () => _onSelfPage(context),
           ),
         ListTile(
           leading: const Icon(Icons.settings_outlined),
-          title: const Text("设置"),
+          title: Text(AppLocalizations.of(context)!.commonActionSettings),
           onTap: () => _onSettingBtn(context),
         ),
         if (controller.isLogin.value)
           ListTile(
             leading: const Icon(Icons.logout_outlined),
-            title: const Text("登出"),
+            title: Text(AppLocalizations.of(context)!.authLogout),
             onTap: () => _onLogoutBtn(context),
           ),
         const SizedBox(height: 10),
@@ -76,16 +77,17 @@ class UserDialogWidget extends StatelessWidget {
         e,
         s,
       );
-      SnackbarUtils.showMessage(msg: "打开失败");
+      SnackbarUtils.showMessage(msg: AppLocalizations.of(context)!.commonNoticeOpenFailed);
     }
   }
 
   void _onSettingBtn(BuildContext context) {
     Navigator.pop(context);
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const SettingsPage()),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentContext = Get.context;
+      if (currentContext == null) return;
+      openSettingsAdaptive(currentContext);
+    });
   }
 
   void _onLogoutBtn(BuildContext context) {

@@ -11,6 +11,7 @@ import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/home/controller.dart';
 import 'package:star_forum/pages/post_list/controller.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -68,7 +69,9 @@ class SetupPageController extends GetxController {
     Api.setUrl(siteUrl);
     await finalSetup();
     isLoading.value = false;
-    SnackbarUtils.showMessage(msg: "初始化完毕!");
+    SnackbarUtils.showMessage(
+      msg: AppLocalizations.of(Get.context!)!.setupInitDone,
+    );
   }
 
   Future<bool> _getForumInfo(String url) async {
@@ -94,7 +97,9 @@ class SetupPageController extends GetxController {
 
   Future<void> setupUrl() async {
     if (siteUrl.isEmpty) {
-      SnackbarUtils.showMessage(msg: "站点地址不能为空!");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.setupSiteUrlEmpty,
+      );
       return;
     }
 
@@ -102,7 +107,9 @@ class SetupPageController extends GetxController {
     final normalizedUrl = StringUtil.normalizeSiteUrl(siteUrl);
 
     if (normalizedUrl == null) {
-      SnackbarUtils.showMessage(msg: "请输入正确的站点地址");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.setupSiteUrlInvalid,
+      );
       return;
     }
 
@@ -112,7 +119,11 @@ class SetupPageController extends GetxController {
     isLoading.value = false;
 
     if (!ok) {
-      SnackbarUtils.showMessage(msg: "网络错误", title: "获取站点信息失败");
+      final l10n = AppLocalizations.of(Get.context!)!;
+      SnackbarUtils.showMessage(
+        msg: l10n.setupNetworkError,
+        title: l10n.setupFetchSiteInfoFailed,
+      );
       return;
     }
 

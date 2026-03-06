@@ -19,6 +19,7 @@ class SearchPageController extends GetxController {
   final RxBool showEditDelete = false.obs;
   final RxList<String> historySearchedWords = <String>[].obs;
   final box = StorageUtils.history;
+  ValueChanged<String>? onSearchRequested;
 
   void onSearchWordChanged(String keyWord) {
     if (keyWord.isNotEmpty) {
@@ -31,12 +32,17 @@ class SearchPageController extends GetxController {
   void search(String keyWord) {
     if (keyWord.trim().isNotEmpty) {
       LogUtil.debug("[SearchPage] user trigger search with keyword : $keyWord");
-      _saveSearchedWord(keyWord.trim());
+      final safeKeyWord = keyWord.trim();
+      _saveSearchedWord(safeKeyWord);
+      if (onSearchRequested != null) {
+        onSearchRequested!.call(safeKeyWord);
+        return;
+      }
       Navigator.of(Get.context!).pushReplacement(
         GetPageRoute(
           page: () => SearchResultPage(
-            key: ValueKey('SearchResultPage:$keyWord'),
-            keyWord: keyWord,
+            key: ValueKey('SearchResultPage:$safeKeyWord'),
+            keyWord: safeKeyWord,
           ),
         ),
       );

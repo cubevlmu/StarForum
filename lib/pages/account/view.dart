@@ -5,8 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/account/controller.dart';
-import 'package:star_forum/pages/settings/settings_page.dart';
+import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/widgets/shared_dialog.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
@@ -42,9 +43,9 @@ class _AccountPageState extends State<AccountPage>
       appBar: _AccountPageTitle(controller: controller),
       body: Obx(() {
         if (!controller.isLogin.value) {
-          return const NotLoginNotice(
-            title: "你还没有登录",
-            tipsText: "请登录你的账户来查看个人信息",
+          return NotLoginNotice(
+            title: AppLocalizations.of(context)!.authNotLoginTitle,
+            tipsText: AppLocalizations.of(context)!.authNotLoginTips,
           );
         } else {
           return UserPage(userId: controller.getTrueId(), isAccountPage: true);
@@ -65,7 +66,7 @@ class _AccountPageTitle extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text("用户"),
+      title: Text(AppLocalizations.of(context)!.accountAppBarTitle),
       actions: [
         Obx(() {
           if (controller.isLogin.value) {
@@ -79,10 +80,7 @@ class _AccountPageTitle extends StatelessWidget implements PreferredSizeWidget {
         const SizedBox(width: 10),
         IconButton(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => SettingsPage()),
-            );
+            openSettingsAdaptive(context);
           },
           icon: const Icon(Icons.settings_outlined),
         ),

@@ -1,13 +1,21 @@
-import 'package:get/get_utils/src/extensions/export.dart';
+import 'package:get/get.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 
 class StringUtil {
+  static AppLocalizations? get _l10n {
+    final context = Get.context;
+    if (context == null) return null;
+    return AppLocalizations.of(context);
+  }
+
   static String numFormat(int num) {
     double num1 = num / 10000;
+    final suffix = _l10n?.commonCountTenThousandSuffix ?? "w";
     if (num1 >= 1) {
       if (num1 - num1.toInt() < 0.1) {
-        return "${num1.toInt()}万";
+        return "${num1.toInt()}$suffix";
       } else {
-        return "${num1.toPrecision(1)}万";
+        return "${num1.toPrecision(1)}$suffix";
       }
     } else {
       return num.toString();
@@ -30,25 +38,30 @@ class StringUtil {
   }
 
   static String timeStampToAgoDate(int timeStamp) {
-    final now = DateTime.now();
     final date = DateTime.fromMillisecondsSinceEpoch(timeStamp * 1000);
+    return dateTimeToAgoDate(date);
+  }
+
+  static String dateTimeToAgoDate(DateTime date) {
+    final now = DateTime.now();
+    final l10n = _l10n;
 
     if (date.isAfter(now)) {
-      return "刚刚";
+      return l10n?.timeJustNow ?? "just now";
     }
 
     final delta = now.difference(date);
 
     if (delta.inMinutes < 1) {
-      return "刚刚";
+      return l10n?.timeJustNow ?? "just now";
     }
 
     if (delta.inMinutes < 60) {
-      return "${delta.inMinutes}分钟前";
+      return l10n?.timeMinutesAgo(delta.inMinutes) ?? "${delta.inMinutes}m ago";
     }
 
     if (delta.inHours < 24) {
-      return "${delta.inHours}小时前";
+      return l10n?.timeHoursAgo(delta.inHours) ?? "${delta.inHours}h ago";
     }
 
     if (now.year == date.year) {

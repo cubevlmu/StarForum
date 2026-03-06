@@ -34,6 +34,7 @@ class UserStorageKeys {
 class SettingsStorageKeys {
   static const String themeMode = "themeMode";
   static const String appTheme = "appTheme";
+  static const String appLang = "appLang";
 
   static const String autoCheckUpdate = "autoCheckUpdate";
   static const String showSearchHistory = "showSearchHistory";

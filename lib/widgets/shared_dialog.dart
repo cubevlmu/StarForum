@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 
 class SharedDialog {
@@ -142,7 +143,9 @@ class _NumberDialog extends StatelessWidget {
           TextField(
             controller: controller,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(hintText: '请输入数字'),
+            decoration: InputDecoration(
+              hintText: AppLocalizations.of(context)!.dialogInputNumberHint,
+            ),
           ),
         ],
       ),
@@ -174,7 +177,9 @@ class _LogoutDialog extends StatelessWidget {
   void _onSubmit(BuildContext context) async {
     final repo = getIt<UserRepo>();
     await repo.logout();
-    SnackbarUtils.showMessage(msg: "登出成功!");
+    SnackbarUtils.showMessage(
+      msg: AppLocalizations.of(context)!.authLogoutSuccess,
+    );
     if (!context.mounted) return;
     Navigator.pop(context, 'OK');
   }
@@ -182,16 +187,16 @@ class _LogoutDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("登出"),
-      content: const Text("是否要登出账号?"),
+      title: Text(AppLocalizations.of(context)!.authLogoutDialogTitle),
+      content: Text(AppLocalizations.of(context)!.authLogoutDialogContent),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context, 'Cancel'),
-          child: Text("取消"),
+          child: Text(AppLocalizations.of(context)!.commonActionCancel),
         ),
         TextButton(
           onPressed: () => _onSubmit(context),
-          child: const Text("确认"),
+          child: Text(AppLocalizations.of(context)!.commonActionConfirm),
         ),
       ],
     );
@@ -228,7 +233,9 @@ class _InputDialog extends StatelessWidget {
           const SizedBox(height: 12),
           TextField(
             controller: controller,
-            decoration: const InputDecoration(hintText: '请输入文字'),
+            decoration: InputDecoration(
+              hintText: AppLocalizations.of(context)!.dialogInputTextHint,
+            ),
           ),
         ],
       ),

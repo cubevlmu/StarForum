@@ -5,7 +5,8 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:star_forum/pages/post_detail/view.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
 import 'package:star_forum/pages/user/controller.dart';
 import 'package:star_forum/utils/string_util.dart';
@@ -51,10 +52,10 @@ class _UserPageState extends State<UserPage>
         _buildUserInfo(context),
 
         Expanded(
-          child: const NoticeWidget(
+          child: NoticeWidget(
             emoji: "🧐",
-            title: "这里还没有任何帖子",
-            tips: "下拉刷新试试看",
+            title: AppLocalizations.of(context)!.userEmptyPostTitle,
+            tips: AppLocalizations.of(context)!.userEmptyPostTips,
           ),
         ),
       ],
@@ -86,7 +87,7 @@ class _UserPageState extends State<UserPage>
     if (widget.isAccountPage && widget.userId > 0) return null;
 
     return AppBar(
-      title: const Text("用户资料"),
+      title: Text(AppLocalizations.of(context)!.userAppBarTitle),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(2),
         child: Obx(() {
@@ -136,13 +137,7 @@ class _UserPageState extends State<UserPage>
                             );
                             if (r == null) return;
                             if (!context.mounted) return;
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PostPage(item: r),
-                              ),
-                            );
+                            openDiscussionAdaptive(context, r);
                           },
                         ),
                       ),
@@ -181,13 +176,16 @@ class _UserPageState extends State<UserPage>
     super.build(context);
 
     if (widget.userId == -1) {
-      return const NoticeWidget(
+      return NoticeWidget(
         emoji: "🤦‍♂️",
-        title: "错误的账号",
-        tips: "很抱歉,我们找不到这个账户",
+        title: AppLocalizations.of(context)!.userInvalidAccountTitle,
+        tips: AppLocalizations.of(context)!.userInvalidAccountTips,
       );
     } else if (widget.userId == -2) {
-      return const NotLoginNotice(title: "账号未登录", tipsText: "请登录您的账号来查看");
+      return NotLoginNotice(
+        title: AppLocalizations.of(context)!.userNotLoginTitle,
+        tipsText: AppLocalizations.of(context)!.userNotLoginTips,
+      );
     }
 
     return Scaffold(appBar: _buildAppBar(context), body: _buildBody(context));
@@ -211,7 +209,10 @@ class _DiscussionHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Text("于 ", style: style?.copyWith(color: Colors.grey)),
+          Text(
+            AppLocalizations.of(context)!.userDiscussionHintPrefix,
+            style: style?.copyWith(color: Colors.grey),
+          ),
           Expanded(
             child: GestureDetector(
               onTap: onTap,
@@ -269,7 +270,8 @@ class _UserIdentityCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      controller.info?.displayName ?? "加载中...",
+                      controller.info?.displayName ??
+                          AppLocalizations.of(context)!.userLoading,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.start,
@@ -287,7 +289,8 @@ class _UserIdentityCard extends StatelessWidget {
                         const SizedBox(width: 5),
                         _InfoRow(
                           icon: Icons.person_add_alt,
-                          text: "注册于 ${controller.getRegisterAt()}",
+                          text:
+                              "${AppLocalizations.of(context)!.userRegisterAtPrefix}: ${controller.getRegisterAt()}",
                         ),
                       ],
                     ),
@@ -308,7 +311,9 @@ class _UserIdentityCard extends StatelessWidget {
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text("个人简介: ${controller.info?.bio}"),
+              child: Text(
+                "${AppLocalizations.of(context)!.userBioPrefix}: ${controller.info?.bio}",
+              ),
             ),
           ],
         ],

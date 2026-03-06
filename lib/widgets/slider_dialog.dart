@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 
 class SliderDialog extends StatefulWidget {
-  const SliderDialog(
-      {super.key,
-      required this.title,
-      required this.initValue,
-      required this.min,
-      required this.max,
-      this.divisions,
-      this.onOk,
-      this.onCancel,
-      this.onChanged,
-      this.buildLabel,
-      this.showCancelButton = true});
+  const SliderDialog({
+    super.key,
+    required this.title,
+    required this.initValue,
+    required this.min,
+    required this.max,
+    this.divisions,
+    this.onOk,
+    this.onCancel,
+    this.onChanged,
+    this.buildLabel,
+    this.showCancelButton = true,
+  });
   final String title;
   final double initValue;
   final double min;
@@ -73,21 +75,23 @@ class _SliderDialogState extends State<SliderDialog> {
       actions: [
         if (widget.showCancelButton)
           TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text(
-                "取消",
-                style: TextStyle(color: Theme.of(context).hintColor),
-              )),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              AppLocalizations.of(context)!.commonActionCancel,
+              style: TextStyle(color: Theme.of(context).hintColor),
+            ),
+          ),
         if (widget.onOk != null)
           TextButton(
-              onPressed: () {
-                isCancel = false;
-                widget.onOk?.call(_selectingValue);
-                Navigator.pop(context);
-              },
-              child: const Text("确定")),
+            onPressed: () {
+              isCancel = false;
+              widget.onOk?.call(_selectingValue);
+              Navigator.pop(context);
+            },
+            child: Text(AppLocalizations.of(context)!.commonActionConfirm),
+          ),
       ],
     );
   }

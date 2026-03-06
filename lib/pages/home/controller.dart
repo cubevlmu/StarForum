@@ -6,6 +6,8 @@
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/forum_info.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
@@ -13,16 +15,25 @@ import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
-import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:window_manager/window_manager.dart';
+
+import '../../l10n/app_localizations.dart';
 
 class HomeController extends GetxController {
   HomeController();
   final cacheManager = CacheUtils.avatarCacheManager;
 
   final List<Map<String, String>> tabsList = [
-    {'text': '贴文', 'id': '', 'controller': 'PostListController'},
-    {'text': '主题', 'id': '', 'controller': 'ThemeListController'},
+    {
+      'text': AppLocalizations.of(Get.context!)!.homeTabPosts,
+      'id': 'posts',
+      'controller': 'PostListController',
+    },
+    {
+      'text': AppLocalizations.of(Get.context!)!.homeTabThemes,
+      'id': 'theme',
+      'controller': 'ThemeListController',
+    },
   ];
   late TabController? tabController;
   final int tabInitIndex = 0;
@@ -53,7 +64,9 @@ class HomeController extends GetxController {
     switch (state) {
       case .unknown:
         LogUtil.error("[HomePage] User repo init failed.");
-        SnackbarUtils.showMessage(msg: "用户服务初始化失败");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.homeUserServiceInitFailed,
+        );
         return;
       case .loggedIn:
         isLogin.value = true;
@@ -65,7 +78,11 @@ class HomeController extends GetxController {
         break;
       case .expired:
         LogUtil.error("[HomePage] User login is expired.");
-        SnackbarUtils.showMessage(msg: "用户登录状态过期!请重新登录");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(
+            Get.context!,
+          )!.homeUserLoginExpiredNeedRelogin,
+        );
         userRepo.logout();
         return;
     }
@@ -78,14 +95,29 @@ class HomeController extends GetxController {
       "[HomePage] Fetched user info, nickname :${userRepo.user!.displayName} avatar url:${avatarUrl.value}",
     );
   }
-  
+
   void _restoreInfo() async {
     final (r, l) = await Api.getForumInfo(Api.getBaseUrl);
     if (r == null) {
-      SnackbarUtils.showMessage(msg: "论坛信息获取失败...");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.homeForumInfoFetchFailed,
+      );
       return;
     }
     info.value = r;
+    _updateDesktopWindowTitle(r.title);
     LogUtil.info("[HomePage] Forum latency $l");
+  }
+
+  Future<void> _updateDesktopWindowTitle(String forumTitle) async {
+    final isDesktopPlatform =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.macOS ||
+            defaultTargetPlatform == TargetPlatform.linux);
+    if (!isDesktopPlatform) {
+      return;
+    }
+    await windowManager.setTitle("StarForum - $forumTitle");
   }
 }

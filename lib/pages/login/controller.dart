@@ -8,8 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/users.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:get/get.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
 
 class LoginController extends GetxController {
   LoginController();
@@ -33,7 +35,9 @@ class LoginController extends GetxController {
 
   void startLogin() async {
     if (account.isEmpty || password.isEmpty) {
-      Get.rawSnackbar(title: "登录", message: "账号或密码不能为空");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.authEmptyCredential,
+      );
       return;
     }
 
@@ -47,23 +51,33 @@ class LoginController extends GetxController {
       );
       if (!r) {
         LogUtil.error("[LoginPage] Login failed with empty response");
-        Get.rawSnackbar(title: "登录", message: "网络错误或账号密码错误");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.authLoginFailed,
+        );
         return;
       }
 
       if (repo.user == null) {
         LogUtil.error("[LoginPage] Empty user info response.");
-        Get.rawSnackbar(title: "登录", message: "获取用户信息错误");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.authUserInfoError,
+        );
         return;
       }
 
-      Get.rawSnackbar(title: "登录", message: "成功! 用户:${repo.user?.displayName}");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(
+          Get.context!,
+        )!.authLoginSuccess(repo.user?.displayName ?? ""),
+      );
       await onLoginSuccess(repo.user!);
 
       Navigator.of(Get.context!).popUntil((route) => route.isFirst);
     } catch (e, st) {
       LogUtil.errorE("[LoginPage] Failed to login.", e, st);
-      Get.rawSnackbar(title: "登录", message: "网络错误或账号密码错误");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.authLoginFailed,
+      );
     } finally {
       _setLoading(false);
     }

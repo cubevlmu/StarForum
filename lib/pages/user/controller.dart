@@ -6,6 +6,7 @@
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/model/discussions.dart';
@@ -13,13 +14,12 @@ import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/model/users.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/html_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/string_util.dart';
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
-import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 
 class UserPageController extends GetxController {
   UserPageController({required this.userId});
@@ -167,7 +167,9 @@ class UserPageController extends GetxController {
       return "";
     }
     if (repo.isLogin) {
-      if (repo.user?.id == info?.id) return "在线";
+      if (repo.user?.id == info?.id) {
+        return AppLocalizations.of(Get.context!)!.userOnline;
+      }
     }
 
     try {
@@ -226,7 +228,9 @@ class UserPageController extends GetxController {
     try {
       final r = await Api.getDiscussionById(discussion.toString());
       if (r == null) {
-        SnackbarUtils.showMessage(msg: "获取帖子信息失败");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.commonNoticeFetchPostFailed,
+        );
         return null;
       }
       r.firstPost = r.posts[r.firstPostId];

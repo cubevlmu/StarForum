@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 
 class ReplyInputSheet extends StatefulWidget {
   const ReplyInputSheet({
@@ -23,6 +24,12 @@ class ReplyInputSheet extends StatefulWidget {
 class _ReplyInputSheetState extends State<ReplyInputSheet> {
   final TextEditingController _controller = TextEditingController();
   bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
@@ -57,7 +64,7 @@ class _ReplyInputSheetState extends State<ReplyInputSheet> {
                     minLines: 1,
                     maxLines: 4,
                     decoration: InputDecoration(
-                      hintText: widget.hintText ?? "写下你的回复…",
+                      hintText: widget.hintText ?? AppLocalizations.of(context)!.replyInputHint,
                       border: InputBorder.none,
                     ),
                     onSubmitted: (_) => _submit(),

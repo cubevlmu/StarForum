@@ -1,0 +1,696 @@
+{
+  "@@locale": "zh",
+
+  "mainHomePage": "首页",
+  "@mainHomePage": {},
+  
+  "mainNotiPage": "通知",
+  "@mainNotiPage": {},
+  
+  "mainUserPage": "我的",
+  "@mainUserPage": {},
+
+  "loginTitle": "账户登录",
+  "@loginTitle": {},
+  
+  "loginAccountLabel": "邮箱或用户名",
+  "@loginAccountLabel": {},
+  
+  "loginPasswordLabel": "密码",
+  "@loginPasswordLabel": {},
+  
+  "loginRememberMe": "记住我的密码（过期自动重新登录）",
+  "@loginRememberMe": {},
+  
+  "loginButton": "登录",
+  "@loginButton": {},
+  
+  "loginRegister": "注册账号（前往 Web 端）",
+  "@loginRegister": {},
+
+  
+  "notificationTitle": "通知",
+  "@notificationTitle": {},
+  
+  "notificationEmptyTitle": "暂无通知",
+  "@notificationEmptyTitle": {},
+  
+  "notificationEmptyTips": "这里会显示回复、提及和系统消息",
+  "@notificationEmptyTips": {},
+  
+  "notificationNotLoginTitle": "你还没有登录",
+  "@notificationNotLoginTitle": {},
+  
+  "notificationNotLoginTips": "登录后即可查看消息通知",
+  "@notificationNotLoginTips": {},
+
+  "postListEmptyTitle": "这里还没有任何帖子",
+  "@postListEmptyTitle": {},
+  
+  "postListEmptyTips": "下拉刷新试试看",
+  "@postListEmptyTips": {},
+
+  "postCreateTagRequiredInline": "主题标签必须选择一个!",
+  "@postCreateTagRequiredInline": {},
+  
+  "postCreateTitleHint": "标题",
+  "@postCreateTitleHint": {},
+  
+  "postCreateContentHint": "正文内容...",
+  "@postCreateContentHint": {},
+  
+  "postCreateSubmit": "发表",
+  "@postCreateSubmit": {},
+
+  "tagDialogTitle": "选择标签",
+  "@tagDialogTitle": {},
+  
+  "tagDialogCustomTag": "自定义标签",
+  "@tagDialogCustomTag": {},
+  
+  "tagDialogClose": "关闭",
+  "@tagDialogClose": {},
+
+  "commonNoticeTitleContentEmpty": "标题和正文不能为空",
+  "@commonNoticeTitleContentEmpty": {},
+  
+  "commonNoticeTitleTooShort": "标题至少6个字",
+  "@commonNoticeTitleTooShort": {},
+  
+  "commonNoticePrimaryTagRequired": "主题标签必须选择一个！",
+  "@commonNoticePrimaryTagRequired": {},
+  
+  "commonNoticeCustomTagTodo": "自定义标签功能待实现",
+  "@commonNoticeCustomTagTodo": {},
+
+  
+  "authLoginRequired": "请先登录！",
+  "@authLoginRequired": {},
+  
+  "authLoginExpired": "登录过期！",
+  "@authLoginExpired": {},
+
+  "postCreateFailedTitle": "发表失败",
+  "@postCreateFailedTitle": {},
+  
+  "postCreateFailedNetwork": "可能是网络问题",
+  "@postCreateFailedNetwork": {},
+  
+  "postCreateDataError": "数据异常",
+  "@postCreateDataError": {},
+  
+  "postCreateSuccess": "发表成功",
+  "@postCreateSuccess": {},
+
+  "splashTitle": "同步数据",
+  "@splashTitle": {},
+  
+  "splashDescription": "客户端正在从论坛服务器同步数据，请稍后",
+  "@splashDescription": {},
+
+  "splashStateInitNetwork": "初始化网络中...",
+  "@splashStateInitNetwork": {},
+  
+  "splashStateSyncUser": "同步用户数据...",
+  "@splashStateSyncUser": {},
+  
+  "splashStateSyncTags": "同步标签信息...",
+  "@splashStateSyncTags": {},
+  
+  "splashStateFinished": "同步完毕",
+  "@splashStateFinished": {},
+  "splashErrorTitle": "同步失败",
+  "@splashErrorTitle": {},
+  "splashErrorTips": "由于网络或站点配置问题，启动同步未完成。",
+  "@splashErrorTips": {},
+  "splashErrorSiteNotConfigured": "站点尚未配置，请先设置论坛地址。",
+  "@splashErrorSiteNotConfigured": {},
+  "splashActionRetry": "重新加载",
+  "@splashActionRetry": {},
+  "splashActionGoSetup": "配置站点",
+  "@splashActionGoSetup": {},
+
+  "commonNoticeInitViewError": "初始化视图错误",
+  "@commonNoticeInitViewError": {},
+
+  "userAppBarTitle": "用户资料",
+  "@userAppBarTitle": {},
+  
+  "userInvalidAccountTitle": "错误的账号",
+  "@userInvalidAccountTitle": {},
+  
+  "userInvalidAccountTips": "很抱歉，我们找不到这个账户",
+  "@userInvalidAccountTips": {},
+  
+  "userNotLoginTitle": "账号未登录",
+  "@userNotLoginTitle": {},
+  
+  "userNotLoginTips": "请登录您的账号来查看",
+  "@userNotLoginTips": {},
+
+  "userEmptyPostTitle": "这里还没有任何帖子",
+  "@userEmptyPostTitle": {},
+  
+  "userEmptyPostTips": "下拉刷新试试看",
+  "@userEmptyPostTips": {},
+
+  "userDiscussionHintPrefix": "于 ",
+  "@userDiscussionHintPrefix": {},
+  
+  "userRegisterAtPrefix": "注册于",
+  "@userRegisterAtPrefix": {},
+  
+  "userLoading": "加载中...",
+  "@userLoading": {},
+  
+  "userOnline": "在线",
+  "@userOnline": {},
+  
+  "userBioPrefix": "个人简介",
+  "@userBioPrefix": {},
+
+  "commonNoticeFetchPostFailed": "获取帖子信息失败",
+  "@commonNoticeFetchPostFailed": {},
+
+  
+  "accountAppBarTitle": "用户",
+  "@accountAppBarTitle": {},
+
+  "authNotLoginTitle": "你还没有登录",
+  "@authNotLoginTitle": {},
+  
+  "authNotLoginTips": "请登录你的账户来查看个人信息",
+  "@authNotLoginTips": {},
+
+  "commonActionLogout": "退出登录",
+  "@commonActionLogout": {},
+  
+  "commonActionSettings": "设置",
+  "@commonActionSettings": {},
+  
+  "homeTabPosts": "贴文",
+  "@homeTabPosts": {},
+  
+  "homeTabThemes": "主题",
+  "@homeTabThemes": {},
+
+  "commonNoticeWorkInProgress": "功能正在开发中",
+  "@commonNoticeWorkInProgress": {},
+
+  "authLogin": "登录",
+  "@authLogin": {},
+  
+  "authLogout": "登出",
+  "@authLogout": {},
+
+  "userCenter": "个人中心",
+  "@userCenter": {},
+
+  "commonNoticeOpenFailed": "打开失败",
+  "@commonNoticeOpenFailed": {},
+
+  "refreshPullToRefresh": "下拉刷新",
+  "@refreshPullToRefresh": {},
+  
+  "refreshReleaseToRefresh": "释放以刷新",
+  "@refreshReleaseToRefresh": {},
+  
+  "refreshRefreshing": "正在刷新...",
+  "@refreshRefreshing": {},
+  
+  "refreshRefreshSuccess": "刷新成功",
+  "@refreshRefreshSuccess": {},
+  
+  "refreshRefreshFailed": "刷新失败",
+  "@refreshRefreshFailed": {},
+
+  "refreshPullToLoad": "上拉加载",
+  "@refreshPullToLoad": {},
+  
+  "refreshReleaseToLoad": "释放以加载更多",
+  "@refreshReleaseToLoad": {},
+  
+  "refreshLoading": "加载中...",
+  "@refreshLoading": {},
+  
+  "refreshLoadSuccess": "加载成功",
+  "@refreshLoadSuccess": {},
+  
+  "refreshLoadFailed": "加载失败",
+  "@refreshLoadFailed": {},
+  
+  "refreshNoMore": "没有更多内容",
+  "@refreshNoMore": {},
+
+  "aboutTitle": "关于",
+  "@aboutTitle": {},
+  
+  "aboutVersion": "版本",
+  "@aboutVersion": {},
+  
+  "aboutCheckUpdate": "检查更新",
+  "@aboutCheckUpdate": {},
+  
+  "aboutAuthor": "作者",
+  "@aboutAuthor": {},
+  
+  "aboutProjectLink": "项目链接",
+  "@aboutProjectLink": {},
+  
+  "aboutLicense": "许可",
+  "@aboutLicense": {},
+  
+  "aboutAppLog": "程序日志",
+  "@aboutAppLog": {},
+
+  "commonNoticeCopiedToClipboard": "已复制 {content} 到剪切板",
+  "@commonNoticeCopiedToClipboard": {
+    "placeholders": {
+      "content": {}
+    }
+  },
+
+  
+  "settingsPersonalizeTitle": "主题设置",
+  "@settingsPersonalizeTitle": {},
+
+  "settingsThemeSection": "主题",
+  "@settingsThemeSection": {},
+  
+  "settingsThemeMode": "主题模式",
+  "@settingsThemeMode": {},
+  
+  "settingsThemeColor": "主题色",
+  "@settingsThemeColor": {},
+
+  "settingsFontSection": "字体",
+  "@settingsFontSection": {},
+  
+  "settingsFontSize": "字体大小",
+  "@settingsFontSize": {},
+
+  "commonActionCancel": "取消",
+  "@commonActionCancel": {},
+
+  "settingsCommonTitle": "通用",
+  "@settingsCommonTitle": {},
+  
+  "settingsAutoCheckUpdate": "自动检查更新",
+  "@settingsAutoCheckUpdate": {},
+  
+  "settingsAutoCheckUpdateDesc": "是否在启动 App 时检查更新",
+  "@settingsAutoCheckUpdateDesc": {},
+
+  "settingsLanguage": "语言",
+  "@settingsLanguage": {},
+  
+  "settingsLanguageSelect": "选择语言",
+  "@settingsLanguageSelect": {},
+
+  "settingsDataSection": "数据",
+  "@settingsDataSection": {},
+  "settingsCacheManagement": "缓存管理",
+  "@settingsCacheManagement": {},
+  "settingsDataManagement": "数据管理",
+  "@settingsDataManagement": {},
+  "settingsReconfigureSite": "重新配置站点",
+  "@settingsReconfigureSite": {},
+
+  "dialogConfirmTitle": "确认",
+  "@dialogConfirmTitle": {},
+  "dialogDeleteCacheConfirm": "是否删除该缓存？",
+  "@dialogDeleteCacheConfirm": {},
+  
+  "dialogClearCacheConfirm": "是否清空缓存？",
+  "@dialogClearCacheConfirm": {},
+  
+  "dialogNo": "否",
+  "@dialogNo": {},
+  
+  "dialogYes": "是",
+  "@dialogYes": {},
+
+  "commonNoticeDeleteFailed": "删除失败...",
+  "@commonNoticeDeleteFailed": {},
+
+  "authLoginTitle": "登录",
+  "@authLoginTitle": {},
+
+  "authEmptyCredential": "账号或密码不能为空",
+  "@authEmptyCredential": {},
+  
+  "authLoginFailed": "网络错误或账号密码错误",
+  "@authLoginFailed": {},
+  
+  "authUserInfoError": "获取用户信息错误",
+  "@authUserInfoError": {},
+
+  "authLoginSuccess": "成功！用户：{username}",
+  "@authLoginSuccess": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+
+  "notificationLevelUpdatedTitle": "等级达成 {levelName}",
+  "@notificationLevelUpdatedTitle": {
+    "placeholders": {
+      "levelName": {}
+    }
+  },
+
+  "notificationLevelUpdatedDesc": "等级高于 {minExp}",
+  "@notificationLevelUpdatedDesc": {
+    "placeholders": {
+      "minExp": {}
+    }
+  },
+
+  "notificationPostMentionedTitle": "回复了你",
+  "@notificationPostMentionedTitle": {},
+
+  "notificationPostMentionedDesc": "帖子：{content}",
+  "@notificationPostMentionedDesc": {
+    "placeholders": {
+      "content": {}
+    }
+  },
+
+  "notificationPostLikedTitle": "点赞了你",
+  "@notificationPostLikedTitle": {},
+
+  "notificationPostLikedDesc": "帖子：{content}",
+  "@notificationPostLikedDesc": {
+    "placeholders": {
+      "content": {}
+    }
+  },
+
+  "notificationBadgeReceivedTitle": "获得了一个勋章",
+  "@notificationBadgeReceivedTitle": {},
+  "notificationBadgeReceivedDesc": "客户端暂不支持解析勋章内容",
+  "@notificationBadgeReceivedDesc": {},
+
+  "notificationWarningTitle": "收到 {username} 的警告",
+  "@notificationWarningTitle": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+
+  "notificationWarningDesc": "记 {strikes} 分：{comment}",
+  "@notificationWarningDesc": {
+    "placeholders": {
+      "strikes": {},
+      "comment": {}
+    }
+  },
+
+  "notificationUnsupportedTitle": "不支持的通知",
+  "@notificationUnsupportedTitle": {},
+  
+  "notificationUnsupportedDesc": "请前往网页版查看",
+  "@notificationUnsupportedDesc": {},
+
+  "authUserNotLogin": "用户未登录",
+  "@authUserNotLogin": {},
+
+  "notificationMarkReadSuccess": "标记已读成功！",
+  "@notificationMarkReadSuccess": {},
+  
+  "notificationMarkReadFailed": "标记已读失败！",
+  "@notificationMarkReadFailed": {},
+
+  "notificationMarkAllReadFailed": "标记全部已读失败！",
+  "@notificationMarkAllReadFailed": {},
+  
+  "notificationMarkAllReadNoNeed": "已经全部已读了.",
+  "@notificationMarkAllReadNoNeed": {},
+  
+  "notificationClearAllFailed": "清理全部消息失败",
+  "@notificationClearAllFailed": {},
+  
+  "notificationClearAllSuccess": "清理全部消息成功！",
+  "@notificationClearAllSuccess": {},
+
+  "notificationFetchDiscussionFailed": "获取帖子信息失败",
+  "@notificationFetchDiscussionFailed": {},
+
+  "commonLike": "点赞",
+  "@commonLike": {},
+
+  "replyInputHint": "写下你的回复…",
+  "@replyInputHint": {},
+
+  "imageSaveTooltip": "保存图片",
+  "@imageSaveTooltip": {},
+  "imageSaveSuccess": "图片已保存到 {savedPath}",
+  "@imageSaveSuccess": {
+    "placeholders": {
+      "savedPath": {}
+    }
+  },
+  "imageSaveFailed": "保存失败：{error}",
+  "@imageSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+
+  "postCardReplyCount": "{count} 回复",
+  "@postCardReplyCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "postCardViewCount": "{count} 阅读",
+  "@postCardViewCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+
+  "commonActionConfirm": "确认",
+  "@commonActionConfirm": {},
+  "commonActionDisagree": "不同意",
+  "@commonActionDisagree": {},
+  "commonActionAgree": "同意",
+  "@commonActionAgree": {},
+  "commonActionAgreeAndContinue": "同意并继续",
+  "@commonActionAgreeAndContinue": {},
+  "commonActionFinishAndEnter": "完成并进入",
+  "@commonActionFinishAndEnter": {},
+
+  "dialogInputNumberHint": "请输入数字",
+  "@dialogInputNumberHint": {},
+  "dialogInputTextHint": "请输入文字",
+  "@dialogInputTextHint": {},
+
+  "authLogoutSuccess": "登出成功!",
+  "@authLogoutSuccess": {},
+  "authLogoutDialogTitle": "登出",
+  "@authLogoutDialogTitle": {},
+  "authLogoutDialogContent": "是否要登出账号?",
+  "@authLogoutDialogContent": {},
+
+  "noticeWorkInProgressTips": "功能还在开发中",
+  "@noticeWorkInProgressTips": {},
+
+  "searchStartHint": "开始搜索吧 👀",
+  "@searchStartHint": {},
+  "searchHistoryTitle": "搜索历史",
+  "@searchHistoryTitle": {},
+  "searchResultEmptyTitle": "没有找到相关内容",
+  "@searchResultEmptyTitle": {},
+  "searchResultEmptyTips": "换个关键词试试吧",
+  "@searchResultEmptyTips": {},
+
+  "networkNotConnectedTitle": "网络未连接",
+  "@networkNotConnectedTitle": {},
+  "networkNotConnectedMsg": "请检查网络状态",
+  "@networkNotConnectedMsg": {},
+
+  "homeUserServiceInitFailed": "用户服务初始化失败",
+  "@homeUserServiceInitFailed": {},
+  "homeUserLoginExpiredNeedRelogin": "用户登录状态过期!请重新登录",
+  "@homeUserLoginExpiredNeedRelogin": {},
+  "homeForumInfoFetchFailed": "论坛信息获取失败...",
+  "@homeForumInfoFetchFailed": {},
+
+  "themeSelectTagHint": "请选择一个标签.",
+  "@themeSelectTagHint": {},
+
+  "postSortByHot": "按热度",
+  "@postSortByHot": {},
+  "postSortByTime": "按时间",
+  "@postSortByTime": {},
+  "postContentLoadingHtml": "<p>加载中...</p>",
+  "@postContentLoadingHtml": {},
+  "postContentUnavailableHtml": "<p>内容无法获取到...可能是网络问题</p>",
+  "@postContentUnavailableHtml": {},
+  "postContentUnavailable": "无法获取到贴文内容",
+  "@postContentUnavailable": {},
+  "postActionComment": "发表评论",
+  "@postActionComment": {},
+  "postReplyPrefix": "回复: {count}",
+  "@postReplyPrefix": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "postTitlePrefix": "贴文: {title}",
+  "@postTitlePrefix": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "postNoReplyTitle": "还没有回复",
+  "@postNoReplyTitle": {},
+  "postNoReplyTips": "成为第一个发表评论的人吧",
+  "@postNoReplyTips": {},
+  "replyToUserHint": "回复 @{username}",
+  "@replyToUserHint": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "postLikeFailedTitle": "点赞失败",
+  "@postLikeFailedTitle": {},
+  "postLikeFailedNetwork": "可能是网络错误",
+  "@postLikeFailedNetwork": {},
+  "postUnlikeSuccess": "取消点赞成功!",
+  "@postUnlikeSuccess": {},
+  "postLikeSuccess": "点赞成功!",
+  "@postLikeSuccess": {},
+
+  "setupInitDone": "初始化完毕!",
+  "@setupInitDone": {},
+  "setupSiteUrlEmpty": "站点地址不能为空!",
+  "@setupSiteUrlEmpty": {},
+  "setupSiteUrlInvalid": "请输入正确的站点地址",
+  "@setupSiteUrlInvalid": {},
+  "setupNetworkError": "网络错误",
+  "@setupNetworkError": {},
+  "setupFetchSiteInfoFailed": "获取站点信息失败",
+  "@setupFetchSiteInfoFailed": {},
+  "setupSiteConfigTitle": "配置站点",
+  "@setupSiteConfigTitle": {},
+  "setupSiteConfigDesc": "请输入Flarum站点网址:",
+  "@setupSiteConfigDesc": {},
+  "setupSiteAddressLabel": "站点地址",
+  "@setupSiteAddressLabel": {},
+  "setupLicenseTitle": "GNU GPL v2 许可协议",
+  "@setupLicenseTitle": {},
+  "setupGreetingTitle": "欢迎!",
+  "@setupGreetingTitle": {},
+  "setupGreetingSubtitle": "欢迎使用 StarForumApp",
+  "@setupGreetingSubtitle": {},
+  "setupFeatureDiscuss": "参与讨论，发现有价值的观点",
+  "@setupFeatureDiscuss": {},
+  "setupFeatureNoti": "获取回复和通知",
+  "@setupFeatureNoti": {},
+  "setupFeatureBookmark": "收藏你感兴趣的内容",
+  "@setupFeatureBookmark": {},
+  "setupLicenseReadAgreeTips": "在继续之前，请阅读并同意许可协议",
+  "@setupLicenseReadAgreeTips": {},
+  "setupViewLicense": "查看许可协议",
+  "@setupViewLicense": {},
+  "setupLagGood": "连接良好",
+  "@setupLagGood": {},
+  "setupLagFair": "连接一般",
+  "@setupLagFair": {},
+  "setupLagSlow": "连接较慢",
+  "@setupLagSlow": {},
+  "setupReadyTitle": "{siteTitle} 准备完成!",
+  "@setupReadyTitle": {
+    "placeholders": {
+      "siteTitle": {}
+    }
+  },
+  "setupReadySubtitle": "站点已就绪",
+  "@setupReadySubtitle": {},
+  "setupSiteConnectionStatus": "站点连接状态",
+  "@setupSiteConnectionStatus": {},
+
+  "devMenuTitle": "开发者菜单",
+  "@devMenuTitle": {},
+
+  "languageEnglish": "English",
+  "@languageEnglish": {},
+  "languageSimplifiedChinese": "简体中文",
+  "@languageSimplifiedChinese": {},
+  "languageTraditionalChinese": "繁體中文",
+  "@languageTraditionalChinese": {},
+
+  "themeModeSystem": "系统",
+  "@themeModeSystem": {},
+  "themeModeLight": "浅色",
+  "@themeModeLight": {},
+  "themeModeDark": "深色",
+  "@themeModeDark": {},
+
+  "themeColorDynamic": "动态",
+  "@themeColorDynamic": {},
+  "themeColorBlue": "蓝色",
+  "@themeColorBlue": {},
+  "themeColorLightBlue": "浅蓝色",
+  "@themeColorLightBlue": {},
+  "themeColorCyan": "天蓝色",
+  "@themeColorCyan": {},
+  "themeColorTeal": "蓝绿色",
+  "@themeColorTeal": {},
+  "themeColorGreen": "绿色",
+  "@themeColorGreen": {},
+  "themeColorLime": "绿黄色",
+  "@themeColorLime": {},
+  "themeColorYellow": "黄色",
+  "@themeColorYellow": {},
+  "themeColorAmber": "琥珀色",
+  "@themeColorAmber": {},
+  "themeColorOrange": "橙色",
+  "@themeColorOrange": {},
+  "themeColorDeepOrange": "深橙色",
+  "@themeColorDeepOrange": {},
+  "themeColorRed": "红色",
+  "@themeColorRed": {},
+  "themeColorPink": "粉色",
+  "@themeColorPink": {},
+  "themeColorPurple": "紫色",
+  "@themeColorPurple": {},
+  "themeColorDeepPurple": "深紫色",
+  "@themeColorDeepPurple": {},
+  "themeColorIndigo": "靛蓝色",
+  "@themeColorIndigo": {},
+  "themeColorBrown": "棕色",
+  "@themeColorBrown": {},
+  "themeColorBlueGrey": "蓝灰色",
+  "@themeColorBlueGrey": {},
+  "themeColorGrey": "灰色",
+  "@themeColorGrey": {},
+
+  "commonCountTenThousandSuffix": "万",
+  "@commonCountTenThousandSuffix": {},
+  "timeJustNow": "刚刚",
+  "@timeJustNow": {},
+  "timeMinutesAgo": "{minutes}分钟前",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "timeHoursAgo": "{hours}小时前",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+
+  "mainDetailPlaceholderTitle": "请选择一个帖子",
+  "@mainDetailPlaceholderTitle": {},
+  "mainDetailPlaceholderTips": "在中间列表选择帖子后，这里会显示详情内容",
+  "@mainDetailPlaceholderTips": {},
+  "mainDetailUnsupportedTitle": "当前页面无详情面板",
+  "@mainDetailUnsupportedTitle": {},
+  "mainDetailUnsupportedTips": "详情并排浏览当前仅在首页帖子流可用",
+  "@mainDetailUnsupportedTips": {}
+}

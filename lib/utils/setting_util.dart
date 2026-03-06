@@ -5,9 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:star_forum/utils/storage_utils.dart';
-
 import 'package:get/get.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/utils/storage_utils.dart';
 
 class SettingsUtil {
   static dynamic getValue(String key, {dynamic defaultValue}) {
@@ -46,7 +46,16 @@ class SettingsUtil {
 }
 
 extension ThemeModeString on ThemeMode {
-  String get value => ['系统', '浅色', '深色'][index];
+  String get value {
+    final context = Get.context;
+    final l10n = context == null ? null : AppLocalizations.of(context);
+    if (l10n == null) return ['System', 'Light', 'Dark'][index];
+    return [
+      l10n.themeModeSystem,
+      l10n.themeModeLight,
+      l10n.themeModeDark,
+    ][index];
+  }
 }
 
 enum AppTheme {
@@ -72,27 +81,55 @@ enum AppTheme {
 }
 
 extension AppThemeName on AppTheme {
-  String get value => [
-    '动态',
-    '蓝色',
-    '浅蓝色',
-    '天蓝色',
-    '蓝绿色',
-    '绿色',
-    '绿黄色',
-    '黄色',
-    '琥珀色',
-    '橙色',
-    '深橙色',
-    '红色',
-    '粉色',
-    '紫色',
-    '深紫色',
-    '靛蓝色',
-    '棕色',
-    '蓝灰色',
-    '灰色',
-  ][index];
+  String get value {
+    final context = Get.context;
+    final l10n = context == null ? null : AppLocalizations.of(context);
+    if (l10n == null) {
+      return [
+        'Dynamic',
+        'Blue',
+        'Light Blue',
+        'Cyan',
+        'Teal',
+        'Green',
+        'Lime',
+        'Yellow',
+        'Amber',
+        'Orange',
+        'Deep Orange',
+        'Red',
+        'Pink',
+        'Purple',
+        'Deep Purple',
+        'Indigo',
+        'Brown',
+        'Blue Grey',
+        'Grey',
+      ][index];
+    }
+    return [
+      l10n.themeColorDynamic,
+      l10n.themeColorBlue,
+      l10n.themeColorLightBlue,
+      l10n.themeColorCyan,
+      l10n.themeColorTeal,
+      l10n.themeColorGreen,
+      l10n.themeColorLime,
+      l10n.themeColorYellow,
+      l10n.themeColorAmber,
+      l10n.themeColorOrange,
+      l10n.themeColorDeepOrange,
+      l10n.themeColorRed,
+      l10n.themeColorPink,
+      l10n.themeColorPurple,
+      l10n.themeColorDeepPurple,
+      l10n.themeColorIndigo,
+      l10n.themeColorBrown,
+      l10n.themeColorBlueGrey,
+      l10n.themeColorGrey,
+    ][index];
+  }
+
   Color get seedColor => [
     Colors.blue,
     Colors.blue,

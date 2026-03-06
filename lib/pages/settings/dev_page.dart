@@ -6,12 +6,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_detail/view.dart';
 import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/pages/settings/widgets/settings_label.dart';
 import 'package:star_forum/widgets/shared_dialog.dart';
-import 'package:get/get.dart';
 
 class DevSettingPage extends StatelessWidget {
   const DevSettingPage({super.key});
@@ -19,7 +19,7 @@ class DevSettingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("开发者菜单")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.devMenuTitle)),
       body: ListView(
         children: [
           const SettingsLabel(text: 'Dev'),
@@ -51,7 +51,10 @@ class DevSettingPage extends StatelessWidget {
             },
           ),
           const Divider(height: 1, thickness: 0.5),
-          ListTile(title: Text("Set apiBase"), onTap: () => _onSetApibase(context)),
+          ListTile(
+            title: Text("Set apiBase"),
+            onTap: () => _onSetApibase(context),
+          ),
         ],
       ),
     );
@@ -72,7 +75,11 @@ class DevSettingPage extends StatelessWidget {
             (i) {
               Navigator.of(
                 context,
-              ).push(GetPageRoute(page: () => UserPage(userId: i)));
+              ).push(
+                MaterialPageRoute(
+                  builder: (_) => UserPage(userId: i),
+                ),
+              );
             },
           ),
         },
@@ -82,17 +89,17 @@ class DevSettingPage extends StatelessWidget {
         title: const Text("DiscussionPage"),
         onTap: () => {
           Navigator.of(context).push(
-            GetPageRoute(
-              page: () => PostPage(
-                item: DiscussionItem(
-                  id: "0",
-                  title: "TEMP",
-                  excerpt: "<h1>TEMP</h1>",
-                  lastPostedAt: DateTime.utc(1980),
-                  userId: 0,
+            MaterialPageRoute(
+              builder: (_) => PostPage(
+                    item: DiscussionItem(
+                      id: "0",
+                      title: "TEMP",
+                      excerpt: "<h1>TEMP</h1>",
+                      lastPostedAt: DateTime.utc(1980),
+                      userId: 0,
+                    ),
+                  ),
                 ),
-              ),
-            ),
           ),
         },
       ),

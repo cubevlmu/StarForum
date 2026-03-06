@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/login/view.dart';
 
 class WorkInProgressNotice extends StatelessWidget {
@@ -12,6 +13,7 @@ class WorkInProgressNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -22,7 +24,7 @@ class WorkInProgressNotice extends StatelessWidget {
             const SizedBox(height: 16),
 
             Text(
-              "正在施工中...",
+              l10n.commonNoticeWorkInProgress,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -30,7 +32,7 @@ class WorkInProgressNotice extends StatelessWidget {
             const SizedBox(height: 8),
 
             Text(
-              "功能还在开发qwq",
+              l10n.noticeWorkInProgressTips,
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -85,7 +87,7 @@ class NotLoginNotice extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => _onLoginBtnPressed(context),
-              child: const Text("去登录"),
+              child: Text(AppLocalizations.of(context)!.authLogin),
             ),
           ],
         ),
@@ -150,7 +152,9 @@ class WorkInProgressPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("功能开发中")),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.commonNoticeWorkInProgress),
+      ),
       body: const WorkInProgressNotice(),
     );
   }

@@ -11,6 +11,7 @@ import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_detail/reply_util.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
@@ -24,8 +25,12 @@ class PostPageController extends GetxController {
   final DiscussionItem discussion;
 
   final RxInt replyCount = 0.obs;
-  final RxString sortTypeText = "按热度".obs;
-  final RxString content = "<p>加载中...</p>".obs;
+  final RxString sortTypeText = AppLocalizations.of(
+    Get.context!,
+  )!.postSortByHot.obs;
+  final RxString content = AppLocalizations.of(
+    Get.context!,
+  )!.postContentLoadingHtml.obs;
 
   final RxList<PostInfo> replyItems = <PostInfo>[].obs;
   final RxList<PostInfo> newReplyItems = <PostInfo>[].obs;
@@ -46,8 +51,9 @@ class PostPageController extends GetxController {
         LogUtil.error(
           "[PostDetail] Failed to fetch post content (content is null).",
         );
-        content.value = "<p>内容无法获取到...可能是网络问题</p>";
-        SnackbarUtils.showMessage(msg: "无法获取到贴文内容");
+        final l10n = AppLocalizations.of(Get.context!)!;
+        content.value = l10n.postContentUnavailableHtml;
+        SnackbarUtils.showMessage(msg: l10n.postContentUnavailable);
         return;
       }
       firstPost.value = r;
@@ -72,10 +78,10 @@ class PostPageController extends GetxController {
   void toggleSort() {
     if (_replySort == ReplySort.like) {
       _replySort = ReplySort.time;
-      sortTypeText.value = "按时间";
+      sortTypeText.value = AppLocalizations.of(Get.context!)!.postSortByTime;
     } else {
       _replySort = ReplySort.like;
-      sortTypeText.value = "按热度";
+      sortTypeText.value = AppLocalizations.of(Get.context!)!.postSortByHot;
     }
     onReplyRefresh();
   }
@@ -172,8 +178,9 @@ class PostPageController extends GetxController {
     }
   }
 
-  Future<void> showAddReplySheet() async {
+  Future<void> showAddReplySheet(BuildContext context) async {
     await ReplyUtil.showAddReplySheet(
+      context: context,
       discussionId: discussion.id,
       newReplyItems: newReplyItems,
       updateWidget: () {},

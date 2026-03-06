@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_main.dart';
@@ -19,8 +20,9 @@ import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 
 class PostPage extends StatefulWidget {
-  const PostPage({super.key, required this.item});
+  const PostPage({super.key, required this.item, this.embedded = false});
   final DiscussionItem item;
+  final bool embedded;
 
   @override
   State<PostPage> createState() => _PostPageState();
@@ -32,32 +34,97 @@ class _PostPageState extends State<PostPage>
   @override
   bool get wantKeepAlive => true;
   late PostPageController controller;
+  late String controllerTag;
 
   @override
   void initState() {
-    controller = Get.put(PostPageController(discussion: widget.item));
+    controllerTag = "PostPage:${widget.item.id}:${widget.embedded}";
+    controller = Get.put(
+      PostPageController(discussion: widget.item),
+      tag: controllerTag,
+    );
     super.initState();
   }
 
   @override
   void dispose() {
-    Get.delete<PostPageController>();
+    Get.delete<PostPageController>(tag: controllerTag);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    if (widget.embedded) {
+      return Column(
+        children: [
+          _EmbeddedDetailHeader(item: widget.item, controller: controller),
+          const Divider(height: 1),
+          Expanded(
+            child: _DetailPageReplies(
+              controller: controller,
+              item: widget.item,
+              controllerTag: controllerTag,
+            ),
+          ),
+        ],
+      );
+    }
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: controller.showAddReplySheet,
-        tooltip: '发表评论',
+        onPressed: () => controller.showAddReplySheet(context),
+        tooltip: AppLocalizations.of(context)!.postActionComment,
         child: Icon(Icons.reply_all_outlined),
       ),
       appBar: _DetailTitleBar(item: widget.item),
-      body: Padding(
-        padding: EdgeInsetsGeometry.only(left: 12, right: 12),
-        child: _DetailPageReplies(controller: controller, item: widget.item),
+      body: _DetailPageReplies(
+        controller: controller,
+        item: widget.item,
+        controllerTag: controllerTag,
+      ),
+    );
+  }
+}
+
+class _EmbeddedDetailHeader extends StatelessWidget {
+  const _EmbeddedDetailHeader({required this.item, required this.controller});
+
+  final DiscussionItem item;
+  final PostPageController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Row(
+            children: [
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.postTitlePrefix(item.title),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              IconButton(
+                onPressed: () => controller.showAddReplySheet(context),
+                tooltip: AppLocalizations.of(context)!.postActionComment,
+                icon: const Icon(Icons.reply_all_outlined),
+              ),
+              IconButton(
+                onPressed: () =>
+                    Share.shareUri(Uri.parse("${Api.getBaseUrl}/d/${item.id}")),
+                icon: const Icon(Icons.share_outlined),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -69,12 +136,17 @@ class _SortReplyItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 12, right: 12),
           child: Text(
-            "回复: ${StringUtil.ensureNotNegative(replyController.discussion.commentCount-1)}",
+            l10n.postReplyPrefix(
+              StringUtil.ensureNotNegative(
+                replyController.discussion.commentCount - 1,
+              ),
+            ),
           ),
         ),
         const Spacer(),
@@ -111,7 +183,7 @@ class _DetailTitleBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text("贴文: ${item.title}"),
+      title: Text(AppLocalizations.of(context)!.postTitlePrefix(item.title)),
       shadowColor: Theme.of(context).shadowColor,
       actions: [
         if (Platform.isAndroid || Platform.isAndroid)
@@ -135,8 +207,13 @@ class _DetailTitleBar extends StatelessWidget implements PreferredSizeWidget {
 class _DetailPageReplies extends StatelessWidget {
   final PostPageController controller;
   final DiscussionItem item;
+  final String controllerTag;
 
-  const _DetailPageReplies({required this.controller, required this.item});
+  const _DetailPageReplies({
+    required this.controller,
+    required this.item,
+    required this.controllerTag,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +236,7 @@ class _DetailPageReplies extends StatelessWidget {
                   () => PostMainWidget(
                     content: item,
                     info: controller.firstPost.value,
+                    controllerTag: controllerTag,
                   ),
                 ),
               ),
@@ -168,12 +246,12 @@ class _DetailPageReplies extends StatelessWidget {
               ),
 
               if (!hasReply)
-                const SliverFillRemaining(
+                SliverFillRemaining(
                   hasScrollBody: false,
                   child: NoticeWidget(
                     emoji: "💬",
-                    title: "还没有回复",
-                    tips: "成为第一个发表评论的人吧",
+                    title: AppLocalizations.of(context)!.postNoReplyTitle,
+                    tips: AppLocalizations.of(context)!.postNoReplyTips,
                   ),
                 )
               else
@@ -185,11 +263,15 @@ class _DetailPageReplies extends StatelessWidget {
                       if (index < totalNew) {
                         return PostItemWidget(
                           reply: controller.newReplyItems[index],
+                          controllerTag: controllerTag,
                         );
                       }
 
                       final i = index - totalNew;
-                      return PostItemWidget(reply: controller.replyItems[i]);
+                      return PostItemWidget(
+                        reply: controller.replyItems[i],
+                        controllerTag: controllerTag,
+                      );
                     },
                     childCount:
                         controller.newReplyItems.length +

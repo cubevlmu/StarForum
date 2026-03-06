@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 
 @immutable
 class LicenseView extends StatelessWidget {
@@ -26,7 +27,9 @@ class LicenseView extends StatelessWidget {
           }
 
           if (!snapshot.hasData) {
-            return const Center(child: Text("协议加载失败"));
+            return Center(
+              child: Text(AppLocalizations.of(context)!.commonNoticeOpenFailed),
+            );
           }
 
           return Scrollbar(

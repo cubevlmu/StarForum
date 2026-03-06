@@ -13,6 +13,7 @@ import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/model/notifications.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:get/get.dart';
@@ -73,14 +74,15 @@ class NotificationPageController extends GetxController {
     try {
       _loading = true;
 
-      items.clear();
       nextUrl = null;
       _hasMore = true;
 
       if (!repo.isLogin) {
         LogUtil.error("[NotifyPage] refresh failed, user not login.");
         if (!isFirstSync) {
-          SnackbarUtils.showMessage(msg: "用户未登录");
+          SnackbarUtils.showMessage(
+            msg: AppLocalizations.of(Get.context!)!.authUserNotLogin,
+          );
         }
         refreshController.finishRefresh(IndicatorResult.fail);
         refreshController.finishLoad(IndicatorResult.fail);
@@ -99,7 +101,9 @@ class NotificationPageController extends GetxController {
             "[NotifyPage] Notification api return 401 for token expired error.",
           );
           repo.logout();
-          SnackbarUtils.showMessage(msg: "登录状态过期，请重新登录");
+          SnackbarUtils.showMessage(
+            msg: AppLocalizations.of(Get.context!)!.authLoginExpired,
+          );
         } else {
           LogUtil.debug(
             "[NotifyPage] Notification api return 401 but in firstSync.",
@@ -123,6 +127,7 @@ class NotificationPageController extends GetxController {
         return;
       }
 
+      items.clear();
       items.addAll(r.list);
       nextUrl = r.links.next;
       _hasMore = nextUrl != null;
@@ -159,7 +164,9 @@ class NotificationPageController extends GetxController {
 
       if (!repo.isLogin) {
         LogUtil.error("[NotifyPage] refresh failed, user not login.");
-        SnackbarUtils.showMessage(msg: "用户未登录");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.authUserNotLogin,
+        );
         refreshController.finishRefresh(IndicatorResult.fail);
         refreshController.finishLoad(IndicatorResult.fail);
 
@@ -173,7 +180,9 @@ class NotificationPageController extends GetxController {
           "[NotifyPage] Notification api return 401 for token expired error.",
         );
         repo.logout();
-        SnackbarUtils.showMessage(msg: "登录状态过期，请重新登录");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.authLoginExpired,
+        );
         refreshController.finishLoad(IndicatorResult.fail);
         return;
       }
@@ -203,11 +212,15 @@ class NotificationPageController extends GetxController {
       final r = await Api.setNotificationIsRead(id.toString());
       if (r == null) {
         LogUtil.error("[NotifyPage] Failed to check as read for $id");
-        SnackbarUtils.showMessage(msg: "标记已读失败！");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.notificationMarkReadFailed,
+        );
         return false;
       }
 
-      SnackbarUtils.showMessage(msg: "标记已读成功！");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.notificationMarkReadSuccess,
+      );
       final item = items.firstWhere((i) {
         return i.id == id;
       });
@@ -223,29 +236,49 @@ class NotificationPageController extends GetxController {
         e,
         s,
       );
-      Get.rawSnackbar(message: "标记已读失败！");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.notificationMarkReadFailed,
+      );
       return false;
     }
   }
 
   void readAll() async {
     if (isInvoking.value) return;
+    
+    bool isAllRead = false;
+    for (var item in items) {
+      isAllRead |= item.isRead;
+    }
+    if (isAllRead) {
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.notificationMarkAllReadNoNeed,
+      );
+      return;
+    }
+
     isInvoking.value = true;
 
     try {
       final r = await Api.readAllNotification();
       if (!r) {
-        Get.rawSnackbar(message: "标记全部已读失败！");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.notificationMarkAllReadFailed,
+        );
         return;
       }
 
-      Get.rawSnackbar(message: "标记已读成功！");
-      for(var item in items) {
+      for (var item in items) {
         item.isRead = true;
       }
-
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.notificationMarkReadSuccess,
+      );
     } catch (e, s) {
       LogUtil.errorE("[NotifyPage] Failed to make all read with error:", e, s);
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.notificationMarkAllReadFailed,
+      );
     } finally {
       isInvoking.value = false;
     }
@@ -258,22 +291,29 @@ class NotificationPageController extends GetxController {
     try {
       final r = await Api.clearAllNotification();
       if (!r) {
-        Get.rawSnackbar(message: "清理全部消息失败");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(Get.context!)!.notificationClearAllFailed,
+        );
         LogUtil.error("[NotifyPage] Failed to clear all notifications");
         return;
       }
 
       items.clear();
-      
+
       nextUrl = null;
       loading = false;
-      Get.rawSnackbar(message: "清理全部消息成功!");
       LogUtil.debug("[NotifyPage] Cleared.");
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.notificationClearAllSuccess,
+      );
     } catch (e, s) {
       LogUtil.errorE(
         "[NotifyPage] Failed to clear all notifications with error:",
         e,
         s,
+      );
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(Get.context!)!.notificationClearAllFailed,
       );
     } finally {
       isInvoking.value = false;
@@ -292,28 +332,27 @@ class NotificationPageController extends GetxController {
         LogUtil.error(
           "[NotifyPage] Failed to get discussion detail by discussion id : $discussion",
         );
-        SnackbarUtils.showMessage(msg: "获取帖子信息失败");
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(
+            Get.context!,
+          )!.notificationFetchDiscussionFailed,
+        );
         return null;
       }
       r.firstPost = r.posts[r.firstPostId];
       r.firstPost?.user = r.users.values.first;
-      return DiscussionItem(
-        id: r.id,
-        title: r.title,
-        excerpt: r.firstPost?.contentHtml ?? "",
-        lastPostedAt: r.lastPostedAt,
-        authorAvatar: r.firstPost?.user?.avatarUrl ?? "",
-        authorName: r.firstPost?.user?.displayName ?? "",
-        viewCount: r.views,
-        likeCount: r.firstPost?.likes ?? 0,
-        commentCount: r.commentCount,
-        userId: r.users.keys.first,
-      );
+      r.user = r.users.values.first;
+      return r.toItem();
     } catch (e, s) {
       LogUtil.errorE(
         "[UserPage] Failed to fetch discussion information with id: $discussion with error:",
         e,
         s,
+      );
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(
+          Get.context!,
+        )!.notificationFetchDiscussionFailed,
       );
       return null;
     } finally {

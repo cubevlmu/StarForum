@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_list/controller.dart';
 import 'package:star_forum/pages/post_list/create_discuss_util.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -54,6 +55,7 @@ class _PostListPageState extends State<PostListPage>
 
   void _onCreateDiscussion() {
     CreateDiscussUtil.showCreateDiscuss(
+      context: context,
       updateWidget: () => controller.items.refresh(),
       scrollController: controller.scrollController,
     );
@@ -82,12 +84,12 @@ class _PostListView extends StatelessWidget {
                 return const SliverToBoxAdapter(child: SizedBox.shrink());
               }
 
-              return const SliverFillRemaining(
+              return SliverFillRemaining(
                 hasScrollBody: false,
                 child: NoticeWidget(
                   emoji: '🧐',
-                  title: '这里还没有任何帖子',
-                  tips: '下拉刷新试试看',
+                  title: AppLocalizations.of(context)!.postListEmptyTitle,
+                  tips: AppLocalizations.of(context)!.postListEmptyTips,
                 ),
               );
             }),
@@ -98,8 +100,7 @@ class _PostListView extends StatelessWidget {
                 return const SliverToBoxAdapter(child: SizedBox.shrink());
               }
 
-              return SliverPrototypeExtentList(
-                prototypeItem: _PostListItem(item: items.first),
+              return SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   return _PostListItem(item: items[index]);
                 }, childCount: items.length),
@@ -121,10 +122,14 @@ class _PostListFloatBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final isWide = mediaQuery.size.width >= 640;
+    final bottomInset = mediaQuery.padding.bottom;
+    final bottomOffset = isWide
+        ? 10.0
+        : (bottomInset + 16).clamp(16.0, 40.0).toDouble();
     return Padding(
-      padding: MediaQuery.of(context).size.width >= 640
-          ? const EdgeInsets.only(bottom: 20)
-          : const EdgeInsets.only(bottom: 80),
+      padding: EdgeInsets.only(bottom: bottomOffset),
       child: FloatingActionButton(
         onPressed: onPressed,
         child: const Icon(Icons.add_outlined),

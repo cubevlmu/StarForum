@@ -3,7 +3,7 @@ description: "a cross platform flarum forum app"
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.1
+version: 1.1.0
 
 environment:
   sdk: ^3.10.7
@@ -11,6 +11,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
   get: ^4.7.3
   dynamic_color: ^1.8.1
@@ -27,7 +31,7 @@ dependencies:
   path_provider: 2.1.5
   easy_refresh: ^3.4.0
   url_launcher: ^6.2.5
-  
+
   sqflite: ^2.4.2
   path: ^1.9.0
   logger: ^2.4.0
@@ -35,7 +39,8 @@ dependencies:
   hive: ^2.2.3
   flutter_secure_storage: ^10.0.0
   flutter_cache_manager: ^3.4.1
-  
+  window_manager: ^0.4.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -47,11 +52,12 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
+  generate: true
   uses-material-design: true
 
   assets:
-   - assets/images/icon.png
-   - assets/licenses/GPL-2.0.txt
+    - assets/images/icon.png
+    - assets/licenses/GPL-2.0.txt
 
 analyzer:
   strong-mode:

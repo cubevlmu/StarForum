@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/setting_util.dart';
 import 'package:star_forum/utils/storage_utils.dart';
 import 'package:star_forum/pages/settings/widgets/settings_label.dart';
@@ -61,29 +62,29 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("主题设置")),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.settingsPersonalizeTitle)),
         body: ListView(children: [
           Padding(
             padding: const EdgeInsets.only(left: 16, right: 16),
             child: Text(
-              "主题",
+              AppLocalizations.of(context)!.settingsThemeSection,
               style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
           ),
           const Padding(padding: EdgeInsetsGeometry.only(bottom: 5)),
           ListTile(
-            title: const Text("主题模式"),
+            title: Text(AppLocalizations.of(context)!.settingsThemeMode),
             subtitle: Text(SettingsUtil.currentThemeMode.value),
             onTap: () {
               showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
                         scrollable: true,
-                        title: const Text("主题模式"),
+                        title: Text(AppLocalizations.of(context)!.settingsThemeMode),
                         actions: [
                           TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text("取消"))
+                              child: Text(AppLocalizations.of(context)!.commonActionCancel))
                         ],
                         contentPadding: EdgeInsets.zero,
                         content: Column(children: buildThemeModeList()),
@@ -92,18 +93,18 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(
-            title: const Text("主题色"),
+            title: Text(AppLocalizations.of(context)!.settingsThemeColor),
             subtitle: Text(SettingsUtil.currentTheme.value),
             onTap: () {
               showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
                         scrollable: true,
-                        title: const Text("主题色"),
+                        title: Text(AppLocalizations.of(context)!.settingsThemeColor),
                         actions: [
                           TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text("取消"))
+                              child: Text(AppLocalizations.of(context)!.commonActionCancel))
                         ],
                         contentPadding: EdgeInsets.zero,
                         content: Column(
@@ -113,10 +114,10 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
             },
           ),
           const Padding(padding: EdgeInsetsGeometry.only(bottom: 8)),
-          const SettingsLabel(text: '字体'),
+          SettingsLabel(text: AppLocalizations.of(context)!.settingsFontSection),
           const Padding(padding: EdgeInsetsGeometry.only(bottom: 5)),
           ListTile(
-            title: const Text('字体大小'),
+            title: Text(AppLocalizations.of(context)!.settingsFontSize),
             subtitle: Text(SettingsUtil.getValue(
                     SettingsStorageKeys.textScaleFactor,
                     defaultValue: 1.0)
@@ -124,14 +125,14 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
             onTap: () => showDialog(
               context: context,
               builder: (context) => SimpleDialog(
-                title: const Text('字体大小'),
+                title: Text(AppLocalizations.of(context)!.settingsFontSize),
                 children: [
                   Slider(
                     value: SettingsUtil.getValue(
                         SettingsStorageKeys.textScaleFactor,
                         defaultValue: 1.0),
                     min: 0.5,
-                    max: 2,
+                    max: 1.5,
                     divisions: 6,
                     onChanged: (value) async {
                       await SettingsUtil.setValue(
