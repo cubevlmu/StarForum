@@ -24,16 +24,18 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:nil/nil.dart';
 import 'package:window_manager/window_manager.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await StorageUtils.ensureInitialized();
-  await LogUtil.init();
-  final isDesktopPlatform =
+final kIsDesktopPlatform =
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.windows ||
           defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.linux);
-  if (isDesktopPlatform) {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await StorageUtils.ensureInitialized();
+  await LogUtil.init();
+  
+  if (kIsDesktopPlatform) {
     await windowManager.ensureInitialized();
   }
 
@@ -75,6 +77,25 @@ class StarForumApp extends StatelessWidget {
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           locale: localeController.locale,
+          localeResolutionCallback: (locale, supportedLocales) {
+            final selectedLocale = localeController.locale;
+            if (selectedLocale != null) {
+              return selectedLocale;
+            }
+            if (locale == null) {
+              return supportedLocales.first;
+            }
+            if (locale.languageCode == 'zh') {
+              // Default Chinese to Simplified unless user explicitly selects another locale.
+              return const Locale('zh');
+            }
+            for (final supported in supportedLocales) {
+              if (supported.languageCode == locale.languageCode) {
+                return supported;
+              }
+            }
+            return supportedLocales.first;
+          },
           scrollBehavior: const _DesktopScrollBehavior(),
           onInit: () async {
             setupInjector();

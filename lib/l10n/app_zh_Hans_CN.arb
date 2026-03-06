@@ -1,6 +1,6 @@
 {
   "@@locale": "zh_Hans_CN",
-
+  
   "mainHomePage": "首頁",
   "@mainHomePage": {},
 
@@ -13,19 +13,19 @@
   "loginTitle": "帳戶登入",
   "@loginTitle": {},
 
-  "loginAccountLabel": "信箱或使用者名稱",
+  "loginAccountLabel": "電子郵件或使用者名稱",
   "@loginAccountLabel": {},
 
   "loginPasswordLabel": "密碼",
   "@loginPasswordLabel": {},
 
-  "loginRememberMe": "記住我的密碼（過期自動重新登入）",
+  "loginRememberMe": "記住我的密碼（逾期自動重新登入）",
   "@loginRememberMe": {},
 
   "loginButton": "登入",
   "@loginButton": {},
 
-  "loginRegister": "註冊帳號（前往 Web 端）",
+  "loginRegister": "註冊帳號（前往網頁版）",
   "@loginRegister": {},
 
   "notificationTitle": "通知",
@@ -37,7 +37,7 @@
   "notificationEmptyTips": "這裡會顯示回覆、提及和系統訊息",
   "@notificationEmptyTips": {},
 
-  "notificationNotLoginTitle": "你還沒有登入",
+  "notificationNotLoginTitle": "您還沒有登入",
   "@notificationNotLoginTitle": {},
 
   "notificationNotLoginTips": "登入後即可查看訊息通知",
@@ -49,7 +49,7 @@
   "postListEmptyTips": "下拉重新整理試試看",
   "@postListEmptyTips": {},
 
-  "postCreateTagRequiredInline": "主題標籤必須選擇一個！",
+  "postCreateTagRequiredInline": "必須選擇一個主題標籤！",
   "@postCreateTagRequiredInline": {},
 
   "postCreateTitleHint": "標題",
@@ -73,10 +73,10 @@
   "commonNoticeTitleContentEmpty": "標題和正文不能為空",
   "@commonNoticeTitleContentEmpty": {},
 
-  "commonNoticeTitleTooShort": "標題至少6個字",
+  "commonNoticeTitleTooShort": "標題至少需要 6 個字",
   "@commonNoticeTitleTooShort": {},
 
-  "commonNoticePrimaryTagRequired": "主題標籤必須選擇一個！",
+  "commonNoticePrimaryTagRequired": "必須選擇一個主題標籤！",
   "@commonNoticePrimaryTagRequired": {},
 
   "commonNoticeCustomTagTodo": "自訂標籤功能待實現",
@@ -85,7 +85,7 @@
   "authLoginRequired": "請先登入！",
   "@authLoginRequired": {},
 
-  "authLoginExpired": "登入已過期！",
+  "authLoginExpired": "登入已逾期！",
   "@authLoginExpired": {},
 
   "postCreateFailedTitle": "發表失敗",
@@ -117,6 +117,16 @@
 
   "splashStateFinished": "同步完畢",
   "@splashStateFinished": {},
+  "splashErrorTitle": "同步失敗",
+  "@splashErrorTitle": {},
+  "splashErrorTips": "由於網路或站點配置問題，啟動同步未完成。",
+  "@splashErrorTips": {},
+  "splashErrorSiteNotConfigured": "尚未配置站點，請先設定論壇網址。",
+  "@splashErrorSiteNotConfigured": {},
+  "splashActionRetry": "重新載入",
+  "@splashActionRetry": {},
+  "splashActionGoSetup": "配置站點",
+  "@splashActionGoSetup": {},
 
   "commonNoticeInitViewError": "初始化檢視錯誤",
   "@commonNoticeInitViewError": {},
@@ -163,10 +173,10 @@
   "accountAppBarTitle": "使用者",
   "@accountAppBarTitle": {},
 
-  "authNotLoginTitle": "你還沒有登入",
+  "authNotLoginTitle": "您還沒有登入",
   "@authNotLoginTitle": {},
 
-  "authNotLoginTips": "請登入你的帳戶來查看個人資訊",
+  "authNotLoginTips": "請登入您的帳戶來查看個人資訊",
   "@authNotLoginTips": {},
 
   "commonActionLogout": "登出",
@@ -250,7 +260,7 @@
   "aboutAppLog": "程式日誌",
   "@aboutAppLog": {},
 
-  "commonNoticeCopiedToClipboard": "已複製 {content} 到剪貼簿",
+  "commonNoticeCopiedToClipboard": "已將 {content} 複製到剪貼簿",
   "@commonNoticeCopiedToClipboard": {
     "placeholders": {
       "content": {}
@@ -304,7 +314,7 @@
 
   "dialogConfirmTitle": "確認",
   "@dialogConfirmTitle": {},
-  "dialogDeleteCacheConfirm": "是否刪除該快取？",
+  "dialogDeleteCacheConfirm": "是否刪除此快取？",
   "@dialogDeleteCacheConfirm": {},
 
   "dialogClearCacheConfirm": "是否清空快取？",
@@ -352,7 +362,7 @@
     }
   },
 
-  "notificationPostMentionedTitle": "回覆了你",
+  "notificationPostMentionedTitle": "回覆了您",
   "@notificationPostMentionedTitle": {},
 
   "notificationPostMentionedDesc": "貼文：{content}",
@@ -362,7 +372,7 @@
     }
   },
 
-  "notificationPostLikedTitle": "按讚了你",
+  "notificationPostLikedTitle": "按讚了您",
   "@notificationPostLikedTitle": {},
 
   "notificationPostLikedDesc": "貼文：{content}",
@@ -410,7 +420,7 @@
   "notificationMarkAllReadFailed": "標記全部已讀失敗！",
   "@notificationMarkAllReadFailed": {},
 
-  "notificationMarkAllReadNoNeed": "已經全部已讀了。",
+  "notificationMarkAllReadNoNeed": "已經全部已讀。",
   "@notificationMarkAllReadNoNeed": {},
 
   "notificationClearAllFailed": "清除全部訊息失敗",
@@ -425,7 +435,7 @@
   "commonLike": "按讚",
   "@commonLike": {},
 
-  "replyInputHint": "寫下你的回覆…",
+  "replyInputHint": "寫下您的回覆…",
   "@replyInputHint": {},
 
   "imageSaveTooltip": "儲存圖片",
@@ -476,7 +486,7 @@
   "@authLogoutSuccess": {},
   "authLogoutDialogTitle": "登出",
   "@authLogoutDialogTitle": {},
-  "authLogoutDialogContent": "是否要登出帳號？",
+  "authLogoutDialogContent": "確定要登出帳號嗎？",
   "@authLogoutDialogContent": {},
 
   "noticeWorkInProgressTips": "功能還在開發中",
@@ -488,17 +498,17 @@
   "@searchHistoryTitle": {},
   "searchResultEmptyTitle": "沒有找到相關內容",
   "@searchResultEmptyTitle": {},
-  "searchResultEmptyTips": "換個關鍵字試試吧",
+  "searchResultEmptyTips": "試試看其他關鍵字",
   "@searchResultEmptyTips": {},
 
   "networkNotConnectedTitle": "網路未連線",
   "@networkNotConnectedTitle": {},
-  "networkNotConnectedMsg": "請檢查網路狀態",
+  "networkNotConnectedMsg": "請檢查您的網路狀態",
   "@networkNotConnectedMsg": {},
 
   "homeUserServiceInitFailed": "使用者服務初始化失敗",
   "@homeUserServiceInitFailed": {},
-  "homeUserLoginExpiredNeedRelogin": "使用者登入狀態已過期！請重新登入",
+  "homeUserLoginExpiredNeedRelogin": "使用者登入狀態已逾期！請重新登入",
   "@homeUserLoginExpiredNeedRelogin": {},
   "homeForumInfoFetchFailed": "論壇資訊獲取失敗...",
   "@homeForumInfoFetchFailed": {},
@@ -551,9 +561,9 @@
 
   "setupInitDone": "初始化完畢！",
   "@setupInitDone": {},
-  "setupSiteUrlEmpty": "站點地址不能為空！",
+  "setupSiteUrlEmpty": "站點網址不能為空！",
   "@setupSiteUrlEmpty": {},
-  "setupSiteUrlInvalid": "請輸入正確的站點地址",
+  "setupSiteUrlInvalid": "請輸入有效的站點網址",
   "@setupSiteUrlInvalid": {},
   "setupNetworkError": "網路錯誤",
   "@setupNetworkError": {},
@@ -561,9 +571,9 @@
   "@setupFetchSiteInfoFailed": {},
   "setupSiteConfigTitle": "設定站點",
   "@setupSiteConfigTitle": {},
-  "setupSiteConfigDesc": "請輸入Flarum站點網址：",
+  "setupSiteConfigDesc": "請輸入 Flarum 站點網址：",
   "@setupSiteConfigDesc": {},
-  "setupSiteAddressLabel": "站點地址",
+  "setupSiteAddressLabel": "站點網址",
   "@setupSiteAddressLabel": {},
   "setupLicenseTitle": "GNU GPL v2 授權條款",
   "@setupLicenseTitle": {},
@@ -575,11 +585,11 @@
   "@setupFeatureDiscuss": {},
   "setupFeatureNoti": "獲取回覆和通知",
   "@setupFeatureNoti": {},
-  "setupFeatureBookmark": "收藏你感興趣的內容",
+  "setupFeatureBookmark": "收藏您感興趣的內容",
   "@setupFeatureBookmark": {},
   "setupLicenseReadAgreeTips": "在繼續之前，請閱讀並同意授權條款",
   "@setupLicenseReadAgreeTips": {},
-  "setupViewLicense": "查看授權條款",
+  "setupViewLicense": "檢視授權條款",
   "@setupViewLicense": {},
   "setupLagGood": "連線良好",
   "@setupLagGood": {},
@@ -621,13 +631,13 @@
   "@themeColorBlue": {},
   "themeColorLightBlue": "淺藍色",
   "@themeColorLightBlue": {},
-  "themeColorCyan": "天藍色",
+  "themeColorCyan": "青色",
   "@themeColorCyan": {},
   "themeColorTeal": "藍綠色",
   "@themeColorTeal": {},
   "themeColorGreen": "綠色",
   "@themeColorGreen": {},
-  "themeColorLime": "綠黃色",
+  "themeColorLime": "黃綠色",
   "@themeColorLime": {},
   "themeColorYellow": "黃色",
   "@themeColorYellow": {},
@@ -658,16 +668,25 @@
   "@commonCountTenThousandSuffix": {},
   "timeJustNow": "剛剛",
   "@timeJustNow": {},
-  "timeMinutesAgo": "{minutes}分鐘前",
+  "timeMinutesAgo": "{minutes} 分鐘前",
   "@timeMinutesAgo": {
     "placeholders": {
       "minutes": {}
     }
   },
-  "timeHoursAgo": "{hours}小時前",
+  "timeHoursAgo": "{hours} 小時前",
   "@timeHoursAgo": {
     "placeholders": {
       "hours": {}
     }
-  }
+  },
+
+  "mainDetailPlaceholderTitle": "請選擇一則貼文",
+  "@mainDetailPlaceholderTitle": {},
+  "mainDetailPlaceholderTips": "在中間清單選擇貼文後，這裡會顯示詳細內容",
+  "@mainDetailPlaceholderTips": {},
+  "mainDetailUnsupportedTitle": "目前頁面無詳細面板",
+  "@mainDetailUnsupportedTitle": {},
+  "mainDetailUnsupportedTips": "詳細並排瀏覽目前僅在首頁貼文串可用",
+  "@mainDetailUnsupportedTips": {}
 }

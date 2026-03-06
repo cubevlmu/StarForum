@@ -21,7 +21,10 @@ class AppLanguage {
 const languages = [
   AppLanguage(Locale('en'), _languageEnglish),
   AppLanguage(Locale('zh'), _languageSimplifiedChinese),
-  AppLanguage(Locale('zh_Hans', 'CN'), _languageTraditionalChinese),
+  AppLanguage(
+    Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans', countryCode: 'CN'),
+    _languageTraditionalChinese,
+  ),
 ];
 
 String _languageEnglish(AppLocalizations l10n) => l10n.languageEnglish;

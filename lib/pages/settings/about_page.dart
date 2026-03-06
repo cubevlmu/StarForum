@@ -79,9 +79,14 @@ class AboutPage extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (_) => const LicensePage(
-                      applicationIcon: ImageIcon(
-                        AssetImage("assets/images/icon.png"),
-                        size: 200,
+                      applicationIcon: Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Image(
+                          image: AssetImage("assets/images/icon.png"),
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                       applicationName: "StarForum",
                     ),

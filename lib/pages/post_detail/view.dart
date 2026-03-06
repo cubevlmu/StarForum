@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/main.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_main.dart';
@@ -116,11 +117,13 @@ class _EmbeddedDetailHeader extends StatelessWidget {
                 tooltip: AppLocalizations.of(context)!.postActionComment,
                 icon: const Icon(Icons.reply_all_outlined),
               ),
-              IconButton(
-                onPressed: () =>
-                    Share.shareUri(Uri.parse("${Api.getBaseUrl}/d/${item.id}")),
-                icon: const Icon(Icons.share_outlined),
-              ),
+              if (!kIsDesktopPlatform)
+                IconButton(
+                  onPressed: () => Share.shareUri(
+                    Uri.parse("${Api.getBaseUrl}/d/${item.id}"),
+                  ),
+                  icon: const Icon(Icons.share_outlined),
+                ),
               const SizedBox(width: 8),
             ],
           ),
