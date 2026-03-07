@@ -67,6 +67,8 @@ analyzer:
 flutter_launcher_icons:
   android: true
   ios: true
-  windows: true
-  macos: true
+  windows:
+    generate: true
+  macos:
+    generate: true
   image_path: "assets/images/icon.png"
