@@ -92,11 +92,10 @@ class _MainPageState extends State<MainPage> {
 
                         return Stack(
                           children: [
-                            _AnimatedIndexedStack(
-                                index: selectedIndex,
-                                vertical: useRail,
-                                children: _rootPages,
-                              ),
+                            IndexedStack(
+                              index: selectedIndex,
+                              children: _rootPages,
+                            ),
                             if (showHomeSearch)
                               Positioned.fill(
                                 child: ColoredBox(
@@ -183,75 +182,6 @@ class _MainPageState extends State<MainPage> {
       });
     }
     _wasThreePane = useThreePane;
-  }
-}
-
-class _AnimatedIndexedStack extends StatefulWidget {
-  const _AnimatedIndexedStack({
-    required this.index,
-    required this.children,
-    required this.vertical,
-  });
-
-  final int index;
-  final List<Widget> children;
-  final bool vertical;
-
-  @override
-  State<_AnimatedIndexedStack> createState() => _AnimatedIndexedStackState();
-}
-
-class _AnimatedIndexedStackState extends State<_AnimatedIndexedStack>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late Animation<Offset> _offsetAnimation;
-  int? _lastIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
-    );
-    _offsetAnimation = const AlwaysStoppedAnimation(Offset.zero);
-  }
-
-  @override
-  void didUpdateWidget(covariant _AnimatedIndexedStack oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (_lastIndex == null) {
-      _lastIndex = widget.index;
-      return;
-    }
-    if (_lastIndex != widget.index) {
-      _controller.duration = widget.vertical
-          ? const Duration(milliseconds: 180)
-          : const Duration(milliseconds: 240);
-      final begin = widget.vertical
-          ? const Offset(0, 0.028)
-          : const Offset(0.024, 0);
-      _offsetAnimation = Tween<Offset>(begin: begin, end: Offset.zero).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-      );
-      _controller.forward(from: 0);
-      _lastIndex = widget.index;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    _lastIndex ??= widget.index;
-    return SlideTransition(
-      position: _offsetAnimation,
-      child: IndexedStack(index: widget.index, children: widget.children),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }
 
