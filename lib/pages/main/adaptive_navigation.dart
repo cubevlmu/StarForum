@@ -9,6 +9,7 @@ import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/post_detail/view.dart';
 import 'package:star_forum/pages/settings/settings_page.dart';
+import 'package:star_forum/pages/user/view.dart';
 
 const double kThreePaneBreakPoint = 980;
 
@@ -32,23 +33,30 @@ void openDiscussionAdaptive(BuildContext context, DiscussionItem item) {
   );
 }
 
+void openUserAdaptive(BuildContext context, int userId) {
+  final useThreePane = isThreePaneLayout(context);
+  if (Get.isRegistered<MainController>()) {
+    final mainController = Get.find<MainController>();
+    if (useThreePane) {
+      mainController.showUserDetail(userId);
+      return;
+    }
+  }
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => UserPage(userId: userId)),
+  );
+}
+
 void openSettingsAdaptive(BuildContext context) {
-  if (isThreePaneLayout(context)) {
-    final size = MediaQuery.sizeOf(context);
-    final maxWidth = size.width * 0.6;
-    final maxHeight = size.height * 0.9;
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        clipBehavior: Clip.antiAlias,
-        child: SizedBox(
-          width: maxWidth.clamp(560.0, 760.0),
-          height: maxHeight.clamp(620.0, 920.0),
-          child: const SettingsDialogNavigator(),
-        ),
-      ),
-    );
-    return;
+  final useThreePane = isThreePaneLayout(context);
+  if (Get.isRegistered<MainController>()) {
+    final mainController = Get.find<MainController>();
+    if (useThreePane) {
+      mainController.showSettingsDetail();
+      return;
+    }
   }
 
   Navigator.push(

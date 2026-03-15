@@ -4,16 +4,19 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/reply_util.dart';
-import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/avatar.dart';
 import 'package:star_forum/widgets/content_view.dart';
+import 'package:star_forum/widgets/shimmer_skeleton.dart';
 import 'package:get/get.dart';
 
 class PostMainWidget extends StatelessWidget {
@@ -72,16 +75,7 @@ class _UserBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => UserPage(
-              key: ValueKey("UserPage:${item.userId}"),
-              userId: item.userId,
-            ),
-          ),
-        );
-      },
+      onTap: () => openUserAdaptive(context, item.userId),
       child: Row(
         children: [
           Padding(
@@ -150,11 +144,22 @@ class _MainContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final model = Get.find<PostPageController>(tag: controllerTag);
-    return SelectableRegion(
-      magnifierConfiguration: const TextMagnifierConfiguration(),
-      focusNode: FocusNode(),
-      selectionControls: MaterialTextSelectionControls(),
+    late final PostPageController model;
+    try {
+      model = Get.find<PostPageController>(tag: controllerTag);
+    } catch (e) {
+      log("[PostMain] Controller died $controllerTag");
+      if (Get.isRegistered<PostPageController>(tag: controllerTag)) {
+        model = Get.find<PostPageController>(tag: controllerTag);
+      } else {
+        model = Get.put(
+          PostPageController(discussion: item),
+          tag: controllerTag,
+        );
+      }
+    }
+    final l10n = AppLocalizations.of(context)!;
+    return SelectionArea(
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Column(
@@ -162,10 +167,89 @@ class _MainContent extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Obx(() => ContentView(content: model.content.value)),
+              child: Obx(() {
+                final content = model.content.value;
+                final isLoading = content == l10n.postContentLoadingHtml;
+
+                return AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: isLoading
+                      ? const _MainContentLoadingSkeleton()
+                      : ContentView(
+                          key: ValueKey(content.hashCode),
+                          content: content,
+                        ),
+                );
+              }),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MainContentLoadingSkeleton extends StatelessWidget {
+  const _MainContentLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      key: const ValueKey('main-content-loading'),
+      constraints: const BoxConstraints(minHeight: 228),
+      child: SkeletonShimmer(
+        duration: const Duration(milliseconds: 1350),
+        highlightStrength: 0.36,
+        builder: (context, palette) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBar(
+                decoration: palette.line(),
+                widthFactor: 0.92,
+                height: 14,
+              ),
+              const SizedBox(height: 10),
+              SkeletonBar(
+                decoration: palette.line(),
+                widthFactor: 0.88,
+                height: 14,
+              ),
+              const SizedBox(height: 10),
+              SkeletonBar(
+                decoration: palette.line(),
+                widthFactor: 0.95,
+                height: 14,
+              ),
+              const SizedBox(height: 10),
+              SkeletonBar(
+                decoration: palette.line(),
+                widthFactor: 0.66,
+                height: 14,
+              ),
+              const SizedBox(height: 18),
+              Container(
+                width: double.infinity,
+                height: 110,
+                decoration: palette.block(),
+              ),
+              const SizedBox(height: 16),
+              SkeletonBar(
+                decoration: palette.line(),
+                widthFactor: 0.9,
+                height: 14,
+              ),
+              const SizedBox(height: 10),
+              SkeletonBar(
+                decoration: palette.line(),
+                widthFactor: 0.58,
+                height: 14,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

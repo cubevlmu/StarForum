@@ -22,6 +22,8 @@ class CommonSettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localeController = Get.find<LocaleController>();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.settingsCommonTitle),
@@ -34,25 +36,23 @@ class CommonSettingsPage extends StatelessWidget {
             settingsKey: SettingsStorageKeys.autoCheckUpdate,
             defualtValue: false,
           ),
-          ListTile(
-            title: Text(AppLocalizations.of(context)!.settingsLanguage),
-            subtitle: Text(
-              AppLocalizations.of(context)!.settingsLanguageSelect,
+          const Divider(height: 1, thickness: 0.5),
+          Obx(
+            () => _LanguageSection(
+              currentLocale: localeController.locale,
+              onChanged: localeController.changeLocale,
             ),
-            onTap: () => _showLanguageSelector(context),
           ),
+          const SizedBox(height: 8),
           SettingsLabel(
             text: AppLocalizations.of(context)!.settingsDataSection,
           ),
+          const SizedBox(height: 8),
           ListTile(
             title: Text(AppLocalizations.of(context)!.settingsCacheManagement),
             onTap: () {
-              Navigator.of(
-                context,
-              ).push(
-                MaterialPageRoute(
-                  builder: (_) => const CacheManagementPage(),
-                ),
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CacheManagementPage()),
               );
             },
           ),
@@ -62,20 +62,14 @@ class CommonSettingsPage extends StatelessWidget {
             onTap: () {
               Navigator.of(
                 context,
-              ).push(
-                MaterialPageRoute(
-                  builder: (_) => const DataBasePage(),
-                ),
-              );
+              ).push(MaterialPageRoute(builder: (_) => const DataBasePage()));
             },
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(
             title: Text(AppLocalizations.of(context)!.settingsReconfigureSite),
             onTap: () {
-              Navigator.of(
-                context,
-              ).push(
+              Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const SetupPage(isSetup: false),
                 ),
@@ -84,47 +78,6 @@ class CommonSettingsPage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showLanguageSelector(BuildContext context) {
-    final controller = Get.find<LocaleController>();
-    final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (context) {
-        final current = controller.locale;
-        return AlertDialog(
-          title: Text(l10n.settingsLanguageSelect),
-          contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          content: SizedBox(
-            width: 360,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (int index = 0; index < languages.length; index++) ...[
-                  _LanguageOptionTile(
-                    label: languages[index].label(context),
-                    selected: _isSameLocale(current, languages[index].locale),
-                    onTap: () {
-                      controller.changeLocale(languages[index].locale);
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  if (index != languages.length - 1)
-                    const Divider(height: 1, thickness: 0.5),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.commonActionCancel),
-            ),
-          ],
-        );
-      },
     );
   }
 }
@@ -136,51 +89,87 @@ bool _isSameLocale(Locale? a, Locale b) {
       a.countryCode == b.countryCode;
 }
 
-class _LanguageOptionTile extends StatelessWidget {
-  const _LanguageOptionTile({
-    required this.label,
-    required this.selected,
-    required this.onTap,
+class _LanguageSection extends StatelessWidget {
+  const _LanguageSection({
+    required this.currentLocale,
+    required this.onChanged,
   });
 
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
+  final Locale? currentLocale;
+  final ValueChanged<Locale> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
+    final effectiveLocale =
+        currentLocale ??
+        Localizations.maybeLocaleOf(context) ??
+        languages.first.locale;
+    final currentLanguage = languages.firstWhere(
+      (language) => _isSameLocale(effectiveLocale, language.locale),
+      orElse: () => languages.first,
+    );
+
+    return _SettingsSection(
+      title: AppLocalizations.of(context)!.settingsLanguage,
+      subtitle: currentLanguage.label(context),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: SegmentedButton<Locale>(
+            segments: [
+              for (final language in languages)
+                ButtonSegment<Locale>(
+                  value: language.locale,
+                  icon: Icon(_languageIcon(language.locale)),
+                  label: Text(language.label(context)),
                 ),
-              ),
-            ),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: selected
-                  ? Icon(
-                      Icons.check_circle_rounded,
-                      key: const ValueKey("selected"),
-                      color: colorScheme.primary,
-                    )
-                  : Icon(
-                      Icons.circle_outlined,
-                      key: const ValueKey("unselected"),
-                      color: colorScheme.outline,
-                    ),
-            ),
-          ],
+            ],
+            selected: {currentLanguage.locale},
+            multiSelectionEnabled: false,
+            emptySelectionAllowed: false,
+            showSelectedIcon: false,
+            onSelectionChanged: (value) {
+              if (value.isNotEmpty) {
+                onChanged(value.first);
+              }
+            },
+          ),
         ),
       ),
+    );
+  }
+
+  IconData _languageIcon(Locale locale) {
+    if (locale.languageCode == 'en') {
+      return Icons.sort_by_alpha_rounded;
+    }
+    if (locale.scriptCode == 'Hans') {
+      return Icons.translate_rounded;
+    }
+    return Icons.language_rounded;
+  }
+}
+
+class _SettingsSection extends StatelessWidget {
+  const _SettingsSection({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ListTile(title: Text(title), subtitle: Text(subtitle)),
+        child,
+        const Divider(height: 1, thickness: 0.5),
+      ],
     );
   }
 }
@@ -325,47 +314,48 @@ class _DataBasePagePageState extends State<DataBasePage> {
   }
 
   void _onTap(String element) {
+    final l10n = AppLocalizations.of(context)!;
+    final navigator = Navigator.of(context);
+
     SharedDialog.showDialog2(
       context,
-      AppLocalizations.of(context)!.dialogConfirmTitle,
-      AppLocalizations.of(context)!.dialogDeleteCacheConfirm,
-      AppLocalizations.of(context)!.dialogNo,
-      () => Navigator.of(context).pop(),
-      AppLocalizations.of(context)!.dialogYes,
+      l10n.dialogConfirmTitle,
+      l10n.dialogDeleteCacheConfirm,
+      l10n.dialogNo,
+      () => navigator.pop(),
+      l10n.dialogYes,
       () async {
         try {
           await repo.discussionsDao.deleteItem(element);
         } catch (_) {
-          SnackbarUtils.showMessage(
-            msg: AppLocalizations.of(context)!.commonNoticeDeleteFailed,
-          );
+          SnackbarUtils.showMessage(msg: l10n.commonNoticeDeleteFailed);
         }
-        if (context.mounted) {
-          Navigator.of(context).pop();
-          setState(() {});
-        }
+        if (!mounted) return;
+        navigator.pop();
+        setState(() {});
       },
     );
   }
 
   void clearAll() {
+    final l10n = AppLocalizations.of(context)!;
+    final navigator = Navigator.of(context);
+
     SharedDialog.showDialog2(
       context,
-      AppLocalizations.of(context)!.dialogConfirmTitle,
-      AppLocalizations.of(context)!.dialogClearCacheConfirm,
-      AppLocalizations.of(context)!.dialogNo,
-      () => Navigator.of(context).pop(),
-      AppLocalizations.of(context)!.dialogYes,
+      l10n.dialogConfirmTitle,
+      l10n.dialogClearCacheConfirm,
+      l10n.dialogNo,
+      () => navigator.pop(),
+      l10n.dialogYes,
       () async {
         try {
           await repo.clearAll();
         } catch (_) {
-          SnackbarUtils.showMessage(
-            msg: AppLocalizations.of(context)!.commonNoticeDeleteFailed,
-          );
+          SnackbarUtils.showMessage(msg: l10n.commonNoticeDeleteFailed);
         }
-        if (!context.mounted) return;
-        Navigator.of(context).pop();
+        if (!mounted) return;
+        navigator.pop();
         setState(() {});
       },
     );

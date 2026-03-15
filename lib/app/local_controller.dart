@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/utils/storage_utils.dart';
 
@@ -20,17 +21,22 @@ class LocaleController extends GetxController {
   }
 
   void _loadLocale() {
-    final dynamic saved = StorageUtils.settings.get(SettingsStorageKeys.appLang);
+    final dynamic saved = StorageUtils.settings.get(
+      SettingsStorageKeys.appLang,
+    );
     if (saved is! String || saved.isEmpty) {
+      _locale.value = _resolveSystemLocale();
       return;
     }
 
     final decoded = _decode(saved);
     if (decoded == null) {
+      _locale.value = _resolveSystemLocale();
       return;
     }
     final normalized = _normalizeSupported(decoded);
     if (normalized == null) {
+      _locale.value = _resolveSystemLocale();
       return;
     }
     _locale.value = normalized;
@@ -73,10 +79,7 @@ class LocaleController extends GetxController {
     }
     if (parts.length == 2) {
       if (parts[1].length == 4) {
-        return Locale.fromSubtags(
-          languageCode: parts[0],
-          scriptCode: parts[1],
-        );
+        return Locale.fromSubtags(languageCode: parts[0], scriptCode: parts[1]);
       }
       return Locale(parts[0], parts[1]);
     }
@@ -103,5 +106,16 @@ class LocaleController extends GetxController {
       default:
         return null;
     }
+  }
+
+  Locale _resolveSystemLocale() {
+    final locales = WidgetsBinding.instance.platformDispatcher.locales;
+    for (final locale in locales) {
+      final normalized = _normalizeSupported(locale);
+      if (normalized != null) {
+        return normalized;
+      }
+    }
+    return const Locale('en');
   }
 }

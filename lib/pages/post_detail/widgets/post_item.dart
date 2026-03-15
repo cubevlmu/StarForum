@@ -6,13 +6,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/posts.dart';
+import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/reply_util.dart';
-import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/avatar.dart';
 import 'package:star_forum/widgets/content_view.dart';
-import 'package:star_forum/widgets/icon_text_button.dart';
 import 'package:get/get.dart';
 
 class PostItemWidget extends StatefulWidget {
@@ -31,6 +30,8 @@ class PostItemWidget extends StatefulWidget {
 }
 
 class _PostItemWidgetState extends State<PostItemWidget> {
+  bool _isLikeSubmitting = false;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -47,14 +48,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                     radius: 45 / 2,
                     onPressed: () {
                       if (widget.isUserPage) return;
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => UserPage(
-                            key: ValueKey("UserPage:${widget.reply.userId}"),
-                            userId: widget.reply.userId,
-                          ),
-                        ),
-                      );
+                      openUserAdaptive(context, widget.reply.userId);
                     },
                     cacheWidthHeight: 200,
                     placeholder: widget.reply.user?.displayName[0] ?? "",
@@ -71,16 +65,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                       child: GestureDetector(
                         onTap: () {
                           if (widget.isUserPage) return;
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => UserPage(
-                                key: ValueKey(
-                                  "UserPage:${widget.reply.userId}",
-                                ),
-                                userId: widget.reply.userId,
-                              ),
-                            ),
-                          );
+                          openUserAdaptive(context, widget.reply.userId);
                         },
 
                         child: Column(
@@ -88,14 +73,18 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  widget.reply.user?.displayName ?? "",
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Text(
+                                    widget.reply.user?.displayName ?? "",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -108,6 +97,8 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                                     widget.reply.editedAt.isEmpty
                                         ? widget.reply.createdAt
                                         : widget.reply.editedAt,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: Theme.of(context).hintColor,
                                       fontSize: 12,
@@ -136,32 +127,25 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                       ),
                       child: Row(
                         children: [
-                          StatefulBuilder(
-                            builder: (context, setState) {
-                              return _ThumUpButton(
-                                likeNum: widget.reply.likes,
-                                selected: false,
-                                onPressed: widget.isUserPage
-                                    ? null
-                                    : () async {
-                                        final r = await ReplyUtil.addLikeToPost(
-                                          widget.reply,
-                                        );
-                                        if (r != null) {
-                                          widget.reply.likes = r.likes;
-                                          setState(() {});
-                                        }
-                                      },
-                              );
-                            },
+                          Flexible(
+                            child: _ThumUpButton(
+                              likeNum: widget.reply.likes,
+                              selected: false,
+                              isLoading: _isLikeSubmitting,
+                              onPressed: widget.isUserPage || _isLikeSubmitting
+                                  ? null
+                                  : _handleLikePressed,
+                            ),
                           ),
                           if (!widget.isUserPage)
-                            _ReplyButton(
-                              postItem: widget.reply,
-                              controllerTag: widget.controllerTag ?? "",
-                              updateWidget: () {
-                                setState(() => ());
-                              },
+                            Flexible(
+                              child: _ReplyButton(
+                                postItem: widget.reply,
+                                controllerTag: widget.controllerTag ?? "",
+                                updateWidget: () {
+                                  setState(() => ());
+                                },
+                              ),
                             ),
                         ],
                       ),
@@ -175,17 +159,40 @@ class _PostItemWidgetState extends State<PostItemWidget> {
       ],
     );
   }
+
+  Future<void> _handleLikePressed() async {
+    setState(() {
+      _isLikeSubmitting = true;
+    });
+
+    try {
+      final r = await ReplyUtil.addLikeToPost(widget.reply);
+      if (r != null && mounted) {
+        setState(() {
+          widget.reply.likes = r.likes;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLikeSubmitting = false;
+        });
+      }
+    }
+  }
 }
 
 class _ThumUpButton extends StatelessWidget {
   const _ThumUpButton({
     required this.onPressed,
     required this.likeNum,
+    required this.isLoading,
     this.selected = false,
   });
   final Function()? onPressed;
   final bool selected;
   final int likeNum;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -210,7 +217,19 @@ class _ThumUpButton extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.thumb_up_rounded, size: 16),
+          if (isLoading)
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: selected == true
+                    ? Theme.of(context).colorScheme.onPrimary
+                    : Theme.of(context).colorScheme.primary,
+              ),
+            )
+          else
+            const Icon(Icons.thumb_up_rounded, size: 16),
           const SizedBox(width: 6),
           Text(StringUtil.numFormat(likeNum), style: textTheme.labelMedium),
         ],
@@ -231,7 +250,16 @@ class _ReplyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconTextButton(
+    return ElevatedButton(
+      style: const ButtonStyle(
+        visualDensity: VisualDensity.standard,
+        padding: WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        ),
+        elevation: WidgetStatePropertyAll(0),
+        minimumSize: WidgetStatePropertyAll(Size(40, 36)),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
       onPressed: () async {
         final controller = Get.find<PostPageController>(tag: controllerTag);
         ReplyUtil.showAddReplySheet2(
@@ -243,11 +271,10 @@ class _ReplyButton extends StatelessWidget {
           scrollController: null,
         );
       },
-      icon: const Padding(
-        padding: EdgeInsets.all(2.0),
-        child: Icon(Icons.reply, size: 15),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [Icon(Icons.reply_rounded, size: 16)],
       ),
-      text: null,
     );
   }
 }

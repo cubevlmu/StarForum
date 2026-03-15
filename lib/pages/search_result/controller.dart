@@ -31,6 +31,7 @@ class SearchResultController extends GetxController
   int offset = 0;
   bool _hasMore = true;
   RxBool isSearching = false.obs;
+  RxBool isInitialLoading = true.obs;
 
   Future<bool> _loadSearchResult() async {
     if (!_hasMore) return true;
@@ -72,6 +73,7 @@ class SearchResultController extends GetxController
   }
 
   Future<void> onRefresh() async {
+    isInitialLoading.value = true;
     offset = 0;
     _hasMore = true;
     searchItems.clear();
@@ -84,11 +86,17 @@ class SearchResultController extends GetxController
     } else {
       refreshController.finishRefresh(IndicatorResult.fail);
     }
+    isInitialLoading.value = false;
   }
 
   Future<void> onLoad() async {
+    if (searchItems.isEmpty) {
+      isInitialLoading.value = true;
+    }
+
     if (!_hasMore) {
       refreshController.finishLoad(IndicatorResult.noMore);
+      isInitialLoading.value = false;
       return;
     }
 
@@ -96,6 +104,7 @@ class SearchResultController extends GetxController
 
     if (!ok) {
       refreshController.finishLoad(IndicatorResult.fail);
+      isInitialLoading.value = false;
       return;
     }
 
@@ -104,5 +113,6 @@ class SearchResultController extends GetxController
     } else {
       refreshController.finishLoad(IndicatorResult.noMore);
     }
+    isInitialLoading.value = false;
   }
 }

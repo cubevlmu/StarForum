@@ -17,6 +17,7 @@ class ThemeListController extends GetxController {
 
   final RxInt selectId = 0.obs;
   final RxBool onLoading = true.obs;
+  final RxBool isInitialLoading = true.obs;
   final RxList<TagInfo> primayTag = <TagInfo>[].obs;
   final RxList<TagInfo> tags = <TagInfo>[].obs;
   final RxList<DiscussionInfo> searchItems = <DiscussionInfo>[].obs;
@@ -51,6 +52,7 @@ class ThemeListController extends GetxController {
       await onRefresh();
     } finally {
       onLoading.value = false;
+      isInitialLoading.value = false;
     }
   }
 
@@ -111,6 +113,7 @@ class ThemeListController extends GetxController {
   }
 
   Future<void> onRefresh() async {
+    isInitialLoading.value = true;
     offset = 0;
     _hasMore = true;
     searchItems.clear();
@@ -123,11 +126,16 @@ class ThemeListController extends GetxController {
     } else {
       refreshController.finishRefresh(IndicatorResult.fail);
     }
+    isInitialLoading.value = false;
   }
 
   Future<void> onLoad() async {
+    if (searchItems.isEmpty) {
+      isInitialLoading.value = true;
+    }
     if (!_hasMore) {
       refreshController.finishLoad(IndicatorResult.noMore);
+      isInitialLoading.value = false;
       return;
     }
 
@@ -135,6 +143,7 @@ class ThemeListController extends GetxController {
 
     if (!ok) {
       refreshController.finishLoad(IndicatorResult.fail);
+      isInitialLoading.value = false;
       return;
     }
 
@@ -143,6 +152,7 @@ class ThemeListController extends GetxController {
     } else {
       refreshController.finishLoad(IndicatorResult.noMore);
     }
+    isInitialLoading.value = false;
   }
 
   void onTagSelectChange(int id) async {

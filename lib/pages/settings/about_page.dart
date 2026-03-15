@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/settings/dev_page.dart';
 import 'package:star_forum/utils/log_util.dart';
-import 'package:get/get.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class AboutPage extends StatelessWidget {
@@ -27,18 +27,22 @@ class AboutPage extends StatelessWidget {
         children: [
           ListTile(
             title: Text(AppLocalizations.of(context)!.aboutVersion),
-            onTap: kDebugMode ? () {
-              tapTimes += 1;
-              if (tapTimes == 5) {
-                tapTimes = 0;
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DevSettingPage()),
-                );
-                return;
-              }
-            } : null,
-            subtitle: Text("1.1.0"),
+            onTap: kDebugMode
+                ? () {
+                    tapTimes += 1;
+                    if (tapTimes == 5) {
+                      tapTimes = 0;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DevSettingPage(),
+                        ),
+                      );
+                      return;
+                    }
+                  }
+                : null,
+            subtitle: Text("1.1.5"),
             trailing: TextButton(
               child: Text(AppLocalizations.of(context)!.aboutCheckUpdate),
               onPressed: () {
@@ -55,8 +59,11 @@ class AboutPage extends StatelessWidget {
             },
             onLongPress: () {
               Clipboard.setData(ClipboardData(text: authorUrl));
-              ScaffoldMessenger.of(context);
-              Get.rawSnackbar(message: AppLocalizations.of(context)!.commonNoticeCopiedToClipboard(authorUrl));
+              SnackbarUtils.showSuccess(
+                msg: AppLocalizations.of(
+                  context,
+                )!.commonNoticeCopiedToClipboard(authorUrl),
+              );
             },
           ),
           const Divider(height: 1, thickness: 0.5),
@@ -68,8 +75,11 @@ class AboutPage extends StatelessWidget {
             },
             onLongPress: () {
               Clipboard.setData(ClipboardData(text: projectUrl));
-              ScaffoldMessenger.of(context);
-              Get.rawSnackbar(message: AppLocalizations.of(context)!.commonNoticeCopiedToClipboard(projectUrl));
+              SnackbarUtils.showSuccess(
+                msg: AppLocalizations.of(
+                  context,
+                )!.commonNoticeCopiedToClipboard(projectUrl),
+              );
             },
           ),
           const Divider(height: 1, thickness: 0.5),
@@ -79,19 +89,19 @@ class AboutPage extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (_) => const LicensePage(
-                      applicationIcon: Padding(
-                        padding: EdgeInsets.only(top: 8),
-                        child: Image(
-                          image: AssetImage("assets/images/icon.png"),
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      applicationName: "StarForum",
+                  applicationIcon: Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Image(
+                      image: AssetImage("assets/images/icon.png"),
+                      width: 96,
+                      height: 96,
+                      fit: BoxFit.contain,
                     ),
+                  ),
+                  applicationName: "StarForum",
                 ),
               ),
+            ),
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(

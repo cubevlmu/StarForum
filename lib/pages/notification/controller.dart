@@ -30,6 +30,7 @@ class NotificationPageController extends GetxController {
   bool loading = false;
   bool isFirstSync = true;
   final RxBool isInvoking = false.obs;
+  final RxBool isInitialLoading = true.obs;
 
   bool _loading = false;
   bool _hasMore = true;
@@ -90,6 +91,7 @@ class NotificationPageController extends GetxController {
         if (isFirstSync) {
           isFirstSync = false;
         }
+        isInitialLoading.value = false;
         return;
       }
 
@@ -114,6 +116,7 @@ class NotificationPageController extends GetxController {
         if (isFirstSync) {
           isFirstSync = false;
         }
+        isInitialLoading.value = false;
         return;
       }
 
@@ -124,6 +127,7 @@ class NotificationPageController extends GetxController {
         if (isFirstSync) {
           isFirstSync = false;
         }
+        isInitialLoading.value = false;
         return;
       }
 
@@ -145,17 +149,24 @@ class NotificationPageController extends GetxController {
       refreshController.finishLoad(IndicatorResult.fail);
     } finally {
       _loading = false;
+      isInitialLoading.value = false;
     }
   }
 
   Future<void> onLoad() async {
+    if (items.isEmpty) {
+      isInitialLoading.value = true;
+    }
+
     if (_loading) {
       refreshController.finishLoad(IndicatorResult.fail);
+      isInitialLoading.value = false;
       return;
     }
 
     if (!_hasMore || nextUrl == null || nextUrl!.isEmpty) {
       refreshController.finishLoad(IndicatorResult.noMore);
+      isInitialLoading.value = false;
       return;
     }
 
@@ -170,6 +181,7 @@ class NotificationPageController extends GetxController {
         refreshController.finishRefresh(IndicatorResult.fail);
         refreshController.finishLoad(IndicatorResult.fail);
 
+        isInitialLoading.value = false;
         return;
       }
 
@@ -184,11 +196,13 @@ class NotificationPageController extends GetxController {
           msg: AppLocalizations.of(Get.context!)!.authLoginExpired,
         );
         refreshController.finishLoad(IndicatorResult.fail);
+        isInitialLoading.value = false;
         return;
       }
 
       if (r == null) {
         refreshController.finishLoad(IndicatorResult.fail);
+        isInitialLoading.value = false;
         return;
       }
 
@@ -204,6 +218,7 @@ class NotificationPageController extends GetxController {
       refreshController.finishLoad(IndicatorResult.fail);
     } finally {
       _loading = false;
+      isInitialLoading.value = false;
     }
   }
 
@@ -245,7 +260,7 @@ class NotificationPageController extends GetxController {
 
   void readAll() async {
     if (isInvoking.value) return;
-    
+
     bool isAllRead = false;
     for (var item in items) {
       isAllRead |= item.isRead;

@@ -10,6 +10,7 @@ import 'package:star_forum/pages/search/view.dart';
 import 'package:star_forum/pages/search_result/controller.dart';
 import 'package:star_forum/widgets/post_card.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
+import 'package:star_forum/widgets/shimmer_skeleton.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
@@ -45,6 +46,12 @@ class _SearchResultPageState extends State<SearchResultPage>
       tag: _controllerTag,
     );
     _keywordController = TextEditingController(text: widget.keyWord);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (controller.searchItems.isEmpty) {
+        controller.onRefresh();
+      }
+    });
     super.initState();
   }
 
@@ -107,67 +114,76 @@ class _SearchResultPageState extends State<SearchResultPage>
 
   Widget _buildView(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return SimpleEasyRefresher(
-      easyRefreshController: controller.refreshController,
-      onLoad: controller.onLoad,
-      onRefresh: controller.onRefresh,
-      childBuilder: (context, physics) {
-        return CustomScrollView(
-          controller: controller.scrollController,
-          physics: physics,
-          slivers: [
-            if (controller.searchItems.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: GestureDetector(
-                  onTap: () {
-                    if (widget.embedded) {
-                      widget.onEditSearch?.call();
-                      return;
-                    }
-                    Navigator.of(context).pushReplacement(
-                      GetPageRoute(
-                        page: () =>
-                            SearchPage(defaultInputSearchWord: widget.keyWord),
-                      ),
-                    );
-                  },
-                  child: Obx(() {
-                    return controller.isSearching.value
-                        ? const SizedBox.shrink()
-                        : NoticeWidget(
-                            emoji: "🔍",
-                            title: l10n.searchResultEmptyTitle,
-                            tips: l10n.searchResultEmptyTips,
-                          );
-                  }),
-                ),
-              )
-            else
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final i = controller.searchItems[index];
-                  return Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: PostCard(item: i.toItem()),
-                      ),
-                      if (index != controller.searchItems.length - 1)
-                        const Divider(
-                          height: 1,
-                          thickness: 0.5,
-                          indent: 12,
-                          endIndent: 12,
+    return Obx(() {
+      final showSkeleton =
+          controller.isInitialLoading.value && controller.searchItems.isEmpty;
+      return SimpleEasyRefresher(
+        easyRefreshController: controller.refreshController,
+        onLoad: controller.onLoad,
+        onRefresh: controller.onRefresh,
+        autoRefreshOnStart: false,
+        refreshEnabled: !showSkeleton,
+        loadEnabled: !showSkeleton,
+        childBuilder: (context, physics) {
+          final effectivePhysics = showSkeleton
+              ? const NeverScrollableScrollPhysics()
+              : physics;
+          return CustomScrollView(
+            controller: controller.scrollController,
+            physics: effectivePhysics,
+            slivers: [
+              if (showSkeleton)
+                const SliverToBoxAdapter(child: _SearchResultLoadingSkeleton())
+              else if (controller.searchItems.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (widget.embedded) {
+                        widget.onEditSearch?.call();
+                        return;
+                      }
+                      Navigator.of(context).pushReplacement(
+                        GetPageRoute(
+                          page: () => SearchPage(
+                            defaultInputSearchWord: widget.keyWord,
+                          ),
                         ),
-                    ],
-                  );
-                }, childCount: controller.searchItems.length),
-              ),
-          ],
-        );
-      },
-    );
+                      );
+                    },
+                    child: NoticeWidget(
+                      emoji: "🔍",
+                      title: l10n.searchResultEmptyTitle,
+                      tips: l10n.searchResultEmptyTips,
+                    ),
+                  ),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final i = controller.searchItems[index];
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: PostCard(item: i.toItem()),
+                        ),
+                        if (index != controller.searchItems.length - 1)
+                          const Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            indent: 12,
+                            endIndent: 12,
+                          ),
+                      ],
+                    );
+                  }, childCount: controller.searchItems.length),
+                ),
+            ],
+          );
+        },
+      );
+    });
   }
 
   @override
@@ -184,6 +200,130 @@ class _SearchResultPageState extends State<SearchResultPage>
     return Scaffold(
       appBar: _appBar(context, controller),
       body: _buildView(context),
+    );
+  }
+}
+
+class _SearchResultLoadingSkeleton extends StatelessWidget {
+  const _SearchResultLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      duration: const Duration(milliseconds: 1450),
+      highlightStrength: 0.18,
+      builder: (context, palette) {
+        return Column(
+          children: List<Widget>.generate(
+            4,
+            (index) => _SearchResultLoadingCard(
+              pillDecoration: palette.line(),
+              circleDecoration: palette.circle(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SearchResultLoadingCard extends StatelessWidget {
+  const _SearchResultLoadingCard({
+    required this.pillDecoration,
+    required this.circleDecoration,
+  });
+
+  final Decoration pillDecoration;
+  final Decoration circleDecoration;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                width: 0.5,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: circleDecoration,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SkeletonBar(
+                            decoration: pillDecoration,
+                            widthFactor: 0.28,
+                            height: 12,
+                          ),
+                          const SizedBox(height: 8),
+                          SkeletonBar(
+                            decoration: pillDecoration,
+                            widthFactor: 0.18,
+                            height: 10,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SkeletonBar(
+                  decoration: pillDecoration,
+                  widthFactor: 0.9,
+                  height: 16,
+                ),
+                const SizedBox(height: 10),
+                SkeletonBar(
+                  decoration: pillDecoration,
+                  widthFactor: 0.82,
+                  height: 12,
+                ),
+                const SizedBox(height: 8),
+                SkeletonBar(
+                  decoration: pillDecoration,
+                  widthFactor: 0.68,
+                  height: 12,
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 28,
+                      decoration: pillDecoration,
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 54,
+                      height: 28,
+                      decoration: pillDecoration,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 0.5, indent: 12, endIndent: 12),
+        ],
+      ),
     );
   }
 }

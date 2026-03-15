@@ -11,6 +11,7 @@ import 'package:star_forum/pages/theme_list/controller.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/widgets/post_card.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
+import 'package:star_forum/widgets/shimmer_skeleton.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 
@@ -60,70 +61,188 @@ class _ThemeListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return SimpleEasyRefresher(
-      easyRefreshController: controller.refreshController,
-      onRefresh: controller.onRefresh,
-      onLoad: controller.onLoad,
-      autoRefreshOnStart: false,
-      childBuilder: (context, physics) {
-        return CustomScrollView(
-          controller: controller.scrollController,
-          physics: physics,
-          slivers: [
-            Obx(() {
-              if (!controller.onLoading.value) {
-                return const SliverToBoxAdapter(child: SizedBox.shrink());
-              }
+    return Obx(() {
+      final showSkeleton =
+          controller.onLoading.value && controller.searchItems.isEmpty;
+      return SimpleEasyRefresher(
+        easyRefreshController: controller.refreshController,
+        onRefresh: controller.onRefresh,
+        onLoad: controller.onLoad,
+        autoRefreshOnStart: false,
+        refreshEnabled: !showSkeleton,
+        loadEnabled: !showSkeleton,
+        childBuilder: (context, physics) {
+          final effectivePhysics = showSkeleton
+              ? const ClampingScrollPhysics()
+              : physics;
+          return CustomScrollView(
+            controller: controller.scrollController,
+            physics: effectivePhysics,
+            slivers: [
+              if (showSkeleton)
+                const SliverToBoxAdapter(child: _ThemeListLoadingSkeleton())
+              else
+                const SliverToBoxAdapter(child: SizedBox.shrink()),
 
-              return SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      RefreshProgressIndicator(),
-                      SizedBox(height: 8),
-                      Text(l10n.refreshLoading),
-                    ],
+              Obx(() {
+                if (controller.searchItems.isNotEmpty ||
+                    controller.isSearching.value ||
+                    controller.onLoading.value) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
+
+                return SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: NoticeWidget(
+                    emoji: '🧐',
+                    title: l10n.postListEmptyTitle,
+                    tips: l10n.postListEmptyTips,
                   ),
-                ),
-              );
-            }),
+                );
+              }),
 
-            Obx(() {
-              if (controller.onLoading.value ||
-                  controller.searchItems.isNotEmpty ||
-                  controller.isSearching.value) {
-                return const SliverToBoxAdapter(child: SizedBox.shrink());
-              }
+              Obx(() {
+                final items = controller.searchItems;
+                if (items.isEmpty) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
 
-              return SliverFillRemaining(
-                hasScrollBody: false,
-                child: NoticeWidget(
-                  emoji: '🧐',
-                  title: l10n.postListEmptyTitle,
-                  tips: l10n.postListEmptyTips,
-                ),
-              );
-            }),
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    return _ThemeListItem(item: items[index].toItem());
+                  }, childCount: items.length),
+                );
+              }),
 
-            Obx(() {
-              final items = controller.searchItems;
-              if (items.isEmpty) {
-                return const SliverToBoxAdapter(child: SizedBox.shrink());
-              }
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            ],
+          );
+        },
+      );
+    });
+  }
+}
 
-              return SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  return _ThemeListItem(item: items[index].toItem());
-                }, childCount: items.length),
-              );
-            }),
+class _ThemeListLoadingSkeleton extends StatelessWidget {
+  const _ThemeListLoadingSkeleton();
 
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
-          ],
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      duration: const Duration(milliseconds: 1450),
+      highlightStrength: 0.18,
+      builder: (context, palette) {
+        return Column(
+          children: List<Widget>.generate(
+            4,
+            (index) => _ThemeListLoadingCard(
+              pillDecoration: palette.line(),
+              circleDecoration: palette.circle(),
+            ),
+          ),
         );
       },
+    );
+  }
+}
+
+class _ThemeListLoadingCard extends StatelessWidget {
+  const _ThemeListLoadingCard({
+    required this.pillDecoration,
+    required this.circleDecoration,
+  });
+
+  final Decoration pillDecoration;
+  final Decoration circleDecoration;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                width: 0.5,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: circleDecoration,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SkeletonBar(
+                            decoration: pillDecoration,
+                            widthFactor: 0.28,
+                            height: 12,
+                          ),
+                          const SizedBox(height: 8),
+                          SkeletonBar(
+                            decoration: pillDecoration,
+                            widthFactor: 0.18,
+                            height: 10,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SkeletonBar(
+                  decoration: pillDecoration,
+                  widthFactor: 0.9,
+                  height: 16,
+                ),
+                const SizedBox(height: 10),
+                SkeletonBar(
+                  decoration: pillDecoration,
+                  widthFactor: 0.82,
+                  height: 12,
+                ),
+                const SizedBox(height: 8),
+                SkeletonBar(
+                  decoration: pillDecoration,
+                  widthFactor: 0.68,
+                  height: 12,
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 28,
+                      decoration: pillDecoration,
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 54,
+                      height: 28,
+                      decoration: pillDecoration,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 0.5, indent: 12, endIndent: 12),
+        ],
+      ),
     );
   }
 }

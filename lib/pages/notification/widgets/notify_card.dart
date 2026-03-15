@@ -9,7 +9,6 @@ import 'package:star_forum/data/model/notifications.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/notification/controller.dart';
-import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/html_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/string_util.dart';
@@ -278,12 +277,7 @@ class NotifyCard extends StatelessWidget {
   }
 
   void _openUserSpace(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => UserPage(userId: item.fromUser?.id ?? -1),
-      ),
-    );
+    openUserAdaptive(context, item.fromUser?.id ?? -1);
   }
 
   _NotifyTypeMeta _buildTypeMeta(BuildContext context, String contentType) {
