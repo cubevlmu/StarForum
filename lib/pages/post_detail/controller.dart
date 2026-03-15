@@ -34,6 +34,7 @@ class PostPageController extends GetxController {
 
   final RxList<PostInfo> replyItems = <PostInfo>[].obs;
   final RxList<PostInfo> newReplyItems = <PostInfo>[].obs;
+  final RxBool isReplyLoading = true.obs;
 
   final EasyRefreshController refreshController = EasyRefreshController(
     controlFinishLoad: true,
@@ -89,6 +90,7 @@ class PostPageController extends GetxController {
   Future<void> onReplyRefresh() async {
     if (_loading) return;
 
+    isReplyLoading.value = true;
     _offset = 1;
     _hasMore = true;
     replyItems.clear();
@@ -103,16 +105,23 @@ class PostPageController extends GetxController {
     refreshController.finishLoad(
       _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
     );
+    isReplyLoading.value = false;
   }
 
   Future<void> onReplyLoad() async {
+    if (replyItems.isEmpty && newReplyItems.isEmpty) {
+      isReplyLoading.value = true;
+    }
+
     if (_loading) {
       refreshController.finishLoad(IndicatorResult.fail);
+      isReplyLoading.value = false;
       return;
     }
 
     if (!_hasMore) {
       refreshController.finishLoad(IndicatorResult.noMore);
+      isReplyLoading.value = false;
       return;
     }
 
@@ -123,6 +132,7 @@ class PostPageController extends GetxController {
           ? (_hasMore ? IndicatorResult.success : IndicatorResult.noMore)
           : IndicatorResult.fail,
     );
+    isReplyLoading.value = false;
   }
 
   Future<bool> _loadReplies({bool reset = false}) async {

@@ -22,9 +22,14 @@ class SetupNextButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (text == null) {
-      return FloatingActionButton(onPressed: onTap, child: Icon(icon));
+      return FloatingActionButton(
+        heroTag: null,
+        onPressed: onTap,
+        child: Icon(icon),
+      );
     }
     return FloatingActionButton.extended(
+      heroTag: null,
       onPressed: onTap,
       enableFeedback: onTap != null,
       icon: Icon(icon),

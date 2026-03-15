@@ -17,7 +17,7 @@ class PostListController extends GetxController {
   final DiscussionRepository repo = getIt<DiscussionRepository>();
 
   final RxList<DiscussionItem> items = <DiscussionItem>[].obs;
-  final RxBool onLoading = true.obs;
+  final RxBool isInitialLoading = true.obs;
 
   final ScrollController scrollController = ScrollController();
   final EasyRefreshController refreshController = EasyRefreshController(
@@ -46,10 +46,6 @@ class PostListController extends GetxController {
 
     _visibleCount.value = _visibleCount.value;
     _restorePagingState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      refreshController.callRefresh();
-    });
   }
 
   Future<void> _restorePagingState() async {
@@ -96,6 +92,7 @@ class PostListController extends GetxController {
       refreshController.finishRefresh(IndicatorResult.fail);
     } finally {
       _loading = false;
+      isInitialLoading.value = false;
       refreshController.finishLoad(
         _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
       );
@@ -106,11 +103,13 @@ class PostListController extends GetxController {
     if (_loading) {
       LogUtil.debug("[PostList] Is loading...");
       refreshController.finishLoad(.fail);
+      isInitialLoading.value = false;
       return;
     }
 
     if (!_hasMore) {
       refreshController.finishLoad(IndicatorResult.noMore);
+      isInitialLoading.value = false;
       return;
     }
     _loading = true;
@@ -132,6 +131,7 @@ class PostListController extends GetxController {
       refreshController.finishLoad(IndicatorResult.fail);
     } finally {
       _loading = false;
+      isInitialLoading.value = false;
     }
   }
 

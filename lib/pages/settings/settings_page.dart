@@ -14,7 +14,8 @@ class SettingsDialogNavigator extends StatefulWidget {
   const SettingsDialogNavigator({super.key});
 
   @override
-  State<SettingsDialogNavigator> createState() => _SettingsDialogNavigatorState();
+  State<SettingsDialogNavigator> createState() =>
+      _SettingsDialogNavigatorState();
 }
 
 class _SettingsDialogNavigatorState extends State<SettingsDialogNavigator> {
@@ -30,9 +31,10 @@ class _SettingsDialogNavigatorState extends State<SettingsDialogNavigator> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         Navigator.of(context, rootNavigator: true).pop();
-        Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute(builder: (_) => const SettingsPage()),
-        );
+        Navigator.of(
+          context,
+          rootNavigator: true,
+        ).push(MaterialPageRoute(builder: (_) => const SettingsPage()));
       });
     }
 
@@ -49,18 +51,38 @@ class _SettingsDialogNavigatorState extends State<SettingsDialogNavigator> {
 
 class SettingsPage extends StatelessWidget {
   final bool isDesktop;
-  const SettingsPage({super.key, this.isDesktop = false});
+  final bool embedded;
+  final VoidCallback? onEmbeddedLeadingPressed;
+  final bool showEmbeddedBack;
+
+  const SettingsPage({
+    super.key,
+    this.isDesktop = false,
+    this.embedded = false,
+    this.onEmbeddedLeadingPressed,
+    this.showEmbeddedBack = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     Color iconColor = Theme.of(context).colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: !isDesktop,
-        leading: isDesktop
+        automaticallyImplyLeading: !(isDesktop || embedded),
+        leading: embedded
+            ? IconButton(
+                icon: Icon(
+                  showEmbeddedBack
+                      ? Icons.arrow_back_rounded
+                      : Icons.close_rounded,
+                ),
+                onPressed: onEmbeddedLeadingPressed,
+              )
+            : isDesktop
             ? IconButton(
                 icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                onPressed: () =>
+                    Navigator.of(context, rootNavigator: true).pop(),
               )
             : null,
         title: Text(AppLocalizations.of(context)!.commonActionSettings),
@@ -70,21 +92,15 @@ class SettingsPage extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.tune_outlined, color: iconColor),
             title: Text(AppLocalizations.of(context)!.settingsCommonTitle),
-            onTap: () => Navigator.of(
-              context,
-            ).push(
-              MaterialPageRoute(
-                builder: (_) => const CommonSettingsPage(),
-              ),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CommonSettingsPage()),
             ),
           ),
           const Divider(height: 1, thickness: 0.5),
           ListTile(
             leading: Icon(Icons.color_lens_outlined, color: iconColor),
             title: Text(AppLocalizations.of(context)!.settingsPersonalizeTitle),
-            onTap: () => Navigator.of(
-              context,
-            ).push(
+            onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => const PersonalizeSettingsPage(),
               ),
@@ -96,14 +112,56 @@ class SettingsPage extends StatelessWidget {
             title: Text(AppLocalizations.of(context)!.aboutTitle),
             onTap: () => Navigator.of(
               context,
-            ).push(
-              MaterialPageRoute(
-                builder: (_) => const AboutPage(),
-              ),
-            ),
+            ).push(MaterialPageRoute(builder: (_) => const AboutPage())),
           ),
         ],
       ),
     );
+  }
+}
+
+class SettingsPaneNavigator extends StatefulWidget {
+  const SettingsPaneNavigator({
+    super.key,
+    required this.onClose,
+    required this.onBack,
+    required this.canPopDetail,
+  });
+
+  final VoidCallback onClose;
+  final VoidCallback onBack;
+  final bool canPopDetail;
+
+  @override
+  State<SettingsPaneNavigator> createState() => _SettingsPaneNavigatorState();
+}
+
+class _SettingsPaneNavigatorState extends State<SettingsPaneNavigator> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      key: _navigatorKey,
+      onGenerateRoute: (settings) {
+        return MaterialPageRoute(
+          builder: (_) => SettingsPage(
+            isDesktop: false,
+            embedded: true,
+            showEmbeddedBack: widget.canPopDetail,
+            onEmbeddedLeadingPressed: _handleLeadingPressed,
+          ),
+          settings: settings,
+        );
+      },
+    );
+  }
+
+  void _handleLeadingPressed() {
+    if (widget.canPopDetail) {
+      widget.onBack();
+      return;
+    }
+    widget.onClose();
   }
 }

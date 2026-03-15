@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/cache_utils.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/widgets/cached_network_image.dart';
 
 class ImagePreviewWidget extends StatefulWidget {
@@ -62,19 +63,13 @@ class ImagePreviewWidgetState extends State<ImagePreviewWidget> {
       final savedPath = await _copyToPictures(file);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.imageSaveSuccess(savedPath),
-          ),
-        ),
+      SnackbarUtils.showSuccess(
+        msg: AppLocalizations.of(context)!.imageSaveSuccess(savedPath),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.imageSaveFailed(e)),
-        ),
+      SnackbarUtils.showError(
+        msg: AppLocalizations.of(context)!.imageSaveFailed(e),
       );
     }
   }

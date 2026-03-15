@@ -5,13 +5,14 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/post_detail/view.dart';
 import 'package:star_forum/pages/search/view.dart';
 import 'package:star_forum/pages/search_result/view.dart';
+import 'package:star_forum/pages/settings/settings_page.dart';
+import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:get/get.dart';
 
@@ -55,10 +56,10 @@ class _MainPageState extends State<MainPage> {
         final width = constraints.maxWidth;
         final useRail = width >= _railBreakPoint;
         final useThreePane = width >= kThreePaneBreakPoint;
-        final selectedDiscussion = controller.selectedDiscussion.value;
+        final currentDetail = controller.currentDetail;
         _handleLayoutTransition(
           useThreePane: useThreePane,
-          selectedDiscussion: selectedDiscussion,
+          currentDetail: currentDetail,
         );
 
         return Scaffold(
@@ -99,8 +100,9 @@ class _MainPageState extends State<MainPage> {
                             if (showHomeSearch)
                               Positioned.fill(
                                 child: ColoredBox(
-                                  color:
-                                      Theme.of(context).scaffoldBackgroundColor,
+                                  color: Theme.of(
+                                    context,
+                                  ).scaffoldBackgroundColor,
                                   child: _HomeSearchPane(
                                     keyword: homeSearchKeyword,
                                     controller: controller,
@@ -121,10 +123,13 @@ class _MainPageState extends State<MainPage> {
                       Expanded(
                         flex: 6,
                         child: Obx(() {
+                          final detailStack = List<DetailPaneEntry>.from(
+                            controller.detailStack,
+                          );
                           return _DetailPane(
                             controller: controller,
                             l10n: l10n,
-                            selected: controller.selectedDiscussion.value,
+                            detailStack: detailStack,
                           );
                         }),
                       ),
@@ -170,15 +175,33 @@ class _MainPageState extends State<MainPage> {
 
   void _handleLayoutTransition({
     required bool useThreePane,
-    required DiscussionItem? selectedDiscussion,
+    required DetailPaneEntry? currentDetail,
   }) {
-    if (_wasThreePane && !useThreePane && selectedDiscussion != null) {
+    if (_wasThreePane && !useThreePane && currentDetail != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => PostPage(item: selectedDiscussion)),
-        );
-        controller.selectedDiscussion.value = null;
+        switch (currentDetail.type) {
+          case DetailPaneEntryType.discussion:
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => PostPage(item: currentDetail.discussion!),
+              ),
+            );
+            break;
+          case DetailPaneEntryType.user:
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => UserPage(userId: currentDetail.userId!),
+              ),
+            );
+            break;
+          case DetailPaneEntryType.settings:
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SettingsPage()));
+            break;
+        }
+        controller.closeDetail();
       });
     }
     _wasThreePane = useThreePane;
@@ -230,16 +253,16 @@ class _DetailPane extends StatelessWidget {
   const _DetailPane({
     required this.controller,
     required this.l10n,
-    required this.selected,
+    required this.detailStack,
   });
 
   final MainController controller;
   final AppLocalizations l10n;
-  final DiscussionItem? selected;
+  final List<DetailPaneEntry> detailStack;
 
   @override
   Widget build(BuildContext context) {
-    if (selected == null) {
+    if (detailStack.isEmpty) {
       return _DetailPlaceholder(
         icon: Icons.touch_app_outlined,
         title: l10n.mainDetailPlaceholderTitle,
@@ -247,14 +270,44 @@ class _DetailPane extends StatelessWidget {
       );
     }
 
-    return ColoredBox(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: PostPage(
-        key: ValueKey("DetailPost:${selected!.id}"),
-        item: selected!,
-        embedded: true,
-      ),
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    return IndexedStack(
+      index: detailStack.length - 1,
+      children: [
+        for (final detail in detailStack)
+          ColoredBox(
+            key: ValueKey("DetailEntry:${detail.entryId}"),
+            color: backgroundColor,
+            child: _buildDetailEntry(detail),
+          ),
+      ],
     );
+  }
+
+  Widget _buildDetailEntry(DetailPaneEntry detail) {
+    switch (detail.type) {
+      case DetailPaneEntryType.user:
+        return UserPage(
+          key: ValueKey("DetailUser:${detail.entryId}:${detail.userId}"),
+          userId: detail.userId!,
+          embedded: true,
+        );
+      case DetailPaneEntryType.settings:
+        return SettingsPaneNavigator(
+          key: ValueKey("DetailSettings:${detail.entryId}"),
+          onClose: controller.closeDetail,
+          onBack: controller.popDetail,
+          canPopDetail: controller.canPopDetail,
+        );
+      case DetailPaneEntryType.discussion:
+        return PostPage(
+          key: ValueKey(
+            "DetailPost:${detail.entryId}:${detail.discussion!.id}",
+          ),
+          item: detail.discussion!,
+          embedded: true,
+        );
+    }
   }
 }
 

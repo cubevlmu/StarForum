@@ -43,11 +43,19 @@ class UserPageController extends GetxController {
 
   final int userId;
   int currentPage = 1;
-  UserInfo? info;
+  final Rxn<UserInfo> profile = Rxn<UserInfo>();
+  final RxBool isProfileLoading = true.obs;
+  final RxBool isPostsLoading = true.obs;
+  final RxBool detailsExpanded = false.obs;
+  bool expAnimationPlayed = false;
+
+  UserInfo? get info => profile.value;
+  set info(UserInfo? value) => profile.value = value;
 
   bool get hasExpData => info?.expInfo != null;
 
   Future<void> loadUserData() async {
+    isProfileLoading.value = true;
     try {
       final r = await Api.getUserInfoByNameOrId(userId.toString());
       if (r == null) {
@@ -61,6 +69,11 @@ class UserPageController extends GetxController {
         info = r;
       } else {
         info?.update(r);
+        info = info;
+      }
+
+      if (info?.expInfo == null) {
+        expAnimationPlayed = true;
       }
     } catch (e, s) {
       LogUtil.errorE(
@@ -68,6 +81,8 @@ class UserPageController extends GetxController {
         e,
         s,
       );
+    } finally {
+      isProfileLoading.value = false;
     }
   }
 
@@ -125,6 +140,7 @@ class UserPageController extends GetxController {
   }
 
   Future<void> onRefresh() async {
+    isPostsLoading.value = true;
     offset = 0;
     _hasMore = true;
     items.clear();
@@ -140,11 +156,17 @@ class UserPageController extends GetxController {
     }
 
     _isSyncing = false;
+    isPostsLoading.value = false;
   }
 
   Future<void> onLoad() async {
+    if (items.isEmpty) {
+      isPostsLoading.value = true;
+    }
+
     if (!_hasMore) {
       refreshController.finishLoad(IndicatorResult.noMore);
+      isPostsLoading.value = false;
       return;
     }
 
@@ -152,6 +174,7 @@ class UserPageController extends GetxController {
 
     if (!ok) {
       refreshController.finishLoad(IndicatorResult.fail);
+      isPostsLoading.value = false;
       return;
     }
 
@@ -160,6 +183,7 @@ class UserPageController extends GetxController {
     } else {
       refreshController.finishLoad(IndicatorResult.noMore);
     }
+    isPostsLoading.value = false;
   }
 
   String getLastSeenAt() {
@@ -212,11 +236,62 @@ class UserPageController extends GetxController {
     return expIfo.expPercent / 100;
   }
 
+  bool shouldAnimateExp() {
+    if (expAnimationPlayed) return false;
+    if (info?.expInfo == null) return false;
+    return true;
+  }
+
+  void markExpAnimationPlayed() {
+    expAnimationPlayed = true;
+  }
+
   bool isMe() {
     if (info == null) return false;
     if (!repo.isLogin) return false;
     if (info?.id == repo.user?.id) return true;
     return false;
+  }
+
+  void toggleDetailsExpanded() {
+    detailsExpanded.value = !detailsExpanded.value;
+  }
+
+  List<String> getGroupNames() {
+    return info?.groups?.list
+            .map((group) => group.name.trim())
+            .where((name) => name.isNotEmpty)
+            .toList() ??
+        const <String>[];
+  }
+
+  String getProfileBio() {
+    final bioText = info?.bio.trim() ?? "";
+    if (bioText.isEmpty) {
+      return AppLocalizations.of(Get.context!)!.userBioEmpty;
+    }
+    return bioText;
+  }
+
+  String getUsernameLabel() {
+    final value = info?.username.trim() ?? "";
+    return value.isEmpty ? "--" : "@$value";
+  }
+
+  String getEmailLabel() {
+    final value = info?.email.trim() ?? "";
+    if (value.isEmpty) {
+      return AppLocalizations.of(Get.context!)!.userFieldHidden;
+    }
+    return value;
+  }
+
+  String getUserIdLabel() {
+    final value = info?.id;
+    if (value == null || value < 0) {
+      return "--";
+    }
+    return value.toString();
   }
 
   Future<DiscussionItem?> naviToDisPage(int discussion) async {

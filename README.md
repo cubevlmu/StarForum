@@ -72,6 +72,7 @@ flutter doctor
 ### 2️⃣ Install Dependencies
 
 ```bash
+flutter clean
 flutter pub get
 flutter gen-l10n
 dart run flutter_launcher_icons

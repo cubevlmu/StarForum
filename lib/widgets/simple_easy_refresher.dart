@@ -6,7 +6,6 @@
 
 import 'dart:async';
 
-
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
@@ -20,7 +19,9 @@ class SimpleEasyRefresher extends StatefulWidget {
     this.onRefresh,
     required this.childBuilder,
     this.indicatorPosition = IndicatorPosition.above,
-    this.autoRefreshOnStart = true
+    this.autoRefreshOnStart = true,
+    this.refreshEnabled = true,
+    this.loadEnabled = true,
   });
   final EasyRefreshController? easyRefreshController;
   final FutureOr<dynamic> Function()? onLoad;
@@ -29,6 +30,8 @@ class SimpleEasyRefresher extends StatefulWidget {
   childBuilder;
   final bool autoRefreshOnStart;
   final IndicatorPosition indicatorPosition;
+  final bool refreshEnabled;
+  final bool loadEnabled;
 
   @override
   State<SimpleEasyRefresher> createState() => _SimpleEasyRefresherState();
@@ -40,22 +43,34 @@ class _SimpleEasyRefresherState extends State<SimpleEasyRefresher> {
     return EasyRefresh.builder(
       refreshOnStart: widget.autoRefreshOnStart,
       resetAfterRefresh: true,
-      onLoad: () async {
-        await widget.onLoad?.call();
-        try {
-          setState(() {});
-        } catch (e, s) {
-          LogUtil.errorE("[Refresher] Exception happend on setState", e, s);
-        }
-      },
-      onRefresh: () async {
-        await widget.onRefresh?.call();
-        try {
-          setState(() {});
-        } catch (e, s) {
-          LogUtil.errorE("[Refresher] Exception happend on setState:", e, s);
-        }
-      },
+      onLoad: widget.loadEnabled
+          ? () async {
+              await widget.onLoad?.call();
+              try {
+                setState(() {});
+              } catch (e, s) {
+                LogUtil.errorE(
+                  "[Refresher] Exception happend on setState",
+                  e,
+                  s,
+                );
+              }
+            }
+          : null,
+      onRefresh: widget.refreshEnabled
+          ? () async {
+              await widget.onRefresh?.call();
+              try {
+                setState(() {});
+              } catch (e, s) {
+                LogUtil.errorE(
+                  "[Refresher] Exception happend on setState:",
+                  e,
+                  s,
+                );
+              }
+            }
+          : null,
       header: ClassicHeader(
         hitOver: true,
         safeArea: true,
