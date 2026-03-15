@@ -1,172 +1,217 @@
 # StarForum
 
-A cross-platform **Flutter** flarum forum client application, targeting **Android, iOS, and Desktop (Windows / macOS / Linux)**.
+<a id="readme-top"></a>
 
-This project focuses on:
+[简体中文](README.zh-CN.md) | English
 
-* Performance and memory efficiency
-* Local caching and offline-friendly experience
-* A clean, maintainable project architecture
+[![Flutter][flutter-shield]][flutter-url]
+[![Dart][dart-shield]][dart-url]
+[![License][license-shield]][license-url]
 
----
+<br />
+<div align="center">
+  <img src="assets/images/logo.svg" alt="StarForum Logo" width="120" height="120">
 
-## ✨ Features
+  <h3 align="center">StarForum</h3>
 
-* 📱 Cross-platform support (Android / iOS / Windows / macOS / Linux)
-* 🚀 High-performance list rendering with pagination and lazy loading
-* 🧠 Local caching (database + in-memory cache)
-* 🖼️ Image caching with memory control
-* 📝 Rich text / HTML content rendering
-* 🔌 Modular API & Repository-based architecture
+  <p align="center">
+    A cross-platform Flutter forum client for Flarum-based communities.
+    <br />
+    Focused on performance, desktop/mobile adaptation, local caching, and a polished Material 3 experience.
+  </p>
+</div>
 
----
+## Table of Contents
 
-## 🧰 Tech Stack
+- [About The Project](#about-the-project)
+- [Built With](#built-with)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Build Release](#build-release)
+- [Notes](#notes)
+- [Roadmap](#roadmap)
+- [License](#license)
 
-* **Flutter** (Dart)
-* **Dio** – HTTP networking
-* **Drift / SQLite** – local persistence
-* **Flutter HTML / Custom HTML parsing** – post content rendering
-* **Provider / Riverpod / Custom state management** (depending on implementation)
+## About The Project
 
----
+StarForum is a Flutter-based forum client designed for Flarum communities, with support for Android, iOS, Windows, macOS, and Linux.
 
-## 📂 Project Structure (Example)
+The project focuses on:
+
+- Responsive UI across mobile and desktop
+- Material 3 based interaction and visual design
+- Local caching and offline-friendly behavior
+- Efficient large-list, image, and rich content rendering
+- Maintainable architecture built around API, repository, and reusable widget layers
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Built With
+
+- [Flutter](https://flutter.dev/)
+- [Dart](https://dart.dev/)
+- [GetX](https://pub.dev/packages/get)
+- [Dio](https://pub.dev/packages/dio)
+- [Drift / SQLite](https://pub.dev/packages/drift)
+- [cached_network_image](https://pub.dev/packages/cached_network_image)
+- [easy_refresh](https://pub.dev/packages/easy_refresh)
+- [dynamic_color](https://pub.dev/packages/dynamic_color)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Features
+
+- Cross-platform support for Android, iOS, Windows, macOS, and Linux
+- Material 3 based UI with theme mode, color, language, and personalization settings
+- Desktop split-view navigation with preserved detail-page state
+- Silent first-load skeleton animations for major list and detail pages
+- Flarum post detail rendering with optimized content parsing and image loading
+- Notification center, search result pages, user profile pages, and theme/category browsing
+- Local data persistence and cache management support
+- Multi-language support with English, Simplified Chinese, and Chinese locale variants
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Project Structure
 
 ```text
 lib/
-├── data/            # Data layer (API / DB / Models)
-│   ├── api/
-│   ├── dao/
-│   ├── model/
-│   ├── repository/
-│   └── ...
-├── pages/           # UI pages
-│   ├── discussion/
-│   ├── post_detail/
-│   ├── settings/
-│   └── ...
-├── widgets/         # Reusable UI components
-├── utils/           # Utilities (network / HTML / cache, etc.)
-└── main.dart        # Application entry point
+├── app/        # App-level controllers and startup state
+├── data/       # API, database, models, repository layer
+├── di/         # Dependency injection setup
+├── l10n/       # Generated and source localization files
+├── pages/      # Screens and feature modules
+├── utils/      # Shared utilities
+├── widgets/    # Reusable widgets and loading components
+└── main.dart   # App entry point
 ```
 
----
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## 🚀 Getting Started
+## Getting Started
 
-### 1️⃣ Requirements
+### Prerequisites
 
-* Flutter SDK (stable channel recommended)
-* Dart SDK (bundled with Flutter)
-* Android Studio or VS Code
+- Flutter SDK stable channel
+- Dart SDK bundled with Flutter
+- Android Studio, VS Code, or another Flutter-capable IDE
 
-Verify your environment:
+Check the local environment:
 
-```bash
+```sh
 flutter doctor
 ```
 
----
+### Installation
 
-### 2️⃣ Install Dependencies
+1. Clone the repository.
 
-```bash
-flutter clean
-flutter pub get
-flutter gen-l10n
-dart run flutter_launcher_icons
-dart run build_runner build --delete-conflicting-outputs
-```
+   ```sh
+   git clone <your-repo-url>
+   cd forum
+   ```
 
----
+2. Install dependencies.
 
-### 3️⃣ Run the App
+   ```sh
+   flutter pub get
+   ```
 
-#### Android / iOS
+3. Generate localization files.
 
-```bash
+   ```sh
+   flutter gen-l10n
+   ```
+
+4. Generate launcher icons if needed.
+
+   ```sh
+   dart run flutter_launcher_icons
+   ```
+
+5. Generate Drift-related code if schema or annotations changed.
+
+   ```sh
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+### Run
+
+```sh
 flutter run
 ```
 
-#### Windows
+Examples:
 
-```bash
+```sh
+flutter run -d android
 flutter run -d windows
-```
-
-#### macOS
-
-```bash
 flutter run -d macos
-```
-
-#### Linux
-
-```bash
 flutter run -d linux
 ```
 
----
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## 🏗️ Build Release Versions
+## Build Release
 
 ### Android
 
-```bash
-# Play Store (smaller download size per device)
+```sh
 flutter build appbundle --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
-
-# Sideload APK (arm64 only)
 flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
 ### iOS
 
-```bash
+```sh
 flutter build ios --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
 ### Desktop
 
-```bash
+```sh
 flutter build windows --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
 flutter build macos --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
 flutter build linux --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
----
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## ⚠️ Notes
+## Notes
 
-* Android 9+ blocks cleartext HTTP by default. If your API uses HTTP, configure `networkSecurityConfig`.
-* Release builds enable R8 / ProGuard. Make sure to keep required model and reflection-related classes.
-* Pages with large lists or images should be carefully optimized to avoid excessive memory usage.
+- Android 9+ blocks cleartext HTTP by default. Configure network security if your forum endpoint is not HTTPS.
+- Some generated files depend on `flutter gen-l10n` and `build_runner`.
+- Release builds use obfuscation and split debug symbols in the provided commands.
+- Large lists, rich text rendering, and image-heavy pages are optimized, but should still be tested in release mode on target devices.
 
----
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## 🧠 Performance & Memory Optimization
+## Roadmap
 
-* All lists use `ListView.builder` for lazy rendering
-* Image cache size is explicitly limited via `ImageCache`
-* Streams, controllers, and subscriptions are properly disposed
-* HTML content is parsed lazily and widgets are not globally cached
+- [x] Cross-platform Flarum client foundation
+- [x] Material 3 settings, personalization, and theme support
+- [x] Multi-language support
+- [x] Desktop split-view detail navigation
+- [x] Skeleton-based silent first-load experience
+- [ ] Additional documentation for architecture and modules
+- [ ] Automated testing coverage for more feature modules
+- [ ] More complete release and contribution documentation
 
----
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## 📖 References
+## License
 
-* Flutter Documentation: [https://docs.flutter.dev/](https://docs.flutter.dev/)
-* Dart Language: [https://dart.dev/](https://dart.dev/)
-* Dio: [https://pub.dev/packages/dio](https://pub.dev/packages/dio)
-* BiliYou: [https://github.com/lucinhu/bili_you](https://github.com/lucinhu/bili_you)
+This project is licensed under **GNU General Public License v2.0**.
 
----
+See [LICENSE](LICENSE) and [assets/licenses/GPL-2.0.txt](assets/licenses/GPL-2.0.txt) for details.
 
-## 📄 License
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-This project is under GNU GENERAL PUBLIC LICENSE V2.
-
----
-
-Feel free to explore, modify, and optimize this project. Contributions and discussions are welcome ✨
+[flutter-shield]: https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white
+[flutter-url]: https://flutter.dev/
+[dart-shield]: https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white
+[dart-url]: https://dart.dev/
+[m3-shield]: https://img.shields.io/badge/Material%203-Enabled-4E5BA6?style=for-the-badge
+[license-shield]: https://img.shields.io/badge/License-GPLv2-blue?style=for-the-badge
+[license-url]: ./LICENSE
