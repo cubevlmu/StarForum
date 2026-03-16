@@ -41,7 +41,7 @@ class PostMainWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: .min,
         children: [
-          _UserBox(item: content),
+          _UserBox(item: content, controllerTag: controllerTag),
           _MainContent(item: content, controllerTag: controllerTag),
           const SizedBox(height: 5),
           like == -1
@@ -69,11 +69,13 @@ class PostMainWidget extends StatelessWidget {
 }
 
 class _UserBox extends StatelessWidget {
-  const _UserBox({required this.item});
+  const _UserBox({required this.item, required this.controllerTag});
   final DiscussionItem item;
+  final String controllerTag;
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<PostPageController>(tag: controllerTag);
     return GestureDetector(
       onTap: () => openUserAdaptive(context, item.userId),
       child: Row(
@@ -106,11 +108,13 @@ class _UserBox extends StatelessWidget {
                     color: Theme.of(context).hintColor,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    StringUtil.numFormat(item.viewCount),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).hintColor,
+                  Obx(
+                    () => Text(
+                      StringUtil.numFormat(controller.viewCount.value),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).hintColor,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

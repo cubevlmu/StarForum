@@ -23,6 +23,7 @@ class PostPageController extends GetxController {
   PostPageController({required this.discussion, required});
 
   final DiscussionItem discussion;
+  final RxInt viewCount = 0.obs;
 
   final RxInt replyCount = 0.obs;
   final RxString sortTypeText = AppLocalizations.of(
@@ -46,7 +47,13 @@ class PostPageController extends GetxController {
 
   @override
   void onInit() async {
+    viewCount.value = discussion.viewCount;
     try {
+      final discussionInfo = await Api.getDiscussionById(discussion.id);
+      if (discussionInfo != null) {
+        viewCount.value = discussionInfo.views;
+      }
+
       final r = await Api.getFirstPost(discussion.id);
       if (r == null) {
         LogUtil.error(

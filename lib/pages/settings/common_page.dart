@@ -65,17 +65,21 @@ class CommonSettingsPage extends StatelessWidget {
               ).push(MaterialPageRoute(builder: (_) => const DataBasePage()));
             },
           ),
-          const Divider(height: 1, thickness: 0.5),
-          ListTile(
-            title: Text(AppLocalizations.of(context)!.settingsReconfigureSite),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const SetupPage(isSetup: false),
-                ),
-              );
-            },
-          ),
+          if (!Api.hasFixedBaseUrl) ...[
+            const Divider(height: 1, thickness: 0.5),
+            ListTile(
+              title: Text(
+                AppLocalizations.of(context)!.settingsReconfigureSite,
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const SetupPage(isSetup: false),
+                  ),
+                );
+              },
+            ),
+          ],
         ],
       ),
     );

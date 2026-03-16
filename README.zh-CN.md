@@ -149,6 +149,7 @@ flutter run -d android
 flutter run -d windows
 flutter run -d macos
 flutter run -d linux
+flutter run
 ```
 
 <p align="right">(<a href="#readme-top">返回顶部</a>)</p>
@@ -183,6 +184,7 @@ flutter build linux --release --obfuscate --split-debug-info=./symbols --tree-sh
 - Android 9 及以上默认会限制明文 HTTP，请在论坛接口未启用 HTTPS 时额外配置网络安全策略。
 - 一部分生成文件依赖 `flutter gen-l10n` 和 `build_runner`。
 - 上面给出的发布命令默认启用了混淆与符号分离。
+- 如果要在编译时固定论坛地址，可追加 `--dart-define=FIXED_API=https://forum.example.com`。设置后应用会优先使用这个地址，并隐藏运行时“重新配置站点”入口。
 - 大列表、富文本和图片较多的页面，建议优先在 release 模式下测试真实性能。
 
 <p align="right">(<a href="#readme-top">返回顶部</a>)</p>

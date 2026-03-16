@@ -56,11 +56,12 @@ class DiscussionInfo {
   }
 
   factory DiscussionInfo.formMaoAndId(Map m, int id) {
+    final rawViewCount = m["viewCount"] ?? m["views"] ?? 0;
     return DiscussionInfo(
       id.toString(),
       m["title"],
       m["commentCount"] ?? 0,
-      m["views"] ?? 0,
+      rawViewCount is int ? rawViewCount : int.tryParse("$rawViewCount") ?? 0,
       DateTime.tryParse(m["createdAt"] ?? "") ?? DateTime.utc(1980),
       DateTime.tryParse(m["lastPostedAt"] ?? "") ?? DateTime.utc(1980),
       m["lastPostNumber"] ?? 0,
