@@ -149,6 +149,7 @@ flutter run -d android
 flutter run -d windows
 flutter run -d macos
 flutter run -d linux
+flutter run
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -183,6 +184,7 @@ flutter build linux --release --obfuscate --split-debug-info=./symbols --tree-sh
 - Android 9+ blocks cleartext HTTP by default. Configure network security if your forum endpoint is not HTTPS.
 - Some generated files depend on `flutter gen-l10n` and `build_runner`.
 - Release builds use obfuscation and split debug symbols in the provided commands.
+- To lock the app to a forum at build time, add `--dart-define=FIXED_API=https://forum.example.com`. When set, the app will prefer that address and hide runtime site reconfiguration.
 - Large lists, rich text rendering, and image-heavy pages are optimized, but should still be tested in release mode on target devices.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/forum_info.dart';
 import 'package:star_forum/pages/setup/controller.dart';
 import 'package:star_forum/pages/setup/pages/finish_page.dart';
@@ -57,7 +58,7 @@ class _SetupPageState extends State<SetupPage> {
         physics: const NeverScrollableScrollPhysics(),
         children: [
           if (widget.isSetup) GreetingPage(controller: controller),
-          SetupSitePage(controller: controller),
+          if (!Api.hasFixedBaseUrl) SetupSitePage(controller: controller),
           FinishPage(controller: controller),
         ],
       ),

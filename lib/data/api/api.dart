@@ -1,12 +1,14 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:star_forum/data/api/api_constants.dart';
 import 'package:star_forum/data/api/api_guard.dart';
 import 'package:star_forum/data/api/api_log.dart';
 import 'package:star_forum/data/model/notifications.dart';
 import 'package:star_forum/utils/http_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/storage_utils.dart';
+import 'package:star_forum/utils/string_util.dart';
 import '../model/discussions.dart';
 import '../model/forum_info.dart';
 import '../model/login_result.dart';
@@ -22,9 +24,34 @@ class Api {
   static String _baseUrl = "";
 
   static String get getBaseUrl => _baseUrl;
+  static bool get hasFixedBaseUrl => _getFixedBaseUrl() != null;
+
+  static String? _normalizeBaseUrl(String? url) {
+    if (url == null) return null;
+    return StringUtil.normalizeSiteUrl(url);
+  }
+
+  static String? _getFixedBaseUrl() {
+    return _normalizeBaseUrl(ApiConstants.fixedApi);
+  }
 
   static Future<bool> setup() async {
-    final r = StorageUtils.networkData.get(SettingsStorageKeys.apiBaseUrl) as String?;
+    final fixedUrl = _getFixedBaseUrl();
+    if (fixedUrl != null) {
+      final (rr, _) = await getForumInfo(fixedUrl);
+      if (rr == null) return false;
+
+      _baseUrl = fixedUrl;
+      await StorageUtils.networkData.put(
+        SettingsStorageKeys.apiBaseUrl,
+        fixedUrl,
+      );
+      return true;
+    }
+
+    final r = _normalizeBaseUrl(
+      StorageUtils.networkData.get(SettingsStorageKeys.apiBaseUrl) as String?,
+    );
     if (r == null) return false;
     if (r.isEmpty) return false;
     final (rr, _) = await getForumInfo(r);
@@ -35,8 +62,18 @@ class Api {
   }
 
   static void setUrl(String url) {
-    _baseUrl = url;
-    StorageUtils.networkData.put(SettingsStorageKeys.apiBaseUrl, url);
+    final fixedUrl = _getFixedBaseUrl();
+    if (fixedUrl != null) {
+      _baseUrl = fixedUrl;
+      StorageUtils.networkData.put(SettingsStorageKeys.apiBaseUrl, fixedUrl);
+      return;
+    }
+
+    final normalizedUrl = _normalizeBaseUrl(url);
+    if (normalizedUrl == null || normalizedUrl.isEmpty) return;
+
+    _baseUrl = normalizedUrl;
+    StorageUtils.networkData.put(SettingsStorageKeys.apiBaseUrl, normalizedUrl);
   }
 
   static Future<(ForumInfo?, int)> getForumInfo(String url) async {
@@ -334,10 +371,7 @@ class Api {
       method: "POST",
       call: () async {
         return PostInfo.fromMap(
-          (await _utils.post(
-            "$_baseUrl/api/posts",
-            data: m,
-          ))?.data,
+          (await _utils.post("$_baseUrl/api/posts", data: m))?.data,
         );
       },
       fallback: null,
@@ -368,10 +402,7 @@ class Api {
       method: "POST",
       call: () async {
         return PostInfo.fromMap(
-          (await _utils.patch(
-            "$_baseUrl/api/posts/$id",
-            data: m,
-          )).data,
+          (await _utils.patch("$_baseUrl/api/posts/$id", data: m)).data,
         );
       },
       fallback: null,
@@ -442,8 +473,7 @@ class Api {
   static Future<(NotificationInfoList?, bool)> getNotification({
     String? url,
   }) async {
-    final reqUrl =
-        url ?? "$_baseUrl/api/notifications?page[limit]=20";
+    final reqUrl = url ?? "$_baseUrl/api/notifications?page[limit]=20";
 
     return ApiGuard.runWithToken(
       name: "getNotification",
@@ -477,10 +507,7 @@ class Api {
       name: "setNotificationIsRead",
       method: "PATCH",
       call: () async => NotificationsInfo.fromMap(
-        (await _utils.patch(
-          "$_baseUrl/api/notifications/$id",
-          data: m,
-        )).data,
+        (await _utils.patch("$_baseUrl/api/notifications/$id", data: m)).data,
       ),
       fallback: null,
     );
@@ -491,9 +518,7 @@ class Api {
       name: "readAllNotification",
       method: "GET",
       call: () async {
-        var r = await _utils.post(
-          "$_baseUrl/api/notifications/read",
-        );
+        var r = await _utils.post("$_baseUrl/api/notifications/read");
         if (r?.statusCode == 204) {
           return true;
         }
@@ -508,9 +533,7 @@ class Api {
       name: "clearAllNotification",
       method: "GET",
       call: () async {
-        final r = await _utils.delete(
-          "$_baseUrl/api/notifications",
-        );
+        final r = await _utils.delete("$_baseUrl/api/notifications");
 
         if (r.statusCode == 204) {
           return true;

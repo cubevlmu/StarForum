@@ -179,7 +179,7 @@ class _UserPageState extends State<UserPage>
                 )
               else if (controller.items.isEmpty)
                 SliverFillRemaining(
-                  hasScrollBody: false,
+                  hasScrollBody: true,
                   child: _onEmptyLoad(context),
                 )
               else
@@ -394,7 +394,6 @@ class _UserHeadline extends StatelessWidget {
   Widget build(BuildContext context) {
     final info = controller.info;
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
     final avatarUrl = info?.avatarUrl ?? "";
 
     final pageWidth = MediaQuery.sizeOf(context).width;
@@ -410,23 +409,13 @@ class _UserHeadline extends StatelessWidget {
       children: [
         Hero(
           tag: 'user-avatar:${info?.id ?? controller.userId}',
-          child: avatarUrl.isEmpty
-              ? Container(
-                  width: compact ? 64 : 76,
-                  height: compact ? 64 : 76,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(compact ? 18 : 22),
-                  ),
-                  child: const Icon(Icons.person_outline_rounded, size: 32),
-                )
-              : AvatarWidget(
-                  avatarUrl: avatarUrl,
-                  radius: compact ? 24 : 28,
-                  placeholder: StringUtil.getAvatarFirstChar(info?.displayName),
-                  width: compact ? 64 : 76,
-                  height: compact ? 64 : 76,
-                ),
+          child: AvatarWidget(
+            avatarUrl: avatarUrl,
+            radius: compact ? 24 : 28,
+            placeholder: StringUtil.getAvatarFirstChar(info?.displayName),
+            width: compact ? 64 : 76,
+            height: compact ? 64 : 76,
+          ),
         ),
         SizedBox(width: compact ? 12 : 16),
         Expanded(

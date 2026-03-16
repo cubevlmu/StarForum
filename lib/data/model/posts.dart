@@ -42,10 +42,20 @@ class PostInfo {
         discussion = int.parse(data.relationships["discussion"]["data"]["id"]);
       }
       if (data.relationships["user"] != null) {
-        user = int.parse(data.relationships["user"]["data"]["id"]);
+        try {
+          user = int.tryParse(data.relationships["user"]["data"]["id"]) ?? 0;
+        } catch (e) {
+          user = 0;
+        }
       }
       if (data.relationships["editedUser"] != null) {
-        editedUser = int.parse(data.relationships["editedUser"]["data"]["id"]);
+        try {
+          editedUser = int.parse(
+            data.relationships["editedUser"]["data"]["id"],
+          );
+        } catch (e) {
+          editedUser = 0;
+        }
       }
       if (data.relationships["mentionedBy"] != null) {
         for (var m in (data.relationships["mentionedBy"]["data"] as List)) {
@@ -89,7 +99,7 @@ class Posts {
         posts.addAll({p.id: p});
       }
     }
-      for (var e in baseBean.included.data) {
+    for (var e in baseBean.included.data) {
       switch (e.type) {
         case "users":
           var u = UserInfo.fromBaseData(e);

@@ -40,12 +40,27 @@ class AvatarWidget extends StatelessWidget {
           children: [
             ClipOval(
               child: avatarUrl.isEmpty
-                  ? CircleAvatar(
+                  ? Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      alignment: Alignment.center,
                       child: placeholder.isEmpty
-                          ? const Center(
-                              child: Icon(Icons.person_outline_rounded),
+                          ? Icon(
+                              Icons.person_outline_rounded,
+                              size: radius,
                             )
-                          : Text(placeholder[0]),
+                          : Text(
+                              placeholder[0],
+                              style: TextStyle(
+                                fontSize: radius * 0.95,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                                height: 1,
+                              ),
+                            ),
                     )
                   : CachedNetworkImage(
                       fit: BoxFit.cover,

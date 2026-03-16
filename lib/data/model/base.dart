@@ -42,14 +42,19 @@ class BaseListBean {
 
 @immutable
 class PrivateBaseBean {
-  final Map<String, dynamic> links;
+  final Object? links;
   final dynamic data;
   final List included;
 
   const PrivateBaseBean(this.links, this.data, this.included);
 
   factory PrivateBaseBean.fromMap(Map map) {
-    return PrivateBaseBean(map["links"] ?? {}, map["data"], map["included"] ?? []);
+    final rawLinks = map["links"];
+    return PrivateBaseBean(
+      rawLinks is Map ? Map<String, dynamic>.from(rawLinks) : rawLinks,
+      map["data"],
+      map["included"] ?? [],
+    );
   }
 }
 
@@ -75,7 +80,7 @@ class BaseData {
   factory BaseData.formMap(Map j) {
     return BaseData(
       j["type"] ?? "",
-      int.parse(j["id"]),
+      int.tryParse(j["id"]) ?? 0,
       j["attributes"] ?? {},
       j["relationships"] ?? {},
     );
@@ -124,12 +129,16 @@ class Links {
   static Links empty = Links(first: '', prev: '', next: '');
 
   factory Links.formBase(PrivateBaseBean baseBean) {
-    Map? j = baseBean.links;
+    final rawLinks = baseBean.links;
+    if (rawLinks is! Map) {
+      return empty;
+    }
+    final j = Map<String, dynamic>.from(rawLinks);
     if (j.isEmpty) {
       return empty;
     }
     return Links(
-      first: j["first"],
+      first: j["first"] ?? "",
       prev: j["prev"] ?? "",
       next: j["next"] ?? "",
     );
