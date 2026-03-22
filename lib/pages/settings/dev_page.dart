@@ -97,6 +97,7 @@ class DevSettingPage extends StatelessWidget {
                       excerpt: "<h1>TEMP</h1>",
                       lastPostedAt: DateTime.utc(1980),
                       userId: 0,
+                      subscription: 0
                     ),
                   ),
                 ),

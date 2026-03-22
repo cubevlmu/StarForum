@@ -4,6 +4,8 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'dart:typed_data';
+
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,33 +23,53 @@ import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/string_util.dart';
 
+enum UserPageSection { info, comments, topics, badges }
+
 class UserPageController extends GetxController {
   UserPageController({required this.userId});
-  EasyRefreshController refreshController = EasyRefreshController(
+  final EasyRefreshController commentsRefreshController = EasyRefreshController(
+    controlFinishLoad: true,
+    controlFinishRefresh: true,
+  );
+  final EasyRefreshController topicsRefreshController = EasyRefreshController(
     controlFinishLoad: true,
     controlFinishRefresh: true,
   );
   final cacheManager = CacheUtils.avatarCacheManager;
-  ScrollController scrollController = ScrollController();
+  final ScrollController commentsScrollController = ScrollController();
+  final ScrollController topicsScrollController = ScrollController();
 
-  final List<PostInfo> items = [];
-  final Map<int, DiscussionInfo> dissItems = {};
+  final Rx<UserPageSection> currentSection = UserPageSection.info.obs;
+  final RxList<PostInfo> comments = <PostInfo>[].obs;
+  final RxList<DiscussionInfo> topics = <DiscussionInfo>[].obs;
+  final RxMap<int, DiscussionInfo> commentDiscussions =
+      <int, DiscussionInfo>{}.obs;
 
   static const int pageSize = 20;
-  int offset = 0;
-  bool _hasMore = true;
+  int _commentsOffset = 0;
+  bool _commentsHasMore = true;
+  int _topicsOffset = 0;
+  bool _topicsHasMore = true;
   final RxBool isLoading = false.obs;
-  bool _isSyncing = false;
+  bool _isCommentsSyncing = false;
+  bool _isTopicsSyncing = false;
 
   final repo = getIt<UserRepo>();
 
   final int userId;
   int currentPage = 1;
   final Rxn<UserInfo> profile = Rxn<UserInfo>();
-  final RxBool isProfileLoading = true.obs;
-  final RxBool isPostsLoading = true.obs;
+  final RxBool isProfileLoading = false.obs;
+  final RxBool isCommentsLoading = false.obs;
+  final RxBool isTopicsLoading = false.obs;
+  final RxBool isAvatarUploading = false.obs;
+  final RxBool isBioUpdating = false.obs;
   final RxBool detailsExpanded = false.obs;
   bool expAnimationPlayed = false;
+  bool _infoInitialized = false;
+  bool _commentsInitialized = false;
+  bool _topicsInitialized = false;
+  Future<void>? _profileLoadingTask;
 
   UserInfo? get info => profile.value;
   set info(UserInfo? value) => profile.value = value;
@@ -55,6 +77,21 @@ class UserPageController extends GetxController {
   bool get hasExpData => info?.expInfo != null;
 
   Future<void> loadUserData() async {
+    if (info != null) {
+      isProfileLoading.value = false;
+      return;
+    }
+    if (_profileLoadingTask != null) {
+      await _profileLoadingTask;
+      return;
+    }
+
+    final task = _loadUserDataInternal();
+    _profileLoadingTask = task;
+    await task;
+  }
+
+  Future<void> _loadUserDataInternal() async {
     isProfileLoading.value = true;
     try {
       final r = await Api.getUserInfoByNameOrId(userId.toString());
@@ -75,6 +112,7 @@ class UserPageController extends GetxController {
       if (info?.expInfo == null) {
         expAnimationPlayed = true;
       }
+      _infoInitialized = true;
     } catch (e, s) {
       LogUtil.errorE(
         "[UserPage] Get user information failed with error: ",
@@ -82,25 +120,27 @@ class UserPageController extends GetxController {
         s,
       );
     } finally {
+      _profileLoadingTask = null;
       isProfileLoading.value = false;
     }
   }
 
-  Future<bool> _loadUserPosts() async {
-    if (!_hasMore) return true;
-    if (_isSyncing) return false;
-    _isSyncing = true;
+  Future<bool> _loadUserComments() async {
+    if (!_commentsHasMore) return true;
+    if (_isCommentsSyncing) return false;
+    _isCommentsSyncing = true;
 
     await loadUserData();
     if (info == null) {
       LogUtil.warn("[UserPage] User info is not prepared.");
+      _isCommentsSyncing = false;
       return false;
     }
 
     try {
       final data = await Api.getPostsByAuthor(
         username: info?.username ?? "",
-        offset: offset,
+        offset: _commentsOffset,
         limit: pageSize,
       );
 
@@ -112,7 +152,7 @@ class UserPageController extends GetxController {
       final list = data.posts.values;
 
       if (list.isEmpty) {
-        _hasMore = false;
+        _commentsHasMore = false;
         return true;
       }
 
@@ -122,68 +162,191 @@ class UserPageController extends GetxController {
         i.contentHtml =
             "<p>${t.substring(0, t.length > 70 ? 70 : t.length)}...</p>";
       }
-      items.addAll(list);
-      dissItems.addAll(data.discussions);
-      offset += list.length;
+      comments.addAll(list);
+      commentDiscussions.addAll(data.discussions);
+      _commentsOffset += list.length;
 
       if (list.length < pageSize) {
-        _hasMore = false;
+        _commentsHasMore = false;
       }
 
       return true;
     } catch (e, s) {
-      LogUtil.errorE("[UserPage] load error", e, s);
+      LogUtil.errorE("[UserPage] load comments error", e, s);
       return false;
     } finally {
-      _isSyncing = false;
+      _isCommentsSyncing = false;
     }
   }
 
-  Future<void> onRefresh() async {
-    isPostsLoading.value = true;
-    offset = 0;
-    _hasMore = true;
-    items.clear();
-    dissItems.clear();
+  Future<void> onCommentsRefresh() async {
+    isCommentsLoading.value = true;
+    _commentsOffset = 0;
+    _commentsHasMore = true;
+    comments.clear();
+    commentDiscussions.clear();
 
-    final ok = await _loadUserPosts();
+    final ok = await _loadUserComments();
 
     if (ok) {
-      refreshController.finishRefresh();
-      refreshController.resetFooter();
+      commentsRefreshController.finishRefresh();
+      commentsRefreshController.resetFooter();
     } else {
-      refreshController.finishRefresh(IndicatorResult.fail);
+      commentsRefreshController.finishRefresh(IndicatorResult.fail);
     }
 
-    _isSyncing = false;
-    isPostsLoading.value = false;
+    _commentsInitialized = true;
+    isCommentsLoading.value = false;
   }
 
-  Future<void> onLoad() async {
-    if (items.isEmpty) {
-      isPostsLoading.value = true;
+  Future<void> onCommentsLoad() async {
+    if (comments.isEmpty) {
+      isCommentsLoading.value = true;
     }
 
-    if (!_hasMore) {
-      refreshController.finishLoad(IndicatorResult.noMore);
-      isPostsLoading.value = false;
+    if (!_commentsHasMore) {
+      commentsRefreshController.finishLoad(IndicatorResult.noMore);
+      isCommentsLoading.value = false;
       return;
     }
 
-    final ok = await _loadUserPosts();
+    final ok = await _loadUserComments();
 
     if (!ok) {
-      refreshController.finishLoad(IndicatorResult.fail);
-      isPostsLoading.value = false;
+      commentsRefreshController.finishLoad(IndicatorResult.fail);
+      isCommentsLoading.value = false;
       return;
     }
 
-    if (_hasMore) {
-      refreshController.finishLoad();
+    if (_commentsHasMore) {
+      commentsRefreshController.finishLoad();
     } else {
-      refreshController.finishLoad(IndicatorResult.noMore);
+      commentsRefreshController.finishLoad(IndicatorResult.noMore);
     }
-    isPostsLoading.value = false;
+    isCommentsLoading.value = false;
+  }
+
+  Future<bool> _loadUserTopics() async {
+    if (!_topicsHasMore) return true;
+    if (_isTopicsSyncing) return false;
+    _isTopicsSyncing = true;
+
+    await loadUserData();
+    if (info == null) {
+      LogUtil.warn("[UserPage] User info is not prepared.");
+      _isTopicsSyncing = false;
+      return false;
+    }
+
+    try {
+      final data = await Api.getAuthorThemes(
+        username: info?.username ?? "",
+        offset: _topicsOffset,
+        limit: pageSize,
+      );
+
+      if (data == null) {
+        LogUtil.warn("[UserPage] empty author themes response");
+        return false;
+      }
+
+      final list = data.list;
+      if (list.isEmpty) {
+        _topicsHasMore = false;
+        return true;
+      }
+
+      topics.addAll(list);
+      _topicsOffset += list.length;
+
+      if (list.length < pageSize) {
+        _topicsHasMore = false;
+      }
+
+      return true;
+    } catch (e, s) {
+      LogUtil.errorE("[UserPage] load topics error", e, s);
+      return false;
+    } finally {
+      _isTopicsSyncing = false;
+    }
+  }
+
+  Future<void> onTopicsRefresh() async {
+    isTopicsLoading.value = true;
+    _topicsOffset = 0;
+    _topicsHasMore = true;
+    topics.clear();
+
+    final ok = await _loadUserTopics();
+
+    if (ok) {
+      topicsRefreshController.finishRefresh();
+      topicsRefreshController.resetFooter();
+    } else {
+      topicsRefreshController.finishRefresh(IndicatorResult.fail);
+    }
+
+    _topicsInitialized = true;
+    isTopicsLoading.value = false;
+  }
+
+  Future<void> onTopicsLoad() async {
+    if (topics.isEmpty) {
+      isTopicsLoading.value = true;
+    }
+
+    if (!_topicsHasMore) {
+      topicsRefreshController.finishLoad(IndicatorResult.noMore);
+      isTopicsLoading.value = false;
+      return;
+    }
+
+    final ok = await _loadUserTopics();
+
+    if (!ok) {
+      topicsRefreshController.finishLoad(IndicatorResult.fail);
+      isTopicsLoading.value = false;
+      return;
+    }
+
+    if (_topicsHasMore) {
+      topicsRefreshController.finishLoad();
+    } else {
+      topicsRefreshController.finishLoad(IndicatorResult.noMore);
+    }
+    isTopicsLoading.value = false;
+  }
+
+  Future<void> selectSection(UserPageSection section) async {
+    if (currentSection.value == section) {
+      return;
+    }
+    currentSection.value = section;
+    await ensureSectionLoaded(section);
+  }
+
+  Future<void> ensureSectionLoaded(UserPageSection section) async {
+    switch (section) {
+      case UserPageSection.info:
+      case UserPageSection.badges:
+        if (!_infoInitialized && _profileLoadingTask == null) {
+          await loadUserData();
+        }
+        return;
+      case UserPageSection.comments:
+        if (_commentsInitialized || isCommentsLoading.value) {
+          return;
+        }
+        await onCommentsRefresh();
+        return;
+      case UserPageSection.topics:
+        if (_topicsInitialized || isTopicsLoading.value) {
+          return;
+        }
+        await onTopicsRefresh();
+        return;
+    }
   }
 
   String getLastSeenAt() {
@@ -322,5 +485,83 @@ class UserPageController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<bool> uploadAvatarBytes({
+    required Uint8List fileData,
+    required String fileName,
+  }) async {
+    if (!isMe()) {
+      return false;
+    }
+
+    final currentAvatarUrl = info?.avatarUrl ?? repo.user?.avatarUrl ?? "";
+    isAvatarUploading.value = true;
+
+    try {
+      final ok = await Api.uploadAvatar(
+        userId: repo.userId,
+        fileData: fileData,
+        fileName: fileName,
+      );
+      if (!ok) {
+        return false;
+      }
+
+      if (currentAvatarUrl.isNotEmpty) {
+        await cacheManager.removeFile(currentAvatarUrl);
+      }
+      cacheManager.store.emptyMemoryCache();
+
+      final refreshed = await repo.refreshCurrentUser();
+      if (refreshed && repo.user != null) {
+        info = repo.user;
+        _infoInitialized = true;
+      }
+      return true;
+    } catch (e, s) {
+      LogUtil.errorE("[UserPage] upload avatar failed", e, s);
+      return false;
+    } finally {
+      isAvatarUploading.value = false;
+    }
+  }
+
+  Future<bool> updateBioText(String bio) async {
+    if (!isMe()) {
+      return false;
+    }
+
+    isBioUpdating.value = true;
+    try {
+      final ok = await Api.updateBio(repo.userId, bio.trim());
+      if (!ok) {
+        return false;
+      }
+
+      final refreshed = await repo.refreshCurrentUser();
+      if (refreshed && repo.user != null) {
+        info = repo.user;
+        _infoInitialized = true;
+      } else if (info != null) {
+        info!.bio = bio.trim();
+        info = info;
+      }
+      return true;
+    } catch (e, s) {
+      LogUtil.errorE("[UserPage] update bio failed", e, s);
+      return false;
+    } finally {
+      isBioUpdating.value = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    commentsScrollController.dispose();
+    commentsRefreshController.dispose();
+    topicsScrollController.dispose();
+    topicsRefreshController.dispose();
+    super.onClose();
   }
 }

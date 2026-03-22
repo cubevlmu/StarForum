@@ -8,12 +8,20 @@ import 'package:flutter/material.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/main/controller.dart';
+import 'package:star_forum/pages/notification/controller.dart';
 import 'package:star_forum/pages/post_detail/view.dart';
 import 'package:star_forum/pages/search/view.dart';
 import 'package:star_forum/pages/search_result/view.dart';
+import 'package:star_forum/pages/settings/about_page.dart';
 import 'package:star_forum/pages/settings/settings_page.dart';
+import 'package:star_forum/pages/setup/view.dart';
 import 'package:star_forum/pages/user/view.dart';
+import 'package:star_forum/pages/login/view.dart';
 import 'package:star_forum/utils/cache_utils.dart';
+import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/setting_util.dart';
+import 'package:star_forum/utils/storage_utils.dart';
+import 'package:star_forum/widgets/image_view.dart';
 import 'package:get/get.dart';
 
 class MainPage extends StatefulWidget {
@@ -25,27 +33,82 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   static const double _railBreakPoint = 640;
+  static const List<int> _backgroundPrewarmIndexes = <int>[2];
   late MainController controller;
-  late final List<Widget> _rootPages;
+  late final List<Widget?> _rootPages;
   bool _wasThreePane = false;
+  bool _didScheduleAutoUpdateCheck = false;
 
   @override
   void initState() {
     controller = Get.put(MainController());
-    _rootPages = List<Widget>.generate(
-      controller.pages.length,
-      (index) => RepaintBoundary(
-        child: KeyedSubtree(
-          key: PageStorageKey<String>("main_root_page_$index"),
-          child: controller.pages[index],
-        ),
-      ),
+    _rootPages = List<Widget?>.filled(
+      controller.pageBuilders.length,
+      null,
       growable: false,
     );
+    _ensureRootPageCreated(0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       CacheUtils.deleteAllCacheImage();
+      _prewarmBackgroundPages();
+      _scheduleAutoUpdateCheck();
     });
     super.initState();
+  }
+
+  Future<void> _scheduleAutoUpdateCheck() async {
+    if (_didScheduleAutoUpdateCheck) {
+      return;
+    }
+    _didScheduleAutoUpdateCheck = true;
+
+    final enabled =
+        SettingsUtil.getValue(
+              SettingsStorageKeys.autoCheckUpdate,
+              defaultValue: true,
+            )
+            as bool;
+    if (!enabled) {
+      LogUtil.info('[Update] Auto update check disabled.');
+      return;
+    }
+
+    LogUtil.info('[Update] Schedule automatic GitHub update check.');
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    if (!mounted) {
+      return;
+    }
+    await runGithubUpdateCheckFlow(context, silentIfLatest: true);
+  }
+
+  Future<void> _prewarmBackgroundPages() async {
+    await Future<void>.delayed(const Duration(milliseconds: 180));
+    for (final index in _backgroundPrewarmIndexes) {
+      if (!mounted) {
+        return;
+      }
+      _ensureRootPageCreated(index, notify: true);
+      await Future<void>.delayed(const Duration(milliseconds: 240));
+    }
+  }
+
+  void _ensureRootPageCreated(int index, {bool notify = false}) {
+    if (_rootPages[index] != null) {
+      return;
+    }
+    final page = RepaintBoundary(
+      child: KeyedSubtree(
+        key: PageStorageKey<String>("main_root_page_$index"),
+        child: controller.pageBuilders[index](),
+      ),
+    );
+    if (!notify) {
+      _rootPages[index] = page;
+      return;
+    }
+    setState(() {
+      _rootPages[index] = page;
+    });
   }
 
   @override
@@ -69,10 +132,14 @@ class _MainPageState extends State<MainPage> {
               if (useRail)
                 Obx(() {
                   final selectedIndex = controller.selectedIndex.value;
+                  final hasUnreadNotifications =
+                      Get.isRegistered<NotificationPageController>() &&
+                      Get.find<NotificationPageController>().hasUnreadItems;
                   return _MainRail(
                     controller: controller,
                     l10n: l10n,
                     selectedIndex: selectedIndex,
+                    hasUnreadNotifications: hasUnreadNotifications,
                   );
                 }),
               Expanded(
@@ -91,11 +158,19 @@ class _MainPageState extends State<MainPage> {
                             selectedIndex == 0 &&
                             isHomeSearchActive;
 
+                        _ensureRootPageCreated(selectedIndex);
+
                         return Stack(
                           children: [
                             IndexedStack(
                               index: selectedIndex,
-                              children: _rootPages,
+                              children: List<Widget>.generate(
+                                _rootPages.length,
+                                (index) =>
+                                    _rootPages[index] ??
+                                    const SizedBox.shrink(),
+                                growable: false,
+                              ),
                             ),
                             if (showHomeSearch)
                               Positioned.fill(
@@ -142,6 +217,9 @@ class _MainPageState extends State<MainPage> {
               ? null
               : Obx(() {
                   final selectedIndex = controller.selectedIndex.value;
+                  final hasUnreadNotifications =
+                      Get.isRegistered<NotificationPageController>() &&
+                      Get.find<NotificationPageController>().hasUnreadItems;
                   return NavigationBar(
                     height: 64,
                     labelBehavior:
@@ -154,8 +232,19 @@ class _MainPageState extends State<MainPage> {
                         label: l10n.mainHomePage,
                       ),
                       NavigationDestination(
-                        icon: const Icon(Icons.notifications_outlined),
-                        selectedIcon: const Icon(Icons.notifications),
+                        icon: const Icon(Icons.sell_outlined),
+                        selectedIcon: const Icon(Icons.sell),
+                        label: l10n.mainTagsPage,
+                      ),
+                      NavigationDestination(
+                        icon: hasUnreadNotifications
+                            ? const Badge(
+                                child: Icon(Icons.notifications_outlined),
+                              )
+                            : const Icon(Icons.notifications_outlined),
+                        selectedIcon: hasUnreadNotifications
+                            ? const Badge(child: Icon(Icons.notifications))
+                            : const Icon(Icons.notifications),
                         label: l10n.mainNotiPage,
                       ),
                       NavigationDestination(
@@ -200,6 +289,26 @@ class _MainPageState extends State<MainPage> {
               context,
             ).push(MaterialPageRoute(builder: (_) => const SettingsPage()));
             break;
+          case DetailPaneEntryType.login:
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const LoginPage()));
+            break;
+          case DetailPaneEntryType.setup:
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const SetupPage(isSetup: false),
+              ),
+            );
+            break;
+          case DetailPaneEntryType.image:
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    ImagePreviewWidget(url: currentDetail.imageUrl!),
+              ),
+            );
+            break;
         }
         controller.closeDetail();
       });
@@ -213,11 +322,13 @@ class _MainRail extends StatelessWidget {
     required this.controller,
     required this.l10n,
     required this.selectedIndex,
+    required this.hasUnreadNotifications,
   });
 
   final MainController controller;
   final AppLocalizations l10n;
   final int selectedIndex;
+  final bool hasUnreadNotifications;
 
   @override
   Widget build(BuildContext context) {
@@ -233,8 +344,17 @@ class _MainRail extends StatelessWidget {
           label: Text(l10n.mainHomePage),
         ),
         NavigationRailDestination(
-          icon: const Icon(Icons.notifications_outlined),
-          selectedIcon: const Icon(Icons.notifications),
+          icon: const Icon(Icons.sell_outlined),
+          selectedIcon: const Icon(Icons.sell),
+          label: Text(l10n.mainTagsPage),
+        ),
+        NavigationRailDestination(
+          icon: hasUnreadNotifications
+              ? const Badge(child: Icon(Icons.notifications_outlined))
+              : const Icon(Icons.notifications_outlined),
+          selectedIcon: hasUnreadNotifications
+              ? const Badge(child: Icon(Icons.notifications))
+              : const Icon(Icons.notifications),
           label: Text(l10n.mainNotiPage),
         ),
         NavigationRailDestination(
@@ -306,6 +426,37 @@ class _DetailPane extends StatelessWidget {
           ),
           item: detail.discussion!,
           embedded: true,
+        );
+      case DetailPaneEntryType.login:
+        return LoginPaneNavigator(
+          key: ValueKey("DetailLogin:${detail.entryId}"),
+          onClose: controller.closeDetail,
+          onBack: controller.popDetail,
+          canPopDetail: controller.canPopDetail,
+          onLoginSuccess: (_) async {
+            controller.selectedIndex.value = 3;
+            controller.closeDetail();
+          },
+        );
+      case DetailPaneEntryType.setup:
+        return SetupPage(
+          key: ValueKey("DetailSetup:${detail.entryId}"),
+          isSetup: false,
+          embedded: true,
+          showEmbeddedBack: controller.canPopDetail,
+          onEmbeddedLeadingPressed: controller.canPopDetail
+              ? controller.popDetail
+              : controller.closeDetail,
+          onFinish: controller.closeDetail,
+        );
+      case DetailPaneEntryType.image:
+        return ImagePreviewWidget(
+          key: ValueKey("DetailImage:${detail.entryId}:${detail.imageUrl}"),
+          url: detail.imageUrl!,
+          embedded: true,
+          onClose: controller.closeDetail,
+          onBack: controller.popDetail,
+          canPopDetail: controller.canPopDetail,
         );
     }
   }

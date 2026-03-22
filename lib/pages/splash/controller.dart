@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
@@ -53,14 +54,12 @@ class SplashScreenController extends GetxController {
       }
 
       final repo = getIt<UserRepo>();
+      final tag = getIt<TagRepo>();
       state.value = l10n.splashStateSyncUser;
       LogUtil.info("[Splash] Begin to setup user service.");
-      await repo.setup();
-
-      state.value = l10n.splashStateSyncTags;
       LogUtil.info("[Splash] Begin sync tags.");
-      final tag = getIt<TagRepo>();
-      await tag.syncTags();
+
+      await Future.wait<void>([repo.setup(), _runTagSync(tag, l10n)]);
 
       state.value = l10n.splashStateFinished;
       if (!context.mounted) return;
@@ -84,6 +83,11 @@ class SplashScreenController extends GetxController {
     } finally {
       _isSyncing = false;
     }
+  }
+
+  Future<void> _runTagSync(TagRepo tagRepo, AppLocalizations l10n) async {
+    state.value = l10n.splashStateSyncTags;
+    await tagRepo.syncTags();
   }
 
   void openSetupPage() {

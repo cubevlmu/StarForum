@@ -13,6 +13,7 @@ import 'package:star_forum/utils/html_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/avatar.dart';
+import 'package:get/get.dart';
 
 (String, String) buildMsg(BuildContext context, NotificationsInfo info) {
   if (info.cachedTitle != null && info.cachedDesc != null) {
@@ -21,9 +22,48 @@ import 'package:star_forum/widgets/avatar.dart';
 
   final result = switch (info.contentType) {
     "quest_done" => () {
-      final real = info.subject as QuestSubject;
-      return (real.quest.name, real.quest.description);
+      final real = info.subject as QuestSubject?;
+      return (
+        real?.quest.name.isNotEmpty == true
+            ? real!.quest.name
+            : AppLocalizations.of(context)!.notificationQuestDoneTitle,
+        real?.quest.description.isNotEmpty == true
+            ? real!.quest.description
+            : AppLocalizations.of(context)!.notificationQuestDoneDesc,
+      );
     }(),
+    "newPostByUser" => () {
+      final real = info.subject as DiscussionSubject?;
+      return (
+        AppLocalizations.of(
+          context,
+        )!.notificationNewPostByUserTitle(info.fromUser?.displayName ?? ""),
+        AppLocalizations.of(context)!.notificationNewPostByUserDesc(
+          real?.discussion.title.isNotEmpty == true
+              ? real!.discussion.title
+              : AppLocalizations.of(context)!.notificationDiscussionFallback,
+        ),
+      );
+    }(),
+    "newDiscussionByUser" => () {
+      final real = info.subject as DiscussionSubject?;
+      return (
+        AppLocalizations.of(context)!.notificationNewDiscussionByUserTitle(
+          info.fromUser?.displayName ?? "",
+        ),
+        AppLocalizations.of(context)!.notificationNewDiscussionByUserDesc(
+          real?.discussion.title.isNotEmpty == true
+              ? real!.discussion.title
+              : AppLocalizations.of(context)!.notificationDiscussionFallback,
+        ),
+      );
+    }(),
+    "newFollower" => (
+      AppLocalizations.of(
+        context,
+      )!.notificationNewFollowerTitle(info.fromUser?.displayName ?? ""),
+      AppLocalizations.of(context)!.notificationNewFollowerDesc,
+    ),
     "levelUpdated" => () {
       final real = info.subject as LevelSubject;
       return (
@@ -98,7 +138,11 @@ class NotifyCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final typeMeta = _buildTypeMeta(context, item.contentType);
     final canOpenDiscussion =
-        item.contentType == "postLiked" || item.contentType == "postMentioned";
+        item.contentType == "postLiked" ||
+        item.contentType == "postMentioned" ||
+        item.contentType == "newPostByUser" ||
+        item.contentType == "newDiscussionByUser";
+    final canOpenUser = item.contentType == "newFollower";
     final titleColor = item.isRead
         ? colorScheme.onSurfaceVariant
         : colorScheme.onSurface;
@@ -126,7 +170,9 @@ class NotifyCard extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
-            onTap: canOpenDiscussion ? () => naviToPage(context) : null,
+            onTap: (canOpenDiscussion || canOpenUser)
+                ? () => naviToPage(context)
+                : null,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
               child: Row(
@@ -230,38 +276,70 @@ class NotifyCard extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(left: 8, right: 2, top: 2),
-                    child: Column(
-                      children: [
-                        IconButton(
-                          tooltip: item.isRead
-                              ? null
-                              : AppLocalizations.of(
-                                  context,
-                                )!.notificationMarkReadSuccess,
-                          icon: Icon(
-                            item.isRead
-                                ? Icons.done_all_rounded
-                                : Icons.done_outline_rounded,
+                    child: Obx(() {
+                      final isMarkReadLoading =
+                          controller.activeItemId.value == item.id &&
+                          controller.activeItemAction.value ==
+                              NotificationItemAction.markRead;
+                      final isOpenLoading =
+                          controller.activeItemId.value == item.id &&
+                          controller.activeItemAction.value ==
+                              NotificationItemAction.openDiscussion;
+
+                      return Column(
+                        children: [
+                          IconButton(
+                            tooltip: item.isRead
+                                ? null
+                                : AppLocalizations.of(
+                                    context,
+                                  )!.notificationMarkReadSuccess,
+                            icon: isMarkReadLoading
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: colorScheme.primary,
+                                    ),
+                                  )
+                                : Icon(
+                                    item.isRead
+                                        ? Icons.done_all_rounded
+                                        : Icons.done_outline_rounded,
+                                  ),
+                            color: item.isRead
+                                ? colorScheme.outline
+                                : colorScheme.onSurfaceVariant,
+                            onPressed:
+                                item.isRead ||
+                                    isMarkReadLoading ||
+                                    isOpenLoading
+                                ? null
+                                : () async {
+                                    await controller.checkAsRead(item.id);
+                                  },
                           ),
-                          color: item.isRead
-                              ? colorScheme.outline
-                              : colorScheme.onSurfaceVariant,
-                          onPressed: item.isRead
-                              ? null
-                              : () async {
-                                  await controller.checkAsRead(item.id);
-                                },
-                        ),
-                        if (canOpenDiscussion)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Icon(
-                              Icons.chevron_right_rounded,
-                              color: colorScheme.onSurfaceVariant,
+                          if (canOpenDiscussion || canOpenUser)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: isOpenLoading
+                                  ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: colorScheme.primary,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
                             ),
-                          ),
-                      ],
-                    ),
+                        ],
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -298,6 +376,21 @@ class NotifyCard extends StatelessWidget {
           icon: Icons.warning_amber_rounded,
           color: colorScheme.error,
         );
+      case "newPostByUser":
+        return _NotifyTypeMeta(
+          icon: Icons.reply_rounded,
+          color: colorScheme.primary,
+        );
+      case "newDiscussionByUser":
+        return _NotifyTypeMeta(
+          icon: Icons.edit_note_rounded,
+          color: colorScheme.primary,
+        );
+      case "newFollower":
+        return _NotifyTypeMeta(
+          icon: Icons.person_add_alt_1_rounded,
+          color: colorScheme.tertiary,
+        );
       case "badgeReceived":
         return _NotifyTypeMeta(
           icon: Icons.workspace_premium_outlined,
@@ -320,12 +413,43 @@ class NotifyCard extends StatelessWidget {
     if (item.contentType == "postLiked" ||
         item.contentType == "postMentioned") {
       final s = item.subject as PostSubject;
-      final r = await controller.naviToDisPage(s.post.discussion);
+      final r = await controller.naviToDisPageByItem(
+        discussion: s.post.discussion,
+        itemId: item.id,
+      );
       if (r == null) {
         return;
       }
       if (!context.mounted) return;
       openDiscussionAdaptive(context, r);
+      return;
+    }
+
+    if (item.contentType == "newPostByUser" ||
+        item.contentType == "newDiscussionByUser") {
+      final s = item.subject as DiscussionSubject?;
+      if (s == null) {
+        return;
+      }
+      final r = await controller.naviToDisPageByItem(
+        discussion: s.discussion.id,
+        itemId: item.id,
+      );
+      if (r == null) {
+        return;
+      }
+      if (!context.mounted) return;
+      openDiscussionAdaptive(context, r);
+      return;
+    }
+
+    if (item.contentType == "newFollower") {
+      final s = item.subject as UserSubject?;
+      final userId = s?.user.id ?? item.fromUser?.id;
+      if (userId == null || userId < 0) {
+        return;
+      }
+      openUserAdaptive(context, userId);
     }
   }
 }

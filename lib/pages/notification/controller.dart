@@ -18,19 +18,29 @@ import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:get/get.dart';
 
+enum NotificationTab { likes, replies, notices }
+
+enum NotificationToolbarAction { none, readAll, clearAll }
+
+enum NotificationItemAction { none, markRead, openDiscussion }
+
 class NotificationPageController extends GetxController {
   NotificationPageController();
   int currentPage = 1;
 
   final items = <NotificationsInfo>[].obs;
+  final Rx<NotificationTab> currentTab = NotificationTab.likes.obs;
   final repo = getIt<UserRepo>();
-  late final StreamSubscription _sub;
-
   String? nextUrl;
   bool loading = false;
   bool isFirstSync = true;
   final RxBool isInvoking = false.obs;
   final RxBool isInitialLoading = true.obs;
+  final Rx<NotificationToolbarAction> activeToolbarAction =
+      NotificationToolbarAction.none.obs;
+  final Rx<NotificationItemAction> activeItemAction =
+      NotificationItemAction.none.obs;
+  final RxnInt activeItemId = RxnInt();
 
   bool _loading = false;
   bool _hasMore = true;
@@ -51,6 +61,65 @@ class NotificationPageController extends GetxController {
     controlFinishRefresh: true,
   );
 
+  List<NotificationsInfo> get filteredItems {
+    switch (currentTab.value) {
+      case NotificationTab.likes:
+        return items.where((item) => item.contentType == "postLiked").toList();
+      case NotificationTab.replies:
+        return items
+            .where(
+              (item) =>
+                  item.contentType == "postMentioned" ||
+                  item.contentType == "newPostByUser",
+            )
+            .toList();
+      case NotificationTab.notices:
+        return items
+            .where(
+              (item) =>
+                  item.contentType != "postLiked" &&
+                  item.contentType != "postMentioned" &&
+                  item.contentType != "newPostByUser",
+            )
+            .toList();
+    }
+  }
+
+  int unreadCountForTab(NotificationTab tab) {
+    return switch (tab) {
+      NotificationTab.likes =>
+        items
+            .where((item) => item.contentType == "postLiked" && !item.isRead)
+            .length,
+      NotificationTab.replies =>
+        items
+            .where(
+              (item) =>
+                  (item.contentType == "postMentioned" ||
+                      item.contentType == "newPostByUser") &&
+                  !item.isRead,
+            )
+            .length,
+      NotificationTab.notices =>
+        items
+            .where(
+              (item) =>
+                  item.contentType != "postLiked" &&
+                  item.contentType != "postMentioned" &&
+                  item.contentType != "newPostByUser" &&
+                  !item.isRead,
+            )
+            .length,
+    };
+  }
+
+  bool get hasUnreadItems => items.any((item) => !item.isRead);
+
+  void selectTab(NotificationTab tab) {
+    if (currentTab.value == tab) return;
+    currentTab.value = tab;
+  }
+
   @override
   void onInit() {
     isLogin.value = repo.isLogin;
@@ -59,10 +128,35 @@ class NotificationPageController extends GetxController {
 
   @override
   void onClose() {
-    _sub.cancel();
     scrollController.dispose();
     refreshController.dispose();
     super.onClose();
+  }
+
+  Future<void> handleLoginStateChanged(bool loggedIn) async {
+    isLogin.value = loggedIn;
+
+    if (!loggedIn) {
+      items.clear();
+      nextUrl = null;
+      _hasMore = true;
+      _loading = false;
+      isInitialLoading.value = false;
+      refreshController.finishRefresh(IndicatorResult.success);
+      refreshController.finishLoad(IndicatorResult.noMore);
+      return;
+    }
+
+    isFirstSync = true;
+    isInitialLoading.value = true;
+    refreshController.finishRefresh(IndicatorResult.success);
+    refreshController.resetFooter();
+
+    if (_loading) {
+      return;
+    }
+
+    await onRefresh();
   }
 
   Future<void> onRefresh() async {
@@ -223,6 +317,10 @@ class NotificationPageController extends GetxController {
   }
 
   Future<bool> checkAsRead(int id) async {
+    if (isInvoking.value) return false;
+    isInvoking.value = true;
+    activeItemId.value = id;
+    activeItemAction.value = NotificationItemAction.markRead;
     try {
       final r = await Api.setNotificationIsRead(id.toString());
       if (r == null) {
@@ -255,16 +353,17 @@ class NotificationPageController extends GetxController {
         msg: AppLocalizations.of(Get.context!)!.notificationMarkReadFailed,
       );
       return false;
+    } finally {
+      activeItemId.value = null;
+      activeItemAction.value = NotificationItemAction.none;
+      isInvoking.value = false;
     }
   }
 
   void readAll() async {
     if (isInvoking.value) return;
 
-    bool isAllRead = false;
-    for (var item in items) {
-      isAllRead |= item.isRead;
-    }
+    final isAllRead = items.isNotEmpty && items.every((item) => item.isRead);
     if (isAllRead) {
       SnackbarUtils.showMessage(
         msg: AppLocalizations.of(Get.context!)!.notificationMarkAllReadNoNeed,
@@ -273,6 +372,7 @@ class NotificationPageController extends GetxController {
     }
 
     isInvoking.value = true;
+    activeToolbarAction.value = NotificationToolbarAction.readAll;
 
     try {
       final r = await Api.readAllNotification();
@@ -286,6 +386,7 @@ class NotificationPageController extends GetxController {
       for (var item in items) {
         item.isRead = true;
       }
+      items.refresh();
       SnackbarUtils.showMessage(
         msg: AppLocalizations.of(Get.context!)!.notificationMarkReadSuccess,
       );
@@ -295,6 +396,7 @@ class NotificationPageController extends GetxController {
         msg: AppLocalizations.of(Get.context!)!.notificationMarkAllReadFailed,
       );
     } finally {
+      activeToolbarAction.value = NotificationToolbarAction.none;
       isInvoking.value = false;
     }
   }
@@ -302,6 +404,7 @@ class NotificationPageController extends GetxController {
   void clearAll() async {
     if (isInvoking.value) return;
     isInvoking.value = true;
+    activeToolbarAction.value = NotificationToolbarAction.clearAll;
 
     try {
       final r = await Api.clearAllNotification();
@@ -331,15 +434,25 @@ class NotificationPageController extends GetxController {
         msg: AppLocalizations.of(Get.context!)!.notificationClearAllFailed,
       );
     } finally {
+      activeToolbarAction.value = NotificationToolbarAction.none;
       isInvoking.value = false;
     }
   }
 
   Future<DiscussionItem?> naviToDisPage(int discussion) async {
+    return naviToDisPageByItem(discussion: discussion, itemId: null);
+  }
+
+  Future<DiscussionItem?> naviToDisPageByItem({
+    required int discussion,
+    required int? itemId,
+  }) async {
     if (isInvoking.value) {
       return null;
     }
     isInvoking.value = true;
+    activeItemId.value = itemId;
+    activeItemAction.value = NotificationItemAction.openDiscussion;
 
     try {
       final r = await Api.getDiscussionById(discussion.toString());
@@ -371,6 +484,8 @@ class NotificationPageController extends GetxController {
       );
       return null;
     } finally {
+      activeItemId.value = null;
+      activeItemAction.value = NotificationItemAction.none;
       isInvoking.value = false;
     }
   }

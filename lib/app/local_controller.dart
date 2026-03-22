@@ -10,6 +10,14 @@ import 'package:get/get.dart';
 import 'package:star_forum/utils/storage_utils.dart';
 
 class LocaleController extends GetxController {
+  static const Locale _englishLocale = Locale('en');
+  static const Locale _simplifiedChineseLocale = Locale('zh');
+  static const Locale _traditionalChineseLocale = Locale.fromSubtags(
+    languageCode: 'zh',
+    scriptCode: 'Hans',
+    countryCode: 'CN',
+  );
+
   final Rx<Locale?> _locale = Rx<Locale?>(null);
 
   Locale? get locale => _locale.value;
@@ -93,16 +101,25 @@ class LocaleController extends GetxController {
   Locale? _normalizeSupported(Locale locale) {
     switch (locale.languageCode) {
       case 'en':
-        return const Locale('en');
+        return _englishLocale;
       case 'zh':
-        if (locale.scriptCode == 'Hans' && locale.countryCode == 'CN') {
-          return Locale.fromSubtags(
-            languageCode: 'zh',
-            scriptCode: 'Hans',
-            countryCode: 'CN',
-          );
+        final scriptCode = locale.scriptCode?.toLowerCase();
+        final countryCode = locale.countryCode?.toUpperCase();
+        const traditionalCountries = {'TW', 'HK', 'MO'};
+        const simplifiedCountries = {'CN', 'SG'};
+
+        if (scriptCode == 'hant' ||
+            (scriptCode == null &&
+                countryCode != null &&
+                traditionalCountries.contains(countryCode))) {
+          return _traditionalChineseLocale;
         }
-        return const Locale('zh');
+        if (scriptCode == 'hans' ||
+            countryCode == null ||
+            simplifiedCountries.contains(countryCode)) {
+          return _simplifiedChineseLocale;
+        }
+        return _traditionalChineseLocale;
       default:
         return null;
     }
@@ -116,6 +133,6 @@ class LocaleController extends GetxController {
         return normalized;
       }
     }
-    return const Locale('en');
+    return _englishLocale;
   }
 }

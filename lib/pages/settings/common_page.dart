@@ -6,7 +6,7 @@ import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
-import 'package:star_forum/pages/setup/view.dart';
+import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/utils/app_language.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/storage_utils.dart';
@@ -34,7 +34,7 @@ class CommonSettingsPage extends StatelessWidget {
             title: AppLocalizations.of(context)!.settingsAutoCheckUpdate,
             subTitle: AppLocalizations.of(context)!.settingsAutoCheckUpdateDesc,
             settingsKey: SettingsStorageKeys.autoCheckUpdate,
-            defualtValue: false,
+            defualtValue: true,
           ),
           const Divider(height: 1, thickness: 0.5),
           Obx(
@@ -71,13 +71,7 @@ class CommonSettingsPage extends StatelessWidget {
               title: Text(
                 AppLocalizations.of(context)!.settingsReconfigureSite,
               ),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const SetupPage(isSetup: false),
-                  ),
-                );
-              },
+              onTap: () => openSetupAdaptive(context),
             ),
           ],
         ],

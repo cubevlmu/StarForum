@@ -8,13 +8,15 @@ import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 
 import 'package:star_forum/pages/home/view.dart';
+import 'package:star_forum/pages/login/controller.dart';
 import 'package:star_forum/pages/notification/view.dart';
+import 'package:star_forum/pages/theme_list/view.dart';
 import 'package:star_forum/pages/account/view.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/user/controller.dart';
 import 'package:get/get.dart';
 
-enum DetailPaneEntryType { discussion, user, settings }
+enum DetailPaneEntryType { discussion, user, settings, login, setup, image }
 
 @immutable
 class DetailPaneEntry {
@@ -23,6 +25,7 @@ class DetailPaneEntry {
     required this.type,
     this.discussion,
     this.userId,
+    this.imageUrl,
   });
 
   const DetailPaneEntry.discussion({
@@ -40,10 +43,24 @@ class DetailPaneEntry {
   const DetailPaneEntry.settings({required int entryId})
     : this._(entryId: entryId, type: DetailPaneEntryType.settings);
 
+  const DetailPaneEntry.login({required int entryId})
+    : this._(entryId: entryId, type: DetailPaneEntryType.login);
+
+  const DetailPaneEntry.setup({required int entryId})
+    : this._(entryId: entryId, type: DetailPaneEntryType.setup);
+
+  const DetailPaneEntry.image({required int entryId, required String imageUrl})
+    : this._(
+        entryId: entryId,
+        type: DetailPaneEntryType.image,
+        imageUrl: imageUrl,
+      );
+
   final int entryId;
   final DetailPaneEntryType type;
   final DiscussionItem? discussion;
   final int? userId;
+  final String? imageUrl;
 }
 
 class MainController extends GetxController {
@@ -54,10 +71,11 @@ class MainController extends GetxController {
   final RxnString homeSearchKeyword = RxnString();
   int _detailEntrySeed = 0;
 
-  List<Widget> pages = [
-    const HomePage(),
-    const NotificationPage(),
-    const AccountPage(),
+  final List<Widget Function()> pageBuilders = [
+    () => const HomePage(),
+    () => const TagListPage(),
+    () => const NotificationPage(),
+    () => const AccountPage(),
   ];
 
   void _initData() {
@@ -105,6 +123,31 @@ class MainController extends GetxController {
     detailStack.add(DetailPaneEntry.settings(entryId: _nextDetailEntryId()));
   }
 
+  void showLoginDetail() {
+    if (currentDetail?.type == DetailPaneEntryType.login) {
+      return;
+    }
+    detailStack.add(DetailPaneEntry.login(entryId: _nextDetailEntryId()));
+  }
+
+  void showSetupDetail() {
+    if (currentDetail?.type == DetailPaneEntryType.setup) {
+      return;
+    }
+    detailStack.add(DetailPaneEntry.setup(entryId: _nextDetailEntryId()));
+  }
+
+  void showImageDetail(String imageUrl) {
+    final current = currentDetail;
+    if (current?.type == DetailPaneEntryType.image &&
+        current?.imageUrl == imageUrl) {
+      return;
+    }
+    detailStack.add(
+      DetailPaneEntry.image(entryId: _nextDetailEntryId(), imageUrl: imageUrl),
+    );
+  }
+
   DetailPaneEntry? get currentDetail {
     if (detailStack.isEmpty) return null;
     return detailStack.last;
@@ -143,6 +186,14 @@ class MainController extends GetxController {
           }
           break;
         case DetailPaneEntryType.settings:
+          break;
+        case DetailPaneEntryType.login:
+          if (Get.isRegistered<LoginController>()) {
+            Get.delete<LoginController>();
+          }
+          break;
+        case DetailPaneEntryType.setup:
+        case DetailPaneEntryType.image:
           break;
       }
     });

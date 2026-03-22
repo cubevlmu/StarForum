@@ -26,6 +26,7 @@ class DbDiscussions extends Table {
   
   IntColumn get lastPostNumber => integer()();
   IntColumn get posterId => integer()();
+  IntColumn get subscription => integer()();
 
   @override
   Set<Column> get primaryKey => {id};

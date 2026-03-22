@@ -36,7 +36,18 @@ class ExcerptDao extends DatabaseAccessor<AppDatabase> with _$ExcerptDaoMixin {
     ),
   );
 
-  
+  Future<void> upsertAll(List<DbDiscussionExcerptCacheCompanion> items) async {
+    if (items.isEmpty) return;
+
+    await batch((batch) {
+      batch.insertAll(
+        dbDiscussionExcerptCache,
+        items,
+        mode: InsertMode.insertOrReplace,
+      );
+    });
+  }
+
   Future<void> clearAll() async {
     final r = await delete(dbDiscussionExcerptCache).go();
     LogUtil.debug("[Db] Excerpts delete $r rows");

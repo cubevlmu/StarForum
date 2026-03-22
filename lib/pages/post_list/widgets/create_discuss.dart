@@ -145,6 +145,15 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
 
     if (!mounted) return;
 
+    final primaryTags = repo.getPrimaryTags();
+    final secondaryTags = repo.getTags();
+    if (primaryTags.isEmpty && secondaryTags.isEmpty) {
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(context)!.themeSelectTagHint,
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) {
@@ -165,7 +174,7 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
                       },
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: repo.getPrimaryTags().map((tag) {
+                        children: primaryTags.map((tag) {
                           if (!tag.canStartDiscussion) {
                             return const SizedBox.shrink();
                           }
@@ -174,7 +183,7 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
                       ),
                     ),
                     const Divider(),
-                    ...repo.getTags().map((tag) {
+                    ...secondaryTags.map((tag) {
                       if (!tag.canStartDiscussion) {
                         return const SizedBox.shrink();
                       }

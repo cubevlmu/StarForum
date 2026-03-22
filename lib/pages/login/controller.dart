@@ -14,12 +14,17 @@ import 'package:get/get.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 
 class LoginController extends GetxController {
-  LoginController();
+  LoginController({
+    this.onLoginSuccessCallback,
+    this.closeToRootOnSuccess = true,
+  });
 
   String account = "";
   String password = "";
   RxBool autoRelogin = true.obs;
   RxBool obscurePassword = true.obs;
+  final Future<void> Function(UserInfo user)? onLoginSuccessCallback;
+  final bool closeToRootOnSuccess;
 
   final repo = getIt<UserRepo>();
   bool isLoading = false;
@@ -72,7 +77,9 @@ class LoginController extends GetxController {
       );
       await onLoginSuccess(repo.user!);
 
-      Navigator.of(Get.context!).popUntil((route) => route.isFirst);
+      if (closeToRootOnSuccess) {
+        Navigator.of(Get.context!).popUntil((route) => route.isFirst);
+      }
     } catch (e, st) {
       LogUtil.errorE("[LoginPage] Failed to login.", e, st);
       SnackbarUtils.showMessage(
@@ -84,7 +91,7 @@ class LoginController extends GetxController {
   }
 
   Future<void> onLoginSuccess(UserInfo user) {
-    return Future.sync(() {});
+    return onLoginSuccessCallback?.call(user) ?? Future.sync(() {});
   }
 
   void _initData() {
