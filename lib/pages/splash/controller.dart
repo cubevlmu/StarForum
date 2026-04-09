@@ -5,7 +5,6 @@
  */
 
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
@@ -55,11 +54,12 @@ class SplashScreenController extends GetxController {
 
       final repo = getIt<UserRepo>();
       state.value = l10n.splashStateSyncUser;
+      LogUtil.info("[Splash] Begin to setup user service.");
       await repo.setup();
 
-      final tag = getIt<TagRepo>();
-      LogUtil.info("[Splash] Begin sync tags.");
       state.value = l10n.splashStateSyncTags;
+      LogUtil.info("[Splash] Begin sync tags.");
+      final tag = getIt<TagRepo>();
       await tag.syncTags();
 
       state.value = l10n.splashStateFinished;

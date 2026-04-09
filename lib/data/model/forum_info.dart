@@ -41,14 +41,14 @@ class ForumInfo {
 
   factory ForumInfo.fromBase(BaseBean base) {
     if (base.data.type == "forums") {
-      final info = base.data.attrs;
+      Map info = base.data.attributes;
       return ForumInfo(
-        title: info.string("title"),
-        url: info.string("baseUrl"),
-        description: info.string("description"),
-        welcomeTitle: info.string("welcomeTitle"),
-        welcomeMessage: info.string("welcomeMessage"),
-        logoUrl: info.string("logoUrl"),
+        title: info["title"] ?? "",
+        url: info["baseUrl"],
+        description: info["description"] ?? "",
+        welcomeTitle: info["welcomeTitle"] ?? "",
+        welcomeMessage: info["welcomeMessage"] ?? "",
+        logoUrl: info["logoUrl"] ?? "",
       );
     }
     return empty;

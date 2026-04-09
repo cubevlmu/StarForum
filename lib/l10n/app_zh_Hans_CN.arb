@@ -3,8 +3,6 @@
   
   "mainHomePage": "首頁",
   "@mainHomePage": {},
-  "mainTagsPage": "標籤",
-  "@mainTagsPage": {},
 
   "mainNotiPage": "通知",
   "@mainNotiPage": {},
@@ -32,12 +30,6 @@
 
   "notificationTitle": "通知",
   "@notificationTitle": {},
-  "notificationTabLikes": "按讚",
-  "@notificationTabLikes": {},
-  "notificationTabReplies": "回覆",
-  "@notificationTabReplies": {},
-  "notificationTabNotices": "通知",
-  "@notificationTabNotices": {},
 
   "notificationEmptyTitle": "暫無通知",
   "@notificationEmptyTitle": {},
@@ -45,15 +37,17 @@
   "notificationEmptyTips": "這裡會顯示回覆、提及和系統訊息",
   "@notificationEmptyTips": {},
 
+  "notificationNotLoginTitle": "您還沒有登入",
+  "@notificationNotLoginTitle": {},
+
   "notificationNotLoginTips": "登入後即可查看訊息通知",
   "@notificationNotLoginTips": {},
 
-  "commonNotLoggedInTitle": "您還沒有登入",
-  "@commonNotLoggedInTitle": {},
-  "commonEmptyPostsTitle": "這裡還沒有任何貼文",
-  "@commonEmptyPostsTitle": {},
-  "commonPullToRefreshTips": "下拉重新整理試試看",
-  "@commonPullToRefreshTips": {},
+  "postListEmptyTitle": "這裡還沒有任何貼文",
+  "@postListEmptyTitle": {},
+
+  "postListEmptyTips": "下拉重新整理試試看",
+  "@postListEmptyTips": {},
 
   "postCreateTagRequiredInline": "必須選擇一個主題標籤！",
   "@postCreateTagRequiredInline": {},
@@ -105,10 +99,6 @@
 
   "postCreateSuccess": "發表成功",
   "@postCreateSuccess": {},
-  "postActionFollow": "關注",
-  "@postActionFollow": {},
-  "postActionUnfollow": "取消關注",
-  "@postActionUnfollow": {},
 
   "splashTitle": "同步資料",
   "@splashTitle": {},
@@ -156,6 +146,12 @@
   "userNotLoginTips": "請登入您的帳號來查看",
   "@userNotLoginTips": {},
 
+  "userEmptyPostTitle": "這裡還沒有任何貼文",
+  "@userEmptyPostTitle": {},
+
+  "userEmptyPostTips": "下拉重新整理試試看",
+  "@userEmptyPostTips": {},
+
   "userDiscussionHintPrefix": "於 ",
   "@userDiscussionHintPrefix": {},
 
@@ -182,22 +178,10 @@
   "@userDetailsCollapse": {},
   "userDetailsTitle": "詳細資訊",
   "@userDetailsTitle": {},
-  "userSectionInfo": "資料",
-  "@userSectionInfo": {},
-  "userSectionBadges": "徽章",
-  "@userSectionBadges": {},
   "userDiscussionCountLabel": "主題",
   "@userDiscussionCountLabel": {},
   "userCommentCountLabel": "回覆",
   "@userCommentCountLabel": {},
-  "userEmptyTopicsTitle": "還沒有發佈主題",
-  "@userEmptyTopicsTitle": {},
-  "userEmptyTopicsTips": "這個使用者暫時還沒有發佈過主題。",
-  "@userEmptyTopicsTips": {},
-  "userBadgesEmptyTitle": "還沒有徽章",
-  "@userBadgesEmptyTitle": {},
-  "userBadgesEmptyTips": "這個使用者暫時還沒有可見的徽章或身份標記。",
-  "@userBadgesEmptyTips": {},
   "userFieldHidden": "未公開",
   "@userFieldHidden": {},
   "userFieldId": "使用者 ID",
@@ -219,6 +203,9 @@
   "accountAppBarTitle": "使用者",
   "@accountAppBarTitle": {},
 
+  "authNotLoginTitle": "您還沒有登入",
+  "@authNotLoginTitle": {},
+
   "authNotLoginTips": "請登入您的帳戶來查看個人資訊",
   "@authNotLoginTips": {},
 
@@ -227,6 +214,12 @@
 
   "commonActionSettings": "設定",
   "@commonActionSettings": {},
+
+  "homeTabPosts": "貼文",
+  "@homeTabPosts": {},
+
+  "homeTabThemes": "主題",
+  "@homeTabThemes": {},
 
   "commonNoticeWorkInProgress": "功能正在開發中",
   "@commonNoticeWorkInProgress": {},
@@ -284,20 +277,6 @@
 
   "aboutCheckUpdate": "檢查更新",
   "@aboutCheckUpdate": {},
-  "aboutAlreadyLatest": "已經是最新版本",
-  "@aboutAlreadyLatest": {},
-  "aboutUpdateCheckFailed": "檢查更新失敗",
-  "@aboutUpdateCheckFailed": {},
-  "aboutDownloadUpdate": "下載",
-  "@aboutDownloadUpdate": {},
-  "aboutUpdateNoDescription": "這個版本沒有提供更新說明",
-  "@aboutUpdateNoDescription": {},
-  "aboutUpdateVersionLabel": "最新版本：{version}",
-  "@aboutUpdateVersionLabel": {
-    "placeholders": {
-      "version": {}
-    }
-  },
 
   "aboutAuthor": "作者",
   "@aboutAuthor": {},
@@ -432,44 +411,6 @@
       "content": {}
     }
   },
-  "notificationNewPostByUserTitle": "{username} 發佈了新回覆",
-  "@notificationNewPostByUserTitle": {
-    "placeholders": {
-      "username": {}
-    }
-  },
-  "notificationNewPostByUserDesc": "主題：{title}",
-  "@notificationNewPostByUserDesc": {
-    "placeholders": {
-      "title": {}
-    }
-  },
-  "notificationNewDiscussionByUserTitle": "{username} 發佈了新主題",
-  "@notificationNewDiscussionByUserTitle": {
-    "placeholders": {
-      "username": {}
-    }
-  },
-  "notificationNewDiscussionByUserDesc": "主題：{title}",
-  "@notificationNewDiscussionByUserDesc": {
-    "placeholders": {
-      "title": {}
-    }
-  },
-  "notificationNewFollowerTitle": "{username} 關注了您",
-  "@notificationNewFollowerTitle": {
-    "placeholders": {
-      "username": {}
-    }
-  },
-  "notificationNewFollowerDesc": "點擊查看對方主頁",
-  "@notificationNewFollowerDesc": {},
-  "notificationQuestDoneTitle": "任務完成",
-  "@notificationQuestDoneTitle": {},
-  "notificationQuestDoneDesc": "您完成了一項任務",
-  "@notificationQuestDoneDesc": {},
-  "notificationDiscussionFallback": "相關主題",
-  "@notificationDiscussionFallback": {},
 
   "notificationBadgeReceivedTitle": "獲得了一個徽章",
   "@notificationBadgeReceivedTitle": {},
@@ -587,8 +528,6 @@
   "@searchHistoryTitle": {},
   "searchHistoryClearAction": "清空",
   "@searchHistoryClearAction": {},
-  "searchHistoryClearConfirm": "是否要清空搜尋紀錄？",
-  "@searchHistoryClearConfirm": {},
   "searchHistoryDeleteAction": "刪除",
   "@searchHistoryDeleteAction": {},
   "searchResultEmptyTitle": "沒有找到相關內容",
@@ -783,95 +722,5 @@
   "mainDetailUnsupportedTitle": "目前頁面無詳細面板",
   "@mainDetailUnsupportedTitle": {},
   "mainDetailUnsupportedTips": "詳細並排瀏覽目前僅在首頁貼文串可用",
-  "@mainDetailUnsupportedTips": {},
-  "homeSectionAllTopics": "全部主題",
-  "@homeSectionAllTopics": {},
-  "homeSectionFollowing": "我的關注",
-  "@homeSectionFollowing": {},
-  "homeFollowingSort": "排序",
-  "@homeFollowingSort": {},
-  "homeFollowingSortHottest": "熱門主題",
-  "@homeFollowingSortHottest": {},
-  "homeFollowingSortLatestReply": "最新回覆",
-  "@homeFollowingSortLatestReply": {},
-  "homeFollowingSortNewest": "最新出爐",
-  "@homeFollowingSortNewest": {},
-  "homeFollowingSortOldest": "老貼子",
-  "@homeFollowingSortOldest": {},
-  "homeFollowingSortMostViews": "熱門",
-  "@homeFollowingSortMostViews": {},
-  "homeFollowingFilter": "篩選",
-  "@homeFollowingFilter": {},
-  "homeFollowingFilterPosts": "貼文",
-  "@homeFollowingFilterPosts": {},
-  "homeFollowingFilterTags": "標籤",
-  "@homeFollowingFilterTags": {},
-  "homeFollowingNotLoginTips": "登入後即可查看你關注的貼文",
-  "@homeFollowingNotLoginTips": {},
-  "homeSectionUsers": "用戶名錄",
-  "@homeSectionUsers": {},
-  "homeUserDirectoryNotLoginTips": "登入後即可查看用戶名錄",
-  "@homeUserDirectoryNotLoginTips": {},
-  "homeSectionGroups": "組群預覽",
-  "@homeSectionGroups": {},
-  "homeSectionBadges": "徽章",
-  "@homeSectionBadges": {},
-  "badgePageEmptyTitle": "還沒有徽章分類",
-  "@badgePageEmptyTitle": {},
-  "badgePageEmptyTips": "可以稍後重新整理，看看社群裡新增了哪些徽章。",
-  "@badgePageEmptyTips": {},
-  "badgePageEarnedSuffix": "位使用者獲得此徽章",
-  "@badgePageEarnedSuffix": {},
-  "homeUserDirectoryEmptyTitle": "還沒有使用者資料",
-  "@homeUserDirectoryEmptyTitle": {},
-  "homeUserDirectoryEmptyTips": "可以稍後重新整理，或調整篩選條件試試。",
-  "@homeUserDirectoryEmptyTips": {},
-  "homeUserDirectorySort": "排序",
-  "@homeUserDirectorySort": {},
-  "homeUserDirectorySortNewest": "新使用者",
-  "@homeUserDirectorySortNewest": {},
-  "homeUserDirectorySortOldest": "老使用者",
-  "@homeUserDirectorySortOldest": {},
-  "homeUserDirectorySortUsernameAsc": "使用者名稱（A-Z）",
-  "@homeUserDirectorySortUsernameAsc": {},
-  "homeUserDirectorySortUsernameDesc": "使用者名稱（Z-A）",
-  "@homeUserDirectorySortUsernameDesc": {},
-  "homeUserDirectorySortMostTopics": "主題最多",
-  "@homeUserDirectorySortMostTopics": {},
-  "homeUserDirectorySortLeastTopics": "主題最少",
-  "@homeUserDirectorySortLeastTopics": {},
-  "homeUserDirectorySortMostExp": "經驗值最多",
-  "@homeUserDirectorySortMostExp": {},
-  "homeUserDirectorySortLeastExp": "經驗值最少",
-  "@homeUserDirectorySortLeastExp": {},
-  "homeUserDirectoryFilterGroup": "篩選使用者組",
-  "@homeUserDirectoryFilterGroup": {},
-  "homeUserDirectoryFilterAll": "全部使用者組",
-  "@homeUserDirectoryFilterAll": {},
-  "homeUserDirectorySearchHint": "搜尋使用者",
-  "@homeUserDirectorySearchHint": {},
-  "homeUserDirectoryRefresh": "重新整理",
-  "@homeUserDirectoryRefresh": {},
-  "userAvatarCropTitle": "上傳",
-  "@userAvatarCropTitle": {},
-  "userAvatarCropHint": "拖動和縮放圖片，裁剪正方形頭像後上傳。",
-  "@userAvatarCropHint": {},
-  "userAvatarCropUpload": "裁剪並上傳",
-  "@userAvatarCropUpload": {},
-  "userAvatarUploadSuccess": "頭像已更新",
-  "@userAvatarUploadSuccess": {},
-  "userAvatarUploadFailed": "頭像上傳失敗",
-  "@userAvatarUploadFailed": {},
-  "userAvatarSelectFailed": "選擇圖片失敗",
-  "@userAvatarSelectFailed": {},
-  "userAvatarInvalidImage": "無法解析所選圖片",
-  "@userAvatarInvalidImage": {},
-  "userBioEditTitle": "修改簽名",
-  "@userBioEditTitle": {},
-  "userBioEditHint": "寫點介紹自己的內容",
-  "@userBioEditHint": {},
-  "userBioUpdateSuccess": "簽名已更新",
-  "@userBioUpdateSuccess": {},
-  "userBioUpdateFailed": "簽名更新失敗",
-  "@userBioUpdateFailed": {}
+  "@mainDetailUnsupportedTips": {}
 }

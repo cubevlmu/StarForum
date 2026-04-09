@@ -17,6 +17,7 @@ import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/widgets/cached_network_image.dart';
+import 'package:star_forum/widgets/image_view.dart';
 import 'package:star_forum/widgets/shimmer_skeleton.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -423,7 +424,9 @@ class _ContentInlineImage extends StatelessWidget {
   }
 
   void _previewImage(BuildContext context) {
-    openImagePreviewAdaptive(context, url);
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => ImagePreviewWidget(url: url)));
   }
 }
 

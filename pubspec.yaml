@@ -3,7 +3,7 @@ description: "a cross platform flarum forum app"
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.2.0
+version: 1.1.5
 
 environment:
   sdk: ^3.10.7
@@ -40,8 +40,6 @@ dependencies:
   flutter_secure_storage: ^10.0.0
   flutter_cache_manager: ^3.4.1
   window_manager: ^0.4.3
-  file_picker: ^10.3.3
-  image: ^4.5.4
 
 dev_dependencies:
   flutter_test:

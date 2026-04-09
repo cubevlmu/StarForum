@@ -153,6 +153,11 @@ class ReplyUtil {
         return null;
       }
 
+      SnackbarUtils.showMessage(
+        msg: r.likes < item.likes
+            ? _l10n.postUnlikeSuccess
+            : _l10n.postLikeSuccess,
+      );
       return r;
     } catch (e, s) {
       LogUtil.errorE(

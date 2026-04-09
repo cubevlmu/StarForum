@@ -5,7 +5,6 @@
  */
 
 import 'package:flutter/material.dart';
-import 'base.dart';
 
 @immutable
 class LoginResult {
@@ -13,11 +12,7 @@ class LoginResult {
   final String token;
 
   factory LoginResult.formMap(Map data) {
-    final json = asJsonMap(data);
-    return LoginResult(
-      userId: JsonValue.asInt(json["userId"]),
-      token: JsonValue.asString(json["token"]),
-    );
+    return LoginResult(userId: data["userId"] ?? 0, token: data["token"] ?? "");
   }
 
   const LoginResult({required this.userId, required this.token});

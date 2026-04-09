@@ -83,13 +83,5 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
 
   Future<int> deleteItem(String title) {
     return (delete(dbDiscussions)..where((t) => t.title.equals(title))).go();
-  }
-
-  Future<int> updateSubscriptionIfExists(
-    String discussionId,
-    int subscription,
-  ) {
-    return (update(dbDiscussions)..where((t) => t.id.equals(discussionId)))
-        .write(DbDiscussionsCompanion(subscription: Value(subscription)));
-  }
+  } 
 }

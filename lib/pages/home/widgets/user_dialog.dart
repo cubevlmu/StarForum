@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/home/controller.dart';
+import 'package:star_forum/pages/login/view.dart';
 import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -59,19 +60,17 @@ class UserDialogWidget extends StatelessWidget {
   }
 
   void _onLoginBtn(BuildContext context) {
-    Navigator.pop(context);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final currentContext = Get.context;
-      if (currentContext == null) return;
-      openLoginAdaptive(currentContext);
-    });
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+    );
   }
 
   void _onSelfPage(BuildContext context) {
     Navigator.pop(context);
     try {
       final cc = Get.find<MainController>();
-      cc.selectedIndex.value = 3;
+      cc.selectedIndex.value = 2;
     } catch (e, s) {
       LogUtil.errorE(
         "[HomePage] Failed to navigate to user space page with error:",

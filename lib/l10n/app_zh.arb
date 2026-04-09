@@ -3,8 +3,6 @@
 
   "mainHomePage": "首页",
   "@mainHomePage": {},
-  "mainTagsPage": "标签",
-  "@mainTagsPage": {},
   
   "mainNotiPage": "通知",
   "@mainNotiPage": {},
@@ -33,28 +31,24 @@
   
   "notificationTitle": "通知",
   "@notificationTitle": {},
-  "notificationTabLikes": "点赞",
-  "@notificationTabLikes": {},
-  "notificationTabReplies": "回复",
-  "@notificationTabReplies": {},
-  "notificationTabNotices": "通知",
-  "@notificationTabNotices": {},
-
+  
   "notificationEmptyTitle": "暂无通知",
   "@notificationEmptyTitle": {},
   
   "notificationEmptyTips": "这里会显示回复、提及和系统消息",
   "@notificationEmptyTips": {},
   
+  "notificationNotLoginTitle": "你还没有登录",
+  "@notificationNotLoginTitle": {},
+  
   "notificationNotLoginTips": "登录后即可查看消息通知",
   "@notificationNotLoginTips": {},
 
-  "commonNotLoggedInTitle": "你还没有登录",
-  "@commonNotLoggedInTitle": {},
-  "commonEmptyPostsTitle": "这里还没有任何帖子",
-  "@commonEmptyPostsTitle": {},
-  "commonPullToRefreshTips": "下拉刷新试试看",
-  "@commonPullToRefreshTips": {},
+  "postListEmptyTitle": "这里还没有任何帖子",
+  "@postListEmptyTitle": {},
+  
+  "postListEmptyTips": "下拉刷新试试看",
+  "@postListEmptyTips": {},
 
   "postCreateTagRequiredInline": "主题标签必须选择一个!",
   "@postCreateTagRequiredInline": {},
@@ -107,10 +101,6 @@
   
   "postCreateSuccess": "发表成功",
   "@postCreateSuccess": {},
-  "postActionFollow": "关注",
-  "@postActionFollow": {},
-  "postActionUnfollow": "取消关注",
-  "@postActionUnfollow": {},
 
   "splashTitle": "同步数据",
   "@splashTitle": {},
@@ -158,6 +148,12 @@
   "userNotLoginTips": "请登录您的账号来查看",
   "@userNotLoginTips": {},
 
+  "userEmptyPostTitle": "这里还没有任何帖子",
+  "@userEmptyPostTitle": {},
+  
+  "userEmptyPostTips": "下拉刷新试试看",
+  "@userEmptyPostTips": {},
+
   "userDiscussionHintPrefix": "于 ",
   "@userDiscussionHintPrefix": {},
   
@@ -184,22 +180,10 @@
   "@userDetailsCollapse": {},
   "userDetailsTitle": "详细信息",
   "@userDetailsTitle": {},
-  "userSectionInfo": "资料",
-  "@userSectionInfo": {},
-  "userSectionBadges": "徽章",
-  "@userSectionBadges": {},
   "userDiscussionCountLabel": "主题",
   "@userDiscussionCountLabel": {},
   "userCommentCountLabel": "回复",
   "@userCommentCountLabel": {},
-  "userEmptyTopicsTitle": "还没有发布主题",
-  "@userEmptyTopicsTitle": {},
-  "userEmptyTopicsTips": "这个用户暂时还没有发布过主题。",
-  "@userEmptyTopicsTips": {},
-  "userBadgesEmptyTitle": "还没有徽章",
-  "@userBadgesEmptyTitle": {},
-  "userBadgesEmptyTips": "这个用户暂时还没有可见的徽章或身份标记。",
-  "@userBadgesEmptyTips": {},
   "userFieldHidden": "未公开",
   "@userFieldHidden": {},
   "userFieldId": "用户 ID",
@@ -222,6 +206,9 @@
   "accountAppBarTitle": "用户",
   "@accountAppBarTitle": {},
 
+  "authNotLoginTitle": "你还没有登录",
+  "@authNotLoginTitle": {},
+  
   "authNotLoginTips": "请登录你的账户来查看个人信息",
   "@authNotLoginTips": {},
 
@@ -231,6 +218,12 @@
   "commonActionSettings": "设置",
   "@commonActionSettings": {},
   
+  "homeTabPosts": "贴文",
+  "@homeTabPosts": {},
+  
+  "homeTabThemes": "主题",
+  "@homeTabThemes": {},
+
   "commonNoticeWorkInProgress": "功能正在开发中",
   "@commonNoticeWorkInProgress": {},
 
@@ -287,21 +280,7 @@
   
   "aboutCheckUpdate": "检查更新",
   "@aboutCheckUpdate": {},
-  "aboutAlreadyLatest": "已经是最新版本",
-  "@aboutAlreadyLatest": {},
-  "aboutUpdateCheckFailed": "检查更新失败",
-  "@aboutUpdateCheckFailed": {},
-  "aboutDownloadUpdate": "下载",
-  "@aboutDownloadUpdate": {},
-  "aboutUpdateNoDescription": "此版本没有提供更新说明",
-  "@aboutUpdateNoDescription": {},
-  "aboutUpdateVersionLabel": "最新版本：{version}",
-  "@aboutUpdateVersionLabel": {
-    "placeholders": {
-      "version": {}
-    }
-  },
-
+  
   "aboutAuthor": "作者",
   "@aboutAuthor": {},
   
@@ -436,44 +415,6 @@
       "content": {}
     }
   },
-  "notificationNewPostByUserTitle": "{username} 发布了新回复",
-  "@notificationNewPostByUserTitle": {
-    "placeholders": {
-      "username": {}
-    }
-  },
-  "notificationNewPostByUserDesc": "主题：{title}",
-  "@notificationNewPostByUserDesc": {
-    "placeholders": {
-      "title": {}
-    }
-  },
-  "notificationNewDiscussionByUserTitle": "{username} 发布了新主题",
-  "@notificationNewDiscussionByUserTitle": {
-    "placeholders": {
-      "username": {}
-    }
-  },
-  "notificationNewDiscussionByUserDesc": "主题：{title}",
-  "@notificationNewDiscussionByUserDesc": {
-    "placeholders": {
-      "title": {}
-    }
-  },
-  "notificationNewFollowerTitle": "{username} 关注了你",
-  "@notificationNewFollowerTitle": {
-    "placeholders": {
-      "username": {}
-    }
-  },
-  "notificationNewFollowerDesc": "点击查看对方主页",
-  "@notificationNewFollowerDesc": {},
-  "notificationQuestDoneTitle": "任务完成",
-  "@notificationQuestDoneTitle": {},
-  "notificationQuestDoneDesc": "你完成了一项任务",
-  "@notificationQuestDoneDesc": {},
-  "notificationDiscussionFallback": "相关主题",
-  "@notificationDiscussionFallback": {},
 
   "notificationBadgeReceivedTitle": "获得了一个勋章",
   "@notificationBadgeReceivedTitle": {},
@@ -591,8 +532,6 @@
   "@searchHistoryTitle": {},
   "searchHistoryClearAction": "清空",
   "@searchHistoryClearAction": {},
-  "searchHistoryClearConfirm": "是否要清空搜索历史？",
-  "@searchHistoryClearConfirm": {},
   "searchHistoryDeleteAction": "删除",
   "@searchHistoryDeleteAction": {},
   "searchResultEmptyTitle": "没有找到相关内容",
@@ -787,95 +726,5 @@
   "mainDetailUnsupportedTitle": "当前页面无详情面板",
   "@mainDetailUnsupportedTitle": {},
   "mainDetailUnsupportedTips": "详情并排浏览当前仅在首页帖子流可用",
-  "@mainDetailUnsupportedTips": {},
-  "homeSectionAllTopics": "全部主题",
-  "@homeSectionAllTopics": {},
-  "homeSectionFollowing": "我的关注",
-  "@homeSectionFollowing": {},
-  "homeFollowingSort": "排序",
-  "@homeFollowingSort": {},
-  "homeFollowingSortHottest": "热门主题",
-  "@homeFollowingSortHottest": {},
-  "homeFollowingSortLatestReply": "最新回复",
-  "@homeFollowingSortLatestReply": {},
-  "homeFollowingSortNewest": "最新出炉",
-  "@homeFollowingSortNewest": {},
-  "homeFollowingSortOldest": "老帖子",
-  "@homeFollowingSortOldest": {},
-  "homeFollowingSortMostViews": "热门",
-  "@homeFollowingSortMostViews": {},
-  "homeFollowingFilter": "筛选",
-  "@homeFollowingFilter": {},
-  "homeFollowingFilterPosts": "贴文",
-  "@homeFollowingFilterPosts": {},
-  "homeFollowingFilterTags": "标签",
-  "@homeFollowingFilterTags": {},
-  "homeFollowingNotLoginTips": "登录后即可查看你关注的贴文",
-  "@homeFollowingNotLoginTips": {},
-  "homeSectionUsers": "用户名录",
-  "@homeSectionUsers": {},
-  "homeUserDirectoryNotLoginTips": "登录后即可查看用户名录",
-  "@homeUserDirectoryNotLoginTips": {},
-  "homeSectionGroups": "组群预览",
-  "@homeSectionGroups": {},
-  "homeSectionBadges": "徽章",
-  "@homeSectionBadges": {},
-  "badgePageEmptyTitle": "还没有徽章分类",
-  "@badgePageEmptyTitle": {},
-  "badgePageEmptyTips": "可以稍后刷新，看看社区里新增了哪些徽章。",
-  "@badgePageEmptyTips": {},
-  "badgePageEarnedSuffix": "位用户获得此徽章",
-  "@badgePageEarnedSuffix": {},
-  "homeUserDirectoryEmptyTitle": "还没有用户数据",
-  "@homeUserDirectoryEmptyTitle": {},
-  "homeUserDirectoryEmptyTips": "可以稍后刷新，或者调整筛选条件试试。",
-  "@homeUserDirectoryEmptyTips": {},
-  "homeUserDirectorySort": "排序",
-  "@homeUserDirectorySort": {},
-  "homeUserDirectorySortNewest": "新用户",
-  "@homeUserDirectorySortNewest": {},
-  "homeUserDirectorySortOldest": "老用户",
-  "@homeUserDirectorySortOldest": {},
-  "homeUserDirectorySortUsernameAsc": "用户名（A-Z）",
-  "@homeUserDirectorySortUsernameAsc": {},
-  "homeUserDirectorySortUsernameDesc": "用户名（Z-A）",
-  "@homeUserDirectorySortUsernameDesc": {},
-  "homeUserDirectorySortMostTopics": "主题最多",
-  "@homeUserDirectorySortMostTopics": {},
-  "homeUserDirectorySortLeastTopics": "主题最少",
-  "@homeUserDirectorySortLeastTopics": {},
-  "homeUserDirectorySortMostExp": "经验值最多",
-  "@homeUserDirectorySortMostExp": {},
-  "homeUserDirectorySortLeastExp": "经验值最少",
-  "@homeUserDirectorySortLeastExp": {},
-  "homeUserDirectoryFilterGroup": "筛选用户组",
-  "@homeUserDirectoryFilterGroup": {},
-  "homeUserDirectoryFilterAll": "全部用户组",
-  "@homeUserDirectoryFilterAll": {},
-  "homeUserDirectorySearchHint": "搜索用户",
-  "@homeUserDirectorySearchHint": {},
-  "homeUserDirectoryRefresh": "刷新",
-  "@homeUserDirectoryRefresh": {},
-  "userAvatarCropTitle": "上传",
-  "@userAvatarCropTitle": {},
-  "userAvatarCropHint": "拖动和缩放图片，裁剪正方形头像后上传。",
-  "@userAvatarCropHint": {},
-  "userAvatarCropUpload": "裁剪并上传",
-  "@userAvatarCropUpload": {},
-  "userAvatarUploadSuccess": "头像已更新",
-  "@userAvatarUploadSuccess": {},
-  "userAvatarUploadFailed": "头像上传失败",
-  "@userAvatarUploadFailed": {},
-  "userAvatarSelectFailed": "选择图片失败",
-  "@userAvatarSelectFailed": {},
-  "userAvatarInvalidImage": "无法解析所选图片",
-  "@userAvatarInvalidImage": {},
-  "userBioEditTitle": "修改签名",
-  "@userBioEditTitle": {},
-  "userBioEditHint": "写点介绍自己的内容",
-  "@userBioEditHint": {},
-  "userBioUpdateSuccess": "签名已更新",
-  "@userBioUpdateSuccess": {},
-  "userBioUpdateFailed": "签名更新失败",
-  "@userBioUpdateFailed": {}
+  "@mainDetailUnsupportedTips": {}
 }

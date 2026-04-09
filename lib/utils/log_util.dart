@@ -5,7 +5,6 @@
  */
 
 import 'dart:io';
-import 'dart:async';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -41,19 +40,19 @@ class LogUtil {
       await _logDir.create(recursive: true);
     }
 
+    _cleanOldLogs();
+
     _logFile = File('${_logDir.path}/${_todayFileName()}');
     if (!_logFile.existsSync()) {
       await _logFile.create();
     }
 
     _logger = Logger(
-      filter: _AlwaysLogFilter(),
       printer: FileLogPrinter(),
       output: MultiOutput([ConsoleOutput(), FileOutput(_logFile)]),
     );
 
     _logger.i('Logger initialized at ${_logFile.path}');
-    unawaited(_cleanOldLogsAsync());
   }
 
   // Share util
@@ -81,10 +80,10 @@ class LogUtil {
   static String _two(int n) => n.toString().padLeft(2, '0');
 
   // Auto clear old logs (More than 30 days).
-  static Future<void> _cleanOldLogsAsync() async {
+  static void _cleanOldLogs() {
     final now = DateTime.now();
 
-    await for (final entity in _logDir.list()) {
+    for (final entity in _logDir.listSync()) {
       if (entity is! File) continue;
 
       final name = entity.uri.pathSegments.last;
@@ -94,7 +93,7 @@ class LogUtil {
       final diff = now.difference(date).inDays;
       if (diff > _maxKeepDays) {
         try {
-          await entity.delete();
+          entity.deleteSync();
         } catch (_) {}
       }
     }
@@ -112,11 +111,6 @@ class LogUtil {
       int.parse(match.group(3)!),
     );
   }
-}
-
-class _AlwaysLogFilter extends LogFilter {
-  @override
-  bool shouldLog(LogEvent event) => true;
 }
 
 class FileOutput extends LogOutput {

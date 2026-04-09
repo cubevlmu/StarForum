@@ -8,6 +8,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
@@ -20,17 +21,19 @@ import 'package:get/get.dart';
 
 class PostMainWidget extends StatelessWidget {
   final DiscussionItem content;
+  final PostInfo? info;
   final String controllerTag;
 
   const PostMainWidget({
     super.key,
     required this.content,
+    required this.info,
     required this.controllerTag,
   });
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<PostPageController>(tag: controllerTag);
+    final like = info?.likes ?? -1;
 
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -41,33 +44,19 @@ class PostMainWidget extends StatelessWidget {
           _UserBox(item: content, controllerTag: controllerTag),
           _MainContent(item: content, controllerTag: controllerTag),
           const SizedBox(height: 5),
-          Obx(() {
-            final info = controller.firstPost.value;
-            final like = info?.likes ?? -1;
-            final canInteract = controller.canUseInteractiveActions;
-            if (like == -1) {
-              return const SizedBox.shrink();
-            }
-            return Row(
-              children: [
-                _ThumUpButton(
-                  enabled: canInteract,
+          like == -1
+              ? const SizedBox.shrink()
+              : _ThumUpButton(
                   likeNum: -1,
                   selected: false,
                   onPressed: () async {
                     if (info == null) return;
-                    final r = await ReplyUtil.addLikeToPost(info);
+                    final r = await ReplyUtil.addLikeToPost(info!);
                     if (r != null) {
-                      info.likes = r.likes;
-                      controller.firstPost.refresh();
+                      info?.likes = r.likes;
                     }
                   },
                 ),
-                const SizedBox(width: 8),
-                _FollowButton(controller: controller),
-              ],
-            );
-          }),
           Divider(
             color: Theme.of(context).colorScheme.secondaryContainer,
             thickness: 1,
@@ -76,59 +65,6 @@ class PostMainWidget extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _FollowButton extends StatelessWidget {
-  const _FollowButton({required this.controller});
-
-  final PostPageController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Obx(() {
-      final selected = controller.subscription.value == 1;
-      final updating = controller.isFollowUpdating.value;
-      final enabled = controller.canUseInteractiveActions;
-      return ElevatedButton(
-        onPressed: (!enabled || updating)
-            ? null
-            : controller.toggleDiscussionFollow,
-        style: const ButtonStyle(
-          visualDensity: VisualDensity.standard,
-          padding: WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          ),
-          elevation: WidgetStatePropertyAll(0),
-          minimumSize: WidgetStatePropertyAll(Size(40, 36)),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (updating)
-              const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            else
-              Icon(
-                selected ? Icons.star_rounded : Icons.star_outline_rounded,
-                size: 16,
-              ),
-            const SizedBox(width: 6),
-            Text(
-              selected
-                  ? AppLocalizations.of(context)!.postActionUnfollow
-                  : AppLocalizations.of(context)!.postActionFollow,
-              style: textTheme.labelMedium,
-            ),
-          ],
-        ),
-      );
-    });
   }
 }
 
@@ -230,31 +166,29 @@ class _MainContent extends StatelessWidget {
     return SelectionArea(
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: RepaintBoundary(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Obx(() {
-                  final content = model.content.value;
-                  final isLoading = content == l10n.postContentLoadingHtml;
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Obx(() {
+                final content = model.content.value;
+                final isLoading = content == l10n.postContentLoadingHtml;
 
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    child: isLoading
-                        ? const _MainContentLoadingSkeleton()
-                        : ContentView(
-                            key: ValueKey(content.hashCode),
-                            content: content,
-                          ),
-                  );
-                }),
-              ),
-            ],
-          ),
+                return AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: isLoading
+                      ? const _MainContentLoadingSkeleton()
+                      : ContentView(
+                          key: ValueKey(content.hashCode),
+                          content: content,
+                        ),
+                );
+              }),
+            ),
+          ],
         ),
       ),
     );
@@ -325,62 +259,30 @@ class _MainContentLoadingSkeleton extends StatelessWidget {
   }
 }
 
-class _ThumUpButton extends StatefulWidget {
+class _ThumUpButton extends StatelessWidget {
   const _ThumUpButton({
-    required this.enabled,
     required this.onPressed,
     required this.likeNum,
     this.selected = false,
   });
-  final bool enabled;
-  final Future<void> Function()? onPressed;
+  final Function()? onPressed;
   final bool selected;
   final int likeNum;
 
   @override
-  State<_ThumUpButton> createState() => _ThumUpButtonState();
-}
-
-class _ThumUpButtonState extends State<_ThumUpButton> {
-  bool _loading = false;
-
-  Future<void> _handlePressed() async {
-    if (!widget.enabled) {
-      return;
-    }
-    if (widget.onPressed == null) {
-      return;
-    }
-    if (_loading) {
-      return;
-    }
-    if (mounted) {
-      setState(() => _loading = true);
-    }
-    try {
-      await widget.onPressed?.call();
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final enabled = widget.enabled;
     return ElevatedButton(
-      onPressed: enabled ? _handlePressed : null,
+      onPressed: onPressed,
       style: ButtonStyle(
         visualDensity: VisualDensity.standard,
         padding: const WidgetStatePropertyAll(
           EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         ),
-        foregroundColor: enabled && widget.selected == true
+        foregroundColor: selected == true
             ? WidgetStatePropertyAll(Theme.of(context).colorScheme.onPrimary)
             : null,
-        backgroundColor: enabled && widget.selected == true
+        backgroundColor: selected == true
             ? WidgetStatePropertyAll(Theme.of(context).colorScheme.primary)
             : null,
         elevation: const WidgetStatePropertyAll(0),
@@ -390,18 +292,12 @@ class _ThumUpButtonState extends State<_ThumUpButton> {
       child: Row(
         mainAxisSize: .min,
         children: [
-          _loading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.thumb_up_rounded, size: 16),
+          const Icon(Icons.thumb_up_rounded, size: 16),
           const SizedBox(width: 6),
           Text(
             AppLocalizations.of(context)!.commonLike,
             style: textTheme.labelMedium,
-          ),
+          ), // StringUtil.numFormat(likeNum)
         ],
       ),
     );

@@ -20,7 +20,6 @@ class DiscussionItem {
   final int likeCount;
   final int commentCount;
   final int userId;
-  final int subscription;
 
   const DiscussionItem({
     required this.id,
@@ -33,6 +32,5 @@ class DiscussionItem {
     this.likeCount = -1,
     this.commentCount = -1,
     required this.userId,
-    required this.subscription
   });
 }

@@ -30,18 +30,52 @@ class PostInfo {
   }
 
   factory PostInfo.fromBaseData(BaseData data) {
-    final m = data.attrs;
+    var m = data.attributes;
 
-    return PostInfo(
+    int discussion = 0;
+    int user = 0;
+    int editedUser = 0;
+    List<int> mentionedBy = [];
+
+    if (data.relationships.isNotEmpty) {
+      if (data.relationships["discussion"] != null) {
+        discussion = int.parse(data.relationships["discussion"]["data"]["id"]);
+      }
+      if (data.relationships["user"] != null) {
+        try {
+          user = int.tryParse(data.relationships["user"]["data"]["id"]) ?? 0;
+        } catch (e) {
+          user = 0;
+        }
+      }
+      if (data.relationships["editedUser"] != null) {
+        try {
+          editedUser = int.parse(
+            data.relationships["editedUser"]["data"]["id"],
+          );
+        } catch (e) {
+          editedUser = 0;
+        }
+      }
+      if (data.relationships["mentionedBy"] != null) {
+        for (var m in (data.relationships["mentionedBy"]["data"] as List)) {
+          m = m as Map;
+          mentionedBy.add(int.parse(m["id"]));
+        }
+      }
+    }
+
+    var p = PostInfo(
       data.id,
-      m.string("createdAt"),
-      m.string("contentHtml"),
-      m.string("editedAt"),
-      data.relatedId("user"),
-      data.relatedId("editedUser"),
-      data.relatedId("discussion"),
-      m.integer("likesCount", -1),
+      m["createdAt"] ?? "",
+      m["contentHtml"] ?? "",
+      m["editedAt"] ?? "",
+      user,
+      editedUser,
+      discussion,
+      m["likesCount"] ?? -1,
     );
+    return p;
   }
 }
 
@@ -56,28 +90,28 @@ class Posts {
   }
 
   factory Posts.fromBaseList(BaseListBean baseBean) {
-    final posts = <int, PostInfo>{};
-    final users = <int, UserInfo>{};
-    final diss = <int, DiscussionInfo>{};
+    Map<int, PostInfo> posts = {};
+    Map<int, UserInfo> users = {};
+    Map<int, DiscussionInfo> diss = {};
     for (var e in baseBean.data.list) {
       if (e.type == "posts") {
-        final p = PostInfo.fromBaseData(e);
-        posts[p.id] = p;
+        var p = PostInfo.fromBaseData(e);
+        posts.addAll({p.id: p});
       }
     }
     for (var e in baseBean.included.data) {
       switch (e.type) {
         case "users":
-          final u = UserInfo.fromBaseData(e);
-          users[u.id] = u;
+          var u = UserInfo.fromBaseData(e);
+          users.addAll({u.id: u});
           break;
         case "posts":
-          final p = PostInfo.fromBaseData(e);
-          posts[p.id] = p;
+          var p = PostInfo.fromBaseData(e);
+          posts.addAll({p.id: p});
           break;
         case "discussions":
-          final d = DiscussionInfo.formMaoAndId(e.attributes, e.id);
-          diss[e.id] = d;
+          var d = DiscussionInfo.formMaoAndId(e.attributes, e.id);
+          diss.addAll({e.id: d});
           break;
       }
     }

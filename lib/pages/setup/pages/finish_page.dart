@@ -5,6 +5,7 @@
  */
 import 'package:flutter/material.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/main/view.dart';
 import 'package:star_forum/pages/setup/controller.dart';
 import 'package:star_forum/pages/setup/widgets/setup_body_view.dart';
 import 'package:star_forum/pages/setup/widgets/setup_next_button.dart';
@@ -14,13 +15,8 @@ import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 @immutable
 class FinishPage extends StatelessWidget {
   final SetupPageController controller;
-  final VoidCallback onFinish;
 
-  const FinishPage({
-    super.key,
-    required this.controller,
-    required this.onFinish,
-  });
+  const FinishPage({super.key, required this.controller});
 
   Color _lagColor(BuildContext context) {
     if (controller.forumLag.value <= 1) return Colors.green;
@@ -114,7 +110,10 @@ class FinishPage extends StatelessWidget {
             await controller.finishSetup();
 
             if (!context.mounted) return;
-            onFinish();
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const MainPage()),
+              (route) => false,
+            );
           },
           text: l10n.commonActionFinishAndEnter,
         );

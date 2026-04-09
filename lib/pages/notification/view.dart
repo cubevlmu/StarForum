@@ -21,19 +21,12 @@ class NotificationPage extends StatefulWidget {
   State<NotificationPage> createState() => _NotificationPageState();
 }
 
-class _NotificationPageState extends State<NotificationPage>
-    with TickerProviderStateMixin {
-  late final NotificationPageController controller;
-  late final TabController tabController;
+class _NotificationPageState extends State<NotificationPage> {
+  late NotificationPageController controller;
 
   @override
   void initState() {
     controller = Get.put(NotificationPageController());
-    tabController = TabController(
-      length: NotificationTab.values.length,
-      vsync: this,
-      initialIndex: controller.currentTab.value.index,
-    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (controller.repo.isLogin && controller.items.isEmpty) {
@@ -45,22 +38,14 @@ class _NotificationPageState extends State<NotificationPage>
 
   @override
   void dispose() {
-    tabController.dispose();
     super.dispose();
   }
 
-  void _handleTabChanged(int index) {
-    controller.selectTab(NotificationTab.values[index]);
-    if (controller.scrollController.hasClients) {
-      controller.scrollController.jumpTo(0);
-    }
-  }
-
   Widget _buildView(BuildContext context) {
+    final items = controller.items;
+
     return Obx(() {
-      final items = controller.filteredItems;
-      final showSkeleton =
-          controller.isInitialLoading.value && controller.items.isEmpty;
+      final showSkeleton = controller.isInitialLoading.value && items.isEmpty;
       return SimpleEasyRefresher(
         easyRefreshController: controller.refreshController,
         onRefresh: controller.onRefresh,
@@ -76,13 +61,6 @@ class _NotificationPageState extends State<NotificationPage>
             controller: controller.scrollController,
             physics: effectivePhysics,
             slivers: [
-              SliverToBoxAdapter(
-                child: _NotificationTabs(
-                  controller: controller,
-                  tabController: tabController,
-                  onTap: _handleTabChanged,
-                ),
-              ),
               if (showSkeleton)
                 const SliverToBoxAdapter(child: _NotificationLoadingSkeleton())
               else if (items.isEmpty)
@@ -113,181 +91,53 @@ class _NotificationPageState extends State<NotificationPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(context),
-      body: _NotificationBody(controller: controller, buildView: _buildView),
-    );
+    return Obx(() {
+      return Scaffold(
+        appBar: _buildAppBar(context),
+        body: controller.isLogin.value
+            ? _buildView(context)
+            : NotLoginNotice(
+                title: AppLocalizations.of(context)!.notificationNotLoginTitle,
+                tipsText: AppLocalizations.of(
+                  context,
+                )!.notificationNotLoginTips,
+              ),
+      );
+    });
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       title: Text(AppLocalizations.of(context)!.notificationTitle),
       actions: [
-        const SizedBox(width: 4),
-        _NotificationActions(controller: controller),
-      ],
-    );
-  }
-}
-
-class _NotificationTabs extends StatelessWidget {
-  const _NotificationTabs({
-    required this.controller,
-    required this.tabController,
-    required this.onTap,
-  });
-
-  final NotificationPageController controller;
-  final TabController tabController;
-  final ValueChanged<int> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Obx(() {
-      final tabs = <({NotificationTab tab, String label})>[
-        (tab: NotificationTab.likes, label: l10n.notificationTabLikes),
-        (tab: NotificationTab.replies, label: l10n.notificationTabReplies),
-        (tab: NotificationTab.notices, label: l10n.notificationTabNotices),
-      ];
-
-      return Material(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-          child: TabBar(
-            controller: tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            onTap: onTap,
-            tabs: [
-              for (final item in tabs)
-                Tab(
-                  child: _NotificationTabLabel(
-                    label: item.label,
-                    unreadCount: controller.unreadCountForTab(item.tab),
-                  ),
-                ),
-            ],
+        if (controller.isLogin.value)
+          IconButton(
+            onPressed: controller.isInvoking.value ? null : controller.readAll,
+            icon: const Icon(Icons.checklist_outlined),
           ),
+        const SizedBox(width: 10),
+        if (controller.isLogin.value)
+          IconButton(
+            onPressed: controller.isInvoking.value ? null : controller.clearAll,
+            icon: const Icon(Icons.delete),
+          ),
+        const SizedBox(width: 10),
+        IconButton(
+          onPressed: controller.isInvoking.value
+              ? null
+              : () {
+                  openSettingsAdaptive(context);
+                },
+          icon: const Icon(Icons.settings_outlined),
         ),
-      );
-    });
-  }
-}
-
-class _NotificationTabLabel extends StatelessWidget {
-  const _NotificationTabLabel({required this.label, required this.unreadCount});
-
-  final String label;
-  final int unreadCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final badgeText = unreadCount > 99 ? '99+' : unreadCount.toString();
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label),
-        if (unreadCount > 0) ...[
-          const SizedBox(width: 6),
-          Badge(label: Text(badgeText)),
-        ],
+        const SizedBox(width: 10),
       ],
-    );
-  }
-}
-
-class _NotificationBody extends StatelessWidget {
-  const _NotificationBody({required this.controller, required this.buildView});
-
-  final NotificationPageController controller;
-  final Widget Function(BuildContext context) buildView;
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      if (controller.isLogin.value) {
-        return buildView(context);
-      }
-      return NotLoginNotice(
-        title: AppLocalizations.of(context)!.commonNotLoggedInTitle,
-        tipsText: AppLocalizations.of(context)!.notificationNotLoginTips,
-      );
-    });
-  }
-}
-
-class _NotificationActions extends StatelessWidget {
-  const _NotificationActions({required this.controller});
-
-  final NotificationPageController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final isLogin = controller.isLogin.value;
-      final isInvoking = controller.isInvoking.value;
-      final activeToolbarAction = controller.activeToolbarAction.value;
-
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isLogin)
-            _ActionIconButton(
-              onPressed: isInvoking ? null : controller.readAll,
-              icon: Icons.checklist_outlined,
-              isLoading:
-                  activeToolbarAction == NotificationToolbarAction.readAll,
-            ),
-          if (isLogin) const SizedBox(width: 10),
-          if (isLogin)
-            _ActionIconButton(
-              onPressed: isInvoking ? null : controller.clearAll,
-              icon: Icons.delete,
-              isLoading:
-                  activeToolbarAction == NotificationToolbarAction.clearAll,
-            ),
-          if (isLogin) const SizedBox(width: 10),
-          _ActionIconButton(
-            onPressed: isInvoking
-                ? null
-                : () {
-                    openSettingsAdaptive(context);
-                  },
-            icon: Icons.settings_outlined,
-          ),
-        ],
-      );
-    });
-  }
-}
-
-class _ActionIconButton extends StatelessWidget {
-  const _ActionIconButton({
-    required this.onPressed,
-    required this.icon,
-    this.isLoading = false,
-  });
-
-  final VoidCallback? onPressed;
-  final IconData icon;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: isLoading ? null : onPressed,
-      icon: isLoading
-          ? SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+      bottom: controller.isInvoking.value
+          ? const PreferredSize(
+              preferredSize: Size.fromHeight(2),
+              child: LinearProgressIndicator(),
             )
-          : Icon(icon),
+          : null,
     );
   }
 }

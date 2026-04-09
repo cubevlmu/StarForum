@@ -5,6 +5,7 @@
  */
 
 import 'package:easy_refresh/easy_refresh.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/data/api/api.dart';
@@ -21,6 +22,21 @@ import '../../l10n/app_localizations.dart';
 class HomeController extends GetxController {
   HomeController();
   final cacheManager = CacheUtils.avatarCacheManager;
+
+  final List<Map<String, String>> tabsList = [
+    {
+      'text': AppLocalizations.of(Get.context!)!.homeTabPosts,
+      'id': 'posts',
+      'controller': 'PostListController',
+    },
+    {
+      'text': AppLocalizations.of(Get.context!)!.homeTabThemes,
+      'id': 'theme',
+      'controller': 'ThemeListController',
+    },
+  ];
+  late TabController? tabController;
+  final int tabInitIndex = 0;
   final info = Rxn<ForumInfo>();
 
   final EasyRefreshController refreshController = EasyRefreshController(

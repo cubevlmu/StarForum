@@ -37,27 +37,28 @@ class TagInfo {
   );
 
   factory TagInfo.fromBaseData(BaseData data) {
-    final m = data.attrs;
+    var m = data.attributes;
 
     int? parentId;
-    if (m.boolean("isChild") && data.relationships.containsKey("parent")) {
-      final id = data.relatedId("parent", -1);
-      parentId = id >= 0 ? id : null;
+    if (m["isChild"] == true) {
+      if (data.relationships.containsKey("parent")) {
+        parentId = int.parse(data.relationships["parent"]["data"]["id"]);
+      }
     }
 
     return TagInfo(
-      m.string("name"),
+      m["name"],
       data.id,
-      m.string("description"),
-      m.string("slug"),
-      m.integer("discussionCount"),
-      m.contains("position") ? m.integer("position", -1) : null,
-      m.string("lastPostedAt"),
+      m["description"],
+      m["slug"],
+      m["discussionCount"] ?? 0,
+      m["position"] ?? -1,
+      m["lastPostedAt"] ?? "",
       SplayTreeMap(),
       -1,
-      m.boolean("isChild"),
+      m["isChild"] ?? false,
       parentId,
-      m.boolean("canStartDiscussion", true),
+      m["canStartDiscussion"] as bool? ?? true,
     );
   }
 

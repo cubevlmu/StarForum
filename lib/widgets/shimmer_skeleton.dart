@@ -4,7 +4,7 @@ class SkeletonShimmer extends StatefulWidget {
   const SkeletonShimmer({
     super.key,
     required this.builder,
-    this.duration = const Duration(milliseconds: 1350),
+    this.duration = const Duration(milliseconds: 1450),
     this.highlightStrength = 0.18,
   });
 
@@ -37,28 +37,6 @@ class _SkeletonShimmerState extends State<SkeletonShimmer>
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseSurface = isDark
-        ? colorScheme.surfaceContainerHighest
-        : colorScheme.surfaceContainerHigh;
-    final highlightSurface = isDark
-        ? Color.alphaBlend(
-            Colors.white.withValues(alpha: 0.14),
-            colorScheme.surfaceBright,
-          )
-        : Color.alphaBlend(
-            Colors.white.withValues(alpha: 0.38),
-            colorScheme.surface,
-          );
-    final baseTone = Color.alphaBlend(
-      colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.045),
-      baseSurface,
-    );
-    final highlightTone = Color.alphaBlend(
-      (isDark ? Colors.white : Colors.black).withValues(
-        alpha: isDark ? 0.05 : 0.025,
-      ),
-      highlightSurface,
-    );
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
@@ -67,8 +45,12 @@ class _SkeletonShimmerState extends State<SkeletonShimmer>
             context,
             SkeletonPalette(
               progress: _controller.value,
-              baseColor: baseTone,
-              highlightColor: highlightTone,
+              baseColor: colorScheme.onSurface.withValues(
+                alpha: isDark ? 0.18 : 0.09,
+              ),
+              highlightColor: colorScheme.onSurface.withValues(
+                alpha: isDark ? 0.34 : 0.19,
+              ),
               highlightStrength: widget.highlightStrength,
             ),
           ),
@@ -103,27 +85,27 @@ class SkeletonPalette {
     required double radius,
     required bool isCircle,
   }) {
-    final sweep = Curves.easeInOut.transform(progress);
+    final pulse = Curves.easeInOut.transform(1 - ((progress - 0.5).abs() * 2));
     final baseTone = Color.lerp(
       baseColor,
       highlightColor,
-      (highlightStrength * 0.16).clamp(0.03, 0.08),
+      (highlightStrength * 0.22 * pulse).clamp(0.0, 0.12),
     )!;
-    final shimmerTone = Color.lerp(
+    final sweepProgress = Curves.easeInOut.transform(progress);
+    final highlightTone = Color.lerp(
       baseColor,
       highlightColor,
-      (highlightStrength * 1.2).clamp(0.22, 0.42),
+      (highlightStrength * 1.15).clamp(0.12, 0.42),
     )!;
-    final startX = -1.2 + (sweep * 2.4);
-    final endX = startX + 0.85;
+    final alignment = Alignment(-1.35 + (sweepProgress * 2.7), 0);
     return BoxDecoration(
       shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
       borderRadius: isCircle ? null : BorderRadius.circular(radius),
       gradient: LinearGradient(
-        begin: Alignment(startX, 0),
-        end: Alignment(endX, 0),
-        colors: [baseTone, baseTone, shimmerTone, baseTone],
-        stops: const [0.0, 0.38, 0.52, 1.0],
+        begin: alignment,
+        end: Alignment(alignment.x + 0.9, 0),
+        colors: [baseTone, baseTone, highlightTone, baseTone, baseTone],
+        stops: const [0.0, 0.34, 0.5, 0.66, 1.0],
       ),
     );
   }

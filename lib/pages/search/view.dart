@@ -9,7 +9,6 @@ import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/search/controller.dart';
 import 'package:star_forum/utils/setting_util.dart';
 import 'package:star_forum/utils/storage_utils.dart';
-import 'package:star_forum/widgets/shared_dialog.dart';
 import 'package:get/get.dart';
 
 class SearchPage extends StatefulWidget {
@@ -215,28 +214,12 @@ class _SearchHistoryHeader extends StatelessWidget {
           ),
           const Spacer(),
           TextButton.icon(
-            onPressed: () => _showClearConfirmDialog(context),
+            onPressed: onClear,
             icon: const Icon(Icons.delete_sweep_outlined),
             label: Text(AppLocalizations.of(context)!.searchHistoryClearAction),
           ),
         ],
       ),
-    );
-  }
-
-  void _showClearConfirmDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    SharedDialog.showDialog2(
-      context,
-      l10n.dialogConfirmTitle,
-      l10n.searchHistoryClearConfirm,
-      l10n.dialogNo,
-      () => Navigator.pop(context),
-      l10n.dialogYes,
-      () {
-        Navigator.pop(context);
-        onClear();
-      },
     );
   }
 }

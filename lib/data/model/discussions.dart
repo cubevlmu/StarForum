@@ -10,7 +10,6 @@ class DiscussionInfo {
   final String id;
   final String title;
   final int commentCount;
-  final int participantCount;
   final int views;
   final DateTime createdAt;
   final DateTime lastPostedAt;
@@ -23,13 +22,11 @@ class DiscussionInfo {
   final Map<int, PostInfo> posts;
   final Map<int, UserInfo> users;
   final List<TagInfo> tags;
-  final int subscription;
 
   DiscussionInfo(
     this.id,
     this.title,
     this.commentCount,
-    this.participantCount,
     this.views,
     this.createdAt,
     this.lastPostedAt,
@@ -42,7 +39,6 @@ class DiscussionInfo {
     this.posts,
     this.users,
     this.tags,
-    this.subscription
   );
 
   DiscussionItem toItem() {
@@ -56,22 +52,19 @@ class DiscussionInfo {
       authorAvatar: user?.avatarUrl ?? "",
       commentCount: commentCount,
       viewCount: views,
-      subscription: subscription,
     );
   }
 
   factory DiscussionInfo.formMaoAndId(Map m, int id) {
-    final info = JsonReader(asJsonMap(m));
-    final rawViewCount = info["viewCount"] ?? info["views"];
+    final rawViewCount = m["viewCount"] ?? m["views"] ?? 0;
     return DiscussionInfo(
       id.toString(),
-      info.string("title"),
-      info.integer("commentCount"),
-      info.integer("participantCount"),
-      JsonValue.asInt(rawViewCount),
-      info.dateTime("createdAt"),
-      info.dateTime("lastPostedAt"),
-      info.integer("lastPostNumber"),
+      m["title"],
+      m["commentCount"] ?? 0,
+      rawViewCount is int ? rawViewCount : int.tryParse("$rawViewCount") ?? 0,
+      DateTime.tryParse(m["createdAt"] ?? "") ?? DateTime.utc(1980),
+      DateTime.tryParse(m["lastPostedAt"] ?? "") ?? DateTime.utc(1980),
+      m["lastPostNumber"] ?? 0,
       0,
       null,
       null,
@@ -80,11 +73,6 @@ class DiscussionInfo {
       {},
       {},
       [],
-      info.json["subscription"] == null
-          ? 0
-          : info.string("subscription") == "ignore"
-          ? 2
-          : 1,
     );
   }
 
@@ -97,37 +85,40 @@ class DiscussionInfo {
   }
 
   factory DiscussionInfo.fromBase(BaseBean base) {
-    final allPosts = <int, PostInfo>{};
-    final d = DiscussionInfo.formMaoAndId(base.data.attributes, base.data.id);
+    Map<int, PostInfo> allPosts = {};
+    var d = DiscussionInfo.formMaoAndId(base.data.attributes, base.data.id);
 
     for (var data in base.included.data) {
       switch (data.type) {
         case "posts":
-          final p = PostInfo.fromBaseData(data);
-          allPosts[p.id] = p;
+          var p = PostInfo.fromBaseData(data);
+          allPosts.addAll({p.id: p});
           break;
         case "tags":
-          final t = TagInfo.fromBaseData(data);
+          var t = TagInfo.fromBaseData(data);
           d.tags.add(t);
           break;
         case "users":
-          final u = UserInfo.fromBaseData(data);
-          d.users[u.id] = u;
+          var u = UserInfo.fromBaseData(data);
+          d.users.addAll({u.id: u});
           break;
       }
     }
-
-    d.postsIdList.addAll(base.data.relatedIds("posts"));
-
-    final firstPostId = base.data.relatedId("firstPost", -1);
-    if (firstPostId >= 0 && !d.postsIdList.contains(firstPostId)) {
-      d.postsIdList.add(firstPostId);
+    if (base.data.relationships.containsKey("posts")) {
+      for (var data in (base.data.relationships["posts"]["data"] as List)) {
+        d.postsIdList.add(int.parse(data["id"]));
+      }
+    }
+    if (base.data.relationships.containsKey("firstPost")) {
+      d.postsIdList.add(
+        int.parse(base.data.relationships["firstPost"]["data"]["id"] ?? "-1"),
+      );
     }
 
     for (var id in d.postsIdList) {
-      final p = allPosts[id];
+      var p = allPosts[id];
       if (p != null) {
-        d.posts[id] = p;
+        d.posts.addAll({id: p});
       }
     }
 
@@ -159,16 +150,16 @@ class Discussions {
       try {
         switch (data.type) {
           case "users":
-            final u = UserInfo.fromBaseData(data);
-            users[u.id] = u;
+            var u = UserInfo.fromBaseData(data);
+            users.addAll({u.id: u});
             break;
           case "posts":
-            final p = PostInfo.fromBaseData(data);
-            posts[p.id] = p;
+            var p = PostInfo.fromBaseData(data);
+            posts.addAll({p.id: p});
             break;
           case "tags":
-            final t = TagInfo.fromBaseData(data);
-            tags[t.id] = t;
+            var t = TagInfo.fromBaseData(data);
+            tags.addAll({t.id: t});
             break;
         }
       } catch (e) {
@@ -178,18 +169,34 @@ class Discussions {
       }
     }
     for (var data in base.data.list) {
-      final d = DiscussionInfo.formMaoAndId(data.attributes, data.id);
-      d.user = users[data.relatedId("user", -1)] ?? UserInfo.deletedUser;
-      d.lastPostedUser =
-          users[data.relatedId("lastPostedUser", -1)] ?? UserInfo.deletedUser;
-      d.firstPost = posts[data.relatedId("firstPost", -1)];
+      var d = DiscussionInfo.formMaoAndId(data.attributes, data.id);
+      if (data.relationships["user"] == null) {
+        d.user = UserInfo.deletedUser;
+      } else {
+        d.user = users[int.parse(data.relationships["user"]["data"]["id"])];
+      }
+      if (data.relationships["lastPostedUser"] == null) {
+        d.lastPostedUser = UserInfo.deletedUser;
+      } else {
+        d.lastPostedUser =
+            users[int.parse(
+              data.relationships["lastPostedUser"]["data"]["id"],
+            )];
+      }
+
+      if (data.relationships["firstPost"] != null) {
+        d.firstPost =
+            posts[int.parse(data.relationships["firstPost"]["data"]["id"])];
+      } else {
+        d.firstPost = null;
+      }
 
       d.tags.clear();
-      for (final id in data.relatedIds("tags")) {
+      for (var m in (data.relationships["tags"]["data"] as List)) {
         try {
-          final tag = tags[id];
-          if (tag == null) continue;
-          d.tags.add(tag);
+          final id = int.parse(m["id"] ?? "0");
+          if (!tags.containsKey(id)) continue;
+          d.tags.add(tags[id]!);
         } catch (e) {
           LogUtil.error(
             "[Parser] Failed to parse discussion item at d.tags.add $e",

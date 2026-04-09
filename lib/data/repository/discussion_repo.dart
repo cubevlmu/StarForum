@@ -4,10 +4,10 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
-import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/db/app_database.dart';
 import 'package:star_forum/data/db/dao/first_posts_dao.dart';
 import 'package:star_forum/data/db/dao/discussions_dao.dart';
@@ -16,48 +16,6 @@ import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/utils/html_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:rxdart/rxdart.dart';
-
-@immutable
-class _ExcerptTask {
-  const _ExcerptTask({
-    required this.discussionId,
-    required this.contentHtml,
-    required this.sourceUpdatedAtIso,
-  });
-
-  final String discussionId;
-  final String contentHtml;
-  final String sourceUpdatedAtIso;
-}
-
-@immutable
-class _ExcerptResult {
-  const _ExcerptResult({
-    required this.discussionId,
-    required this.excerpt,
-    required this.sourceUpdatedAtIso,
-  });
-
-  final String discussionId;
-  final String excerpt;
-  final String sourceUpdatedAtIso;
-}
-
-List<_ExcerptResult> _buildExcerptResults(List<_ExcerptTask> tasks) {
-  return tasks
-      .map((task) {
-        var excerpt = htmlToPlainText(task.contentHtml);
-        if (excerpt.length > 80) {
-          excerpt = excerpt.substring(0, 80);
-        }
-        return _ExcerptResult(
-          discussionId: task.discussionId,
-          excerpt: excerpt,
-          sourceUpdatedAtIso: task.sourceUpdatedAtIso,
-        );
-      })
-      .toList(growable: false);
-}
 
 class DiscussionRepository {
   final DiscussionsDao discussionsDao;
@@ -100,7 +58,6 @@ class DiscussionRepository {
           commentCount: d.commentCount,
           likeCount: d.likeCount,
           userId: d.posterId,
-          subscription: d.subscription,
         );
       }).toList();
     });
@@ -151,7 +108,6 @@ class DiscussionRepository {
           posterId: d.user?.id ?? -1,
 
           lastSeenAt: syncTime,
-          subscription: d.subscription,
         );
       }).toList(),
     );
@@ -175,7 +131,11 @@ class DiscussionRepository {
       );
     }
 
-    await _saveFirstPostsAndExcerpts(remote);
+    for (final d in remote) {
+      if (d.firstPost != null) {
+        await _saveFirstPostAndExcerpt(d.id, d.firstPost!);
+      }
+    }
 
     final after = await discussionsDao.countAll();
 
@@ -201,7 +161,6 @@ class DiscussionRepository {
         posterId: d.user?.id ?? -1,
 
         lastSeenAt: DateTime.now(),
-        subscription: d.subscription,
       ),
     );
 
@@ -223,54 +182,35 @@ class DiscussionRepository {
     LogUtil.info('[DiscussionRepo] Deleted $deleted discussions');
   }
 
-  Future<void> _saveFirstPostsAndExcerpts(
-    List<DiscussionInfo> discussions,
+  Future<void> _saveFirstPostAndExcerpt(
+    String discussionId,
+    PostInfo post,
   ) async {
-    final tasks = <_ExcerptTask>[];
-    for (final discussion in discussions) {
-      final post = discussion.firstPost;
-      if (post == null) continue;
+    final editedAt = post.editedAt.isNotEmpty
+        ? DateTime.parse(post.editedAt)
+        : DateTime.parse(post.createdAt);
 
-      final editedAt = post.editedAt.isNotEmpty
-          ? DateTime.parse(post.editedAt)
-          : DateTime.parse(post.createdAt);
+    // await firstPostsDao.upsert(
+    //   discussionId,
+    //   post.contentHtml,
+    //   editedAt,
+    //   post.likes,
+    // );
 
-      tasks.add(
-        _ExcerptTask(
-          discussionId: discussion.id,
-          contentHtml: post.contentHtml,
-          sourceUpdatedAtIso: editedAt.toIso8601String(),
-        ),
-      );
+    var excerpt = htmlToPlainText(post.contentHtml);
+    if (excerpt.length > 80) {
+      excerpt = excerpt.substring(0, 80);
     }
 
-    if (tasks.isEmpty) return;
-
-    final results = await compute(_buildExcerptResults, tasks);
-    final generatedAt = DateTime.now();
-    await excerptDao.upsertAll(
-      results
-          .map(
-            (item) => DbDiscussionExcerptCacheCompanion(
-              discussionId: Value(item.discussionId),
-              excerpt: Value(item.excerpt),
-              sourceUpdatedAt: Value(DateTime.parse(item.sourceUpdatedAtIso)),
-              generatedAt: Value(generatedAt),
-            ),
-          )
-          .toList(growable: false),
+    await excerptDao.upsert(
+      discussionId: discussionId,
+      excerpt: excerpt,
+      sourceUpdatedAt: editedAt,
     );
   }
 
   Future<void> clearAll() async {
     await discussionsDao.clearAll();
     await excerptDao.clearAll();
-  }
-
-  Future<void> updateSubscriptionIfExists({
-    required String discussionId,
-    required int subscription,
-  }) async {
-    await discussionsDao.updateSubscriptionIfExists(discussionId, subscription);
   }
 }
