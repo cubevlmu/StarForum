@@ -10,6 +10,7 @@ import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_detail/reply_util.dart';
@@ -36,18 +37,24 @@ class PostPageController extends GetxController {
   final RxList<PostInfo> replyItems = <PostInfo>[].obs;
   final RxList<PostInfo> newReplyItems = <PostInfo>[].obs;
   final RxBool isReplyLoading = true.obs;
+  final RxInt subscription = 0.obs;
+  final RxBool isFollowUpdating = false.obs;
 
   final EasyRefreshController refreshController = EasyRefreshController(
     controlFinishLoad: true,
     controlFinishRefresh: true,
   );
   final repo = getIt<DiscussionRepository>();
+  final userRepo = getIt<UserRepo>();
   final ScrollController scrollController = ScrollController();
   final Rxn<PostInfo> firstPost = Rxn<PostInfo>();
+
+  bool get canUseInteractiveActions => userRepo.isLogin;
 
   @override
   void onInit() async {
     viewCount.value = discussion.viewCount;
+    subscription.value = discussion.subscription;
     try {
       final discussionInfo = await Api.getDiscussionById(discussion.id);
       if (discussionInfo != null) {
@@ -74,6 +81,31 @@ class PostPageController extends GetxController {
       );
     }
     super.onInit();
+  }
+
+  Future<bool> toggleDiscussionFollow() async {
+    if (isFollowUpdating.value) {
+      return false;
+    }
+
+    final targetFollow = subscription.value != 1;
+    isFollowUpdating.value = true;
+    try {
+      final ok = await Api.setDiscussionFollow(discussion.id, targetFollow);
+      if (!ok) {
+        return false;
+      }
+
+      final nextValue = targetFollow ? 1 : 0;
+      subscription.value = nextValue;
+      await repo.updateSubscriptionIfExists(
+        discussionId: discussion.id,
+        subscription: nextValue,
+      );
+      return true;
+    } finally {
+      isFollowUpdating.value = false;
+    }
   }
 
   static const int _pageSize = 10;

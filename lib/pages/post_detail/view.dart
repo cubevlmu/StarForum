@@ -15,8 +15,8 @@ import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_main.dart';
 import 'package:star_forum/utils/string_util.dart';
+import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:star_forum/widgets/shimmer_skeleton.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
@@ -73,12 +73,7 @@ class _PostPageState extends State<PostPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        heroTag: null,
-        onPressed: () => controller.showAddReplySheet(context),
-        tooltip: AppLocalizations.of(context)!.postActionComment,
-        child: Icon(Icons.reply_all_outlined),
-      ),
+      floatingActionButton: _ReplyFab(controller: controller),
       appBar: _DetailTitleBar(
         item: widget.item,
         embedded: widget.embedded,
@@ -89,6 +84,22 @@ class _PostPageState extends State<PostPage>
         item: widget.item,
         controllerTag: controllerTag,
       ),
+    );
+  }
+}
+
+class _ReplyFab extends StatelessWidget {
+  const _ReplyFab({required this.controller});
+
+  final PostPageController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      heroTag: null,
+      onPressed: () => controller.showAddReplySheet(context),
+      tooltip: AppLocalizations.of(context)!.postActionComment,
+      child: const Icon(Icons.reply_all_outlined),
     );
   }
 }
@@ -177,11 +188,12 @@ class _DetailTitleBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text(AppLocalizations.of(context)!.postTitlePrefix(item.title)),
       shadowColor: Theme.of(context).shadowColor,
       actions: [
-        IconButton(
-          onPressed: onReply,
-          tooltip: AppLocalizations.of(context)!.postActionComment,
-          icon: const Icon(Icons.reply_all_outlined),
-        ),
+        if (embedded)
+          IconButton(
+            onPressed: onReply,
+            tooltip: AppLocalizations.of(context)!.postActionComment,
+            icon: const Icon(Icons.reply_all_outlined),
+          ),
         if (Platform.isAndroid || Platform.isAndroid)
           IconButton(
             onPressed: _onShareClick,
@@ -214,27 +226,20 @@ class _DetailPageReplies extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hasReply =
-          controller.replyItems.isNotEmpty ||
-          controller.newReplyItems.isNotEmpty;
+      final replyItems = controller.replyItems;
+      final newReplyItems = controller.newReplyItems;
+      final hasReply = replyItems.isNotEmpty || newReplyItems.isNotEmpty;
       final showReplySkeleton = controller.isReplyLoading.value && !hasReply;
-      final showInitialSkeleton =
-          showReplySkeleton || controller.firstPost.value == null;
 
       return SimpleEasyRefresher(
         onLoad: controller.onReplyLoad,
         onRefresh: controller.onReplyRefresh,
         easyRefreshController: controller.refreshController,
         autoRefreshOnStart: false,
-        refreshEnabled: !showInitialSkeleton,
-        loadEnabled: !showInitialSkeleton,
+        refreshEnabled: !showReplySkeleton,
+        loadEnabled: !showReplySkeleton,
         childBuilder: (context, physics) {
-          final hasReply =
-              controller.replyItems.isNotEmpty ||
-              controller.newReplyItems.isNotEmpty;
-          final showReplySkeleton =
-              controller.isReplyLoading.value && !hasReply;
-          final effectivePhysics = showInitialSkeleton
+          final effectivePhysics = showReplySkeleton
               ? const ClampingScrollPhysics()
               : physics;
 
@@ -243,12 +248,9 @@ class _DetailPageReplies extends StatelessWidget {
             physics: effectivePhysics,
             slivers: [
               SliverToBoxAdapter(
-                child: Obx(
-                  () => PostMainWidget(
-                    content: item,
-                    info: controller.firstPost.value,
-                    controllerTag: controllerTag,
-                  ),
+                child: PostMainWidget(
+                  content: item,
+                  controllerTag: controllerTag,
                 ),
               ),
 
@@ -257,7 +259,9 @@ class _DetailPageReplies extends StatelessWidget {
               ),
 
               if (showReplySkeleton)
-                const SliverToBoxAdapter(child: _ReplyListLoadingSkeleton())
+                const SliverToBoxAdapter(
+                  child: PostListLoadingSkeleton(minItems: 3, maxItems: 6),
+                )
               else if (!hasReply)
                 SliverFillRemaining(
                   hasScrollBody: false,
@@ -269,138 +273,27 @@ class _DetailPageReplies extends StatelessWidget {
                 )
               else
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final totalNew = controller.newReplyItems.length;
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final totalNew = newReplyItems.length;
 
-                      if (index < totalNew) {
-                        return PostItemWidget(
-                          reply: controller.newReplyItems[index],
-                          controllerTag: controllerTag,
-                        );
-                      }
-
-                      final i = index - totalNew;
+                    if (index < totalNew) {
                       return PostItemWidget(
-                        reply: controller.replyItems[i],
+                        reply: newReplyItems[index],
                         controllerTag: controllerTag,
                       );
-                    },
-                    childCount:
-                        controller.newReplyItems.length +
-                        controller.replyItems.length,
-                  ),
+                    }
+
+                    final i = index - totalNew;
+                    return PostItemWidget(
+                      reply: replyItems[i],
+                      controllerTag: controllerTag,
+                    );
+                  }, childCount: newReplyItems.length + replyItems.length),
                 ),
             ],
           );
         },
       );
     });
-  }
-}
-
-class _ReplyListLoadingSkeleton extends StatelessWidget {
-  const _ReplyListLoadingSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return SkeletonShimmer(
-      duration: const Duration(milliseconds: 1420),
-      highlightStrength: 0.22,
-      builder: (context, palette) {
-        return Column(
-          children: List<Widget>.generate(
-            3,
-            (index) => _ReplyLoadingCard(
-              pillDecoration: palette.line(),
-              circleDecoration: palette.circle(),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-@immutable
-class _ReplyLoadingCard extends StatelessWidget {
-  const _ReplyLoadingCard({
-    required this.pillDecoration,
-    required this.circleDecoration,
-  });
-
-  final Decoration pillDecoration;
-  final Decoration circleDecoration;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(width: 44, height: 44, decoration: circleDecoration),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.32,
-                      height: 14,
-                    ),
-                    const SizedBox(height: 8),
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.22,
-                      height: 12,
-                    ),
-                    const SizedBox(height: 14),
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.96,
-                      height: 12,
-                    ),
-                    const SizedBox(height: 8),
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.84,
-                      height: 12,
-                    ),
-                    const SizedBox(height: 8),
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.58,
-                      height: 12,
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Container(
-                          width: 74,
-                          height: 32,
-                          decoration: pillDecoration,
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          width: 44,
-                          height: 32,
-                          decoration: pillDecoration,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const Divider(height: 1, thickness: 0.5, indent: 12, endIndent: 12),
-        ],
-      ),
-    );
   }
 }

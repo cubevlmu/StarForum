@@ -14,6 +14,7 @@ class NotificationsInfo {
   final String contentType;
   final DateTime createdAt;
   bool isRead;
+  final JsonMap? content;
 
   UserInfo? fromUser;
   NotificationSubject? subject;
@@ -25,6 +26,7 @@ class NotificationsInfo {
     required this.contentType,
     required this.createdAt,
     required this.isRead,
+    this.content,
     this.fromUser,
     this.subject,
     this.cachedTitle,
@@ -32,11 +34,13 @@ class NotificationsInfo {
   });
 
   factory NotificationsInfo.formMapAndId(Map map, int id) {
+    final attrs = JsonReader(asJsonMap(map));
     return NotificationsInfo(
       id: id,
-      contentType: map["contentType"],
-      createdAt: DateTime.parse(map["createdAt"]),
-      isRead: map["isRead"] ?? false,
+      contentType: attrs.string("contentType"),
+      createdAt: attrs.dateTime("createdAt"),
+      isRead: attrs.boolean("isRead"),
+      content: map["content"] is Map ? asJsonMap(map["content"]) : null,
     );
   }
 
@@ -55,32 +59,37 @@ class NotificationInfoList {
   }
 
   factory NotificationInfoList.fromBase(BaseListBean base) {
-    List<NotificationsInfo> list = [];
-    final Map<String, Map<int, dynamic>> included = {};
+    final list = <NotificationsInfo>[];
+    final users = <int, UserInfo>{};
+    final posts = <int, PostInfo>{};
+    final discussions = <int, DiscussionNotificationInfo>{};
+    final quests = <int, QuestInfo>{};
+    final levels = <int, LevelInfo>{};
+    final badges = <int, UserBadgeInfo>{};
+    final warnings = <int, WarningInfo>{};
 
-    void addIncluded(String type, int id, dynamic value) {
-      included.putIfAbsent(type, () => {})[id] = value;
-    }
-
-    for (var d in base.included.data) {
+    for (final d in base.included.data) {
       switch (d.type) {
         case "users":
-          addIncluded("users", d.id, UserInfo.fromBaseData(d));
+          users[d.id] = UserInfo.fromBaseData(d);
           break;
         case "posts":
-          addIncluded("posts", d.id, PostInfo.fromBaseData(d));
+          posts[d.id] = PostInfo.fromBaseData(d);
+          break;
+        case "discussions":
+          discussions[d.id] = DiscussionNotificationInfo.fromBaseData(d);
           break;
         case "quest-infos":
-          addIncluded("quest-infos", d.id, QuestInfo.fromBaseData(d));
+          quests[d.id] = QuestInfo.fromBaseData(d);
           break;
         case "levels":
-          addIncluded("levels", d.id, LevelInfo.fromBaseData(d));
+          levels[d.id] = LevelInfo.fromBaseData(d);
           break;
         case "userBadges":
-          addIncluded("userBadges", d.id, UserBadgeInfo.fromBaseData(d));
+          badges[d.id] = UserBadgeInfo.fromBaseData(d);
           break;
         case "warnings":
-          addIncluded("warnings", d.id, WarningInfo.fromBaseData(d));
+          warnings[d.id] = WarningInfo.fromBaseData(d);
           break;
       }
     }
@@ -88,30 +97,79 @@ class NotificationInfoList {
     for (var d in base.data.list) {
       final n = NotificationsInfo.formMapAndId(d.attributes, d.id);
 
-      // fromUser
-      final from = d.relationships["fromUser"]?["data"];
-      if (from != null) {
-        n.fromUser = included["users"]?[int.parse(from["id"])];
-      }
+      n.fromUser = users[d.relatedId("fromUser", -1)];
 
-      // subject
-      final sub = d.relationships["subject"]?["data"];
-      if (sub != null) {
-        final type = sub["type"];
-        final id = int.parse(sub["id"]);
-        final obj = included[type]?[id];
-
-        if (obj is PostInfo) {
-          n.subject = PostSubject(obj);
-        } else if (obj is QuestInfo) {
-          n.subject = QuestSubject(obj);
-        } else if (obj is LevelInfo) {
-          n.subject = LevelSubject(obj);
-        } else if (obj is UserBadgeInfo) {
-          n.subject = UserBadgeSubject(obj);
-        } else if (obj is WarningInfo) {
-          n.subject = WarningSubject(obj);
-        }
+      final subjectType = d.relatedType("subject");
+      final subjectId = d.relatedId("subject", -1);
+      switch (subjectType) {
+        case "posts":
+          final post = posts[subjectId];
+          if (post != null) {
+            n.subject = PostSubject(post);
+          } else if (subjectId >= 0) {
+            n.subject = PostSubject(
+              PostInfo(subjectId, '', '', '', -1, -1, -1, -1),
+            );
+          }
+          break;
+        case "discussions":
+          final discussion = discussions[subjectId];
+          if (discussion != null) {
+            n.subject = DiscussionSubject(discussion);
+          } else if (subjectId >= 0) {
+            n.subject = DiscussionSubject(
+              DiscussionNotificationInfo(id: subjectId, title: ''),
+            );
+          }
+          break;
+        case "users":
+          final user = users[subjectId];
+          if (user != null) {
+            n.subject = UserSubject(
+              NotificationUserInfo(
+                id: user.id,
+                displayName: user.displayName,
+                avatarUrl: user.avatarUrl,
+              ),
+            );
+          } else if (subjectId >= 0) {
+            n.subject = UserSubject(
+              NotificationUserInfo(
+                id: subjectId,
+                displayName: n.fromUser?.displayName ?? '',
+                avatarUrl: n.fromUser?.avatarUrl ?? '',
+              ),
+            );
+          }
+          break;
+        case "quest-infos":
+          final quest = quests[subjectId];
+          if (quest != null) {
+            n.subject = QuestSubject(quest);
+          } else if (subjectId >= 0) {
+            n.subject = QuestSubject(
+              QuestInfo(id: subjectId, name: '', description: ''),
+            );
+          }
+          break;
+        case "levels":
+          final level = levels[subjectId];
+          if (level != null) {
+            n.subject = LevelSubject(level);
+          } else if (subjectId >= 0) {
+            n.subject = LevelSubject(
+              LevelInfo(id: subjectId, name: '', minExpRequired: 0),
+            );
+          }
+          break;
+        case "userBadges":
+          final badge = badges[subjectId];
+          if (badge != null) n.subject = UserBadgeSubject(badge);
+          break;
+        case "warnings":
+          final warning = warnings[subjectId];
+          if (warning != null) n.subject = WarningSubject(warning);
+          break;
       }
 
       list.add(n);
@@ -135,6 +193,40 @@ class PostSubject extends NotificationSubject {
   PostSubject(this.post) : super("posts", post.id);
 }
 
+class DiscussionNotificationInfo {
+  final int id;
+  final String title;
+
+  DiscussionNotificationInfo({required this.id, required this.title});
+
+  factory DiscussionNotificationInfo.fromBaseData(BaseData d) {
+    final attrs = d.attrs;
+    return DiscussionNotificationInfo(id: d.id, title: attrs.string("title"));
+  }
+}
+
+class DiscussionSubject extends NotificationSubject {
+  final DiscussionNotificationInfo discussion;
+  DiscussionSubject(this.discussion) : super("discussions", discussion.id);
+}
+
+class NotificationUserInfo {
+  final int id;
+  final String displayName;
+  final String avatarUrl;
+
+  NotificationUserInfo({
+    required this.id,
+    required this.displayName,
+    required this.avatarUrl,
+  });
+}
+
+class UserSubject extends NotificationSubject {
+  final NotificationUserInfo user;
+  UserSubject(this.user) : super("users", user.id);
+}
+
 class QuestSubject extends NotificationSubject {
   final QuestInfo quest;
   QuestSubject(this.quest) : super("quest-infos", quest.id);
@@ -153,10 +245,11 @@ class QuestInfo {
   QuestInfo({required this.id, required this.name, required this.description});
 
   factory QuestInfo.fromBaseData(BaseData d) {
+    final attrs = d.attrs;
     return QuestInfo(
       id: d.id,
-      name: d.attributes["name"],
-      description: d.attributes["description"],
+      name: attrs.string("name"),
+      description: attrs.string("description"),
     );
   }
 }
@@ -173,10 +266,11 @@ class LevelInfo {
   });
 
   factory LevelInfo.fromBaseData(BaseData d) {
+    final attrs = d.attrs;
     return LevelInfo(
       id: d.id,
-      name: d.attributes["name"],
-      minExpRequired: d.attributes["min_exp_required"] ?? 0,
+      name: attrs.string("name"),
+      minExpRequired: attrs.integer("min_exp_required"),
     );
   }
 }
@@ -197,12 +291,13 @@ class UserBadgeInfo {
   });
 
   factory UserBadgeInfo.fromBaseData(BaseData d) {
+    final attrs = d.attrs;
     return UserBadgeInfo(
       id: d.id,
-      description: d.attributes["description"],
-      assignedAt: DateTime.parse(d.attributes["assignedAt"]),
-      isPrimary: (d.attributes["isPrimary"] ?? 0) == 1,
-      inUserCard: d.attributes["inUserCard"] ?? false,
+      description: attrs["description"] as String?,
+      assignedAt: attrs.dateTime("assignedAt"),
+      isPrimary: attrs.boolean("isPrimary"),
+      inUserCard: attrs.boolean("inUserCard"),
     );
   }
 }
@@ -230,13 +325,14 @@ class WarningInfo {
   });
 
   factory WarningInfo.fromBaseData(BaseData d) {
+    final attrs = d.attrs;
     return WarningInfo(
       id: d.id,
-      userId: d.attributes["userId"],
-      publicComment: d.attributes["public_comment"],
-      privateComment: d.attributes["private_comment"],
-      strikes: d.attributes["strikes"] ?? 0,
-      createdAt: DateTime.parse(d.attributes["createdAt"]),
+      userId: attrs.integer("userId"),
+      publicComment: attrs["public_comment"] as String?,
+      privateComment: attrs["private_comment"] as String?,
+      strikes: attrs.integer("strikes"),
+      createdAt: attrs.dateTime("createdAt"),
     );
   }
 }

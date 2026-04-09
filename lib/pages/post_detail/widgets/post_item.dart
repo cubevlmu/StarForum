@@ -34,7 +34,8 @@ class _PostItemWidgetState extends State<PostItemWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return RepaintBoundary(
+      child: Column(
       children: [
         Padding(
           padding: const EdgeInsets.all(10),
@@ -142,9 +143,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                               child: _ReplyButton(
                                 postItem: widget.reply,
                                 controllerTag: widget.controllerTag ?? "",
-                                updateWidget: () {
-                                  setState(() => ());
-                                },
+                                updateWidget: () {},
                               ),
                             ),
                         ],
@@ -157,6 +156,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
           ),
         ),
       ],
+      ),
     );
   }
 

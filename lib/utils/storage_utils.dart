@@ -16,10 +16,16 @@ class StorageUtils {
   static Future<void> ensureInitialized() async {
     if (!_initialized) {
       Hive.init("${(await getApplicationSupportDirectory()).path}/hive");
-      user = await Hive.openBox("user");
-      networkData = await Hive.openBox("networkData");
-      settings = await Hive.openBox("settings");
-      history = await Hive.openBox("history");
+      final boxes = await Future.wait<Box<dynamic>>([
+        Hive.openBox("user"),
+        Hive.openBox("networkData"),
+        Hive.openBox("settings"),
+        Hive.openBox("history"),
+      ]);
+      user = boxes[0];
+      networkData = boxes[1];
+      settings = boxes[2];
+      history = boxes[3];
       _initialized = true;
     }
   }
@@ -38,7 +44,7 @@ class SettingsStorageKeys {
 
   static const String autoCheckUpdate = "autoCheckUpdate";
   static const String showSearchHistory = "showSearchHistory";
-  
+
   static const String textScaleFactor = 'textScaleFactor';
   static const String apiBaseUrl = 'apiBaseUrl';
 }

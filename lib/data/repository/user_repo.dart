@@ -27,10 +27,29 @@ class UserRepo {
 
   bool _setupCalled = false;
   bool _isHandling = false;
+  Future<void>? _setupTask;
 
   int get userId => int.parse(storge.userId ?? "-1");
 
   Future<void> setup() async {
+    final activeTask = _setupTask;
+    if (activeTask != null) {
+      await activeTask;
+      return;
+    }
+
+    final task = _performSetup();
+    _setupTask = task;
+    try {
+      await task;
+    } finally {
+      if (identical(_setupTask, task)) {
+        _setupTask = null;
+      }
+    }
+  }
+
+  Future<void> _performSetup() async {
     if (_setupCalled) {
       LogUtil.debug("[UserRepo] setup already called");
       return;
@@ -108,10 +127,31 @@ class UserRepo {
     }
   }
 
+  Future<bool> refreshCurrentUser() async {
+    if (!isLogin || storge.userId == null) {
+      return false;
+    }
+
+    try {
+      final me = await Api.getUserInfoByNameOrId(storge.userId!);
+      if (me == null) {
+        return false;
+      }
+
+      _user = me;
+      _state = .loggedIn;
+      _notifyLoginState();
+      return true;
+    } catch (e, s) {
+      LogUtil.errorE("[UserRepo] refreshCurrentUser failed", e, s);
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     if (_isHandling) return;
     _isHandling = true;
-    
+
     storge.clearAutoLogin();
     await _clearLogin();
 
@@ -137,24 +177,18 @@ class UserRepo {
   }
 
   Future<bool> _autoRelogin() async {
-  if (!storge.autoRelogin) return false;
+    if (!storge.autoRelogin) return false;
 
-  final last = storge.lastInputPwdTime;
-  if (last == null ||
-      DateTime.now().difference(last).inDays > 7) {
-    return false;
+    final last = storge.lastInputPwdTime;
+    if (last == null || DateTime.now().difference(last).inDays > 7) {
+      return false;
+    }
+
+    final pwd = await storge.password;
+    if (pwd == null) return false;
+
+    return login(storge.username ?? "", pwd, autoRelogin: true);
   }
-
-  final pwd = await storge.password;
-  if (pwd == null) return false;
-
-  return login(
-    storge.username ?? "",
-    pwd,
-    autoRelogin: true,
-  );
-}
-
 
   void _setNotLogin() {
     _user = null;
@@ -169,7 +203,8 @@ class UserRepo {
     } catch (_) {}
 
     try {
-      Get.find<NotificationPageController>().isLogin.value = isLogin;
+      final notificationController = Get.find<NotificationPageController>();
+      notificationController.handleLoginStateChanged(isLogin);
     } catch (_) {}
 
     try {

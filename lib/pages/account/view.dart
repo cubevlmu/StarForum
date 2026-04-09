@@ -44,7 +44,7 @@ class _AccountPageState extends State<AccountPage>
       body: Obx(() {
         if (!controller.isLogin.value) {
           return NotLoginNotice(
-            title: AppLocalizations.of(context)!.authNotLoginTitle,
+            title: AppLocalizations.of(context)!.commonNotLoggedInTitle,
             tipsText: AppLocalizations.of(context)!.authNotLoginTips,
           );
         } else {

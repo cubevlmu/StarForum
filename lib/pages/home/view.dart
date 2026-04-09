@@ -6,17 +6,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/main/controller.dart';
+import 'package:star_forum/pages/badge/view.dart';
 import 'package:star_forum/pages/home/controller.dart';
 import 'package:star_forum/pages/home/widgets/user_dialog.dart';
-import 'package:star_forum/pages/post_list/controller.dart';
 import 'package:star_forum/pages/post_list/view.dart';
 import 'package:star_forum/pages/search/view.dart';
-import 'package:star_forum/pages/theme_list/controller.dart';
-import 'package:star_forum/pages/theme_list/view.dart';
+import 'package:star_forum/pages/subscription/view.dart';
+import 'package:star_forum/pages/user_group/view.dart';
 import 'package:star_forum/widgets/avatar.dart';
-import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/sheet_util.dart';
 
 class HomePage extends StatefulWidget {
@@ -26,28 +26,27 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  late HomeController controller;
-
-  final PostListPage postListPage = const PostListPage();
-  final ThemeListPage themeListPage = const ThemeListPage();
-  // final LiveTabPage liveTabPage = const LiveTabPage();
-  List<Map<String, dynamic>> tabsList = [];
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  late final HomeController controller;
+  late final TabController _tabController;
 
   @override
   void initState() {
     controller = Get.put(HomeController());
-    tabsList = controller.tabsList;
-    controller.tabController = TabController(
-      length: tabsList.length,
-      vsync: this,
-      initialIndex: controller.tabInitIndex,
-    );
+    _tabController = TabController(length: 4, vsync: this);
     super.initState();
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Obx(() => Text(controller.info.value?.title ?? "")),
@@ -65,7 +64,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 MaterialPageRoute(builder: (_) => const SearchPage()),
               );
             },
-            icon: Icon(Icons.search_outlined),
+            icon: const Icon(Icons.search_outlined),
           ),
           const SizedBox(width: 10),
           Obx(() {
@@ -84,38 +83,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           }),
           const SizedBox(width: 10),
         ],
-        bottom: TabBar(
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          padding: const EdgeInsets.only(left: 8),
-          tabs: tabsList.map((e) => Tab(text: e['text'])).toList(),
-          controller: controller.tabController,
-          onTap: (index) {
-            if (controller.tabController!.indexIsChanging) return;
-            switch (index) {
-              case 0:
-                Get.find<PostListController>().animateToTop();
-                break;
-              case 1:
-                Get.find<ThemeListController>().animateToTop();
-                break;
-              default:
-            }
-          },
-        ),
       ),
-      body: TabBarView(
-        controller: controller.tabController,
-        children: tabsList.map((e) {
-          switch (e['id']) {
-            case 'posts':
-              return postListPage;
-            case 'theme':
-              return themeListPage;
-            default:
-              return const WorkInProgressNotice();
-          }
-        }).toList(),
+      body: Column(
+        children: [
+          Material(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: [
+                Tab(text: l10n.homeSectionAllTopics),
+                Tab(text: l10n.homeSectionFollowing),
+                Tab(text: l10n.homeSectionUsers),
+                Tab(text: l10n.homeSectionBadges),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: const [
+                PostListPage(),
+                SubscriptionPage(),
+                UserGroupPage(),
+                BadgePage(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

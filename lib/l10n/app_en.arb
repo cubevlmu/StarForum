@@ -5,6 +5,10 @@
   "@mainHomePage": {
     "description": "Navigation tile title of home page"
   },
+  "mainTagsPage": "Tags",
+  "@mainTagsPage": {
+    "description": "Navigation tile title of tags page"
+  },
   "mainNotiPage": "Notification",
   "@mainNotiPage": {
     "description": "Navigation tile title of notification page"
@@ -34,24 +38,28 @@
   
   "notificationTitle": "Notifications",
   "@notificationTitle": {},
-  
+  "notificationTabLikes": "Likes",
+  "@notificationTabLikes": {},
+  "notificationTabReplies": "Replies",
+  "@notificationTabReplies": {},
+  "notificationTabNotices": "Notices",
+  "@notificationTabNotices": {},
+
   "notificationEmptyTitle": "No notifications",
   "@notificationEmptyTitle": {},
   
   "notificationEmptyTips": "Replies, mentions and system messages will appear here",
   "@notificationEmptyTips": {},
   
-  "notificationNotLoginTitle": "You are not logged in",
-  "@notificationNotLoginTitle": {},
-  
   "notificationNotLoginTips": "Log in to view your notifications",
   "@notificationNotLoginTips": {},
 
-  "postListEmptyTitle": "No posts yet",
-  "@postListEmptyTitle": {},
-  
-  "postListEmptyTips": "Pull down to refresh",
-  "@postListEmptyTips": {},
+  "commonNotLoggedInTitle": "You are not logged in",
+  "@commonNotLoggedInTitle": {},
+  "commonEmptyPostsTitle": "No posts yet",
+  "@commonEmptyPostsTitle": {},
+  "commonPullToRefreshTips": "Pull down to refresh",
+  "@commonPullToRefreshTips": {},
 
   "postCreateTagRequiredInline": "A primary tag must be selected!",
   "@postCreateTagRequiredInline": {},
@@ -103,6 +111,10 @@
   
   "postCreateSuccess": "Published successfully",
   "@postCreateSuccess": {},
+  "postActionFollow": "Follow",
+  "@postActionFollow": {},
+  "postActionUnfollow": "Unfollow",
+  "@postActionUnfollow": {},
 
   "splashTitle": "Syncing Data",
   "@splashTitle": {},
@@ -150,12 +162,6 @@
   "userNotLoginTips": "Please log in to view this page",
   "@userNotLoginTips": {},
 
-  "userEmptyPostTitle": "No posts yet",
-  "@userEmptyPostTitle": {},
-  
-  "userEmptyPostTips": "Pull down to refresh",
-  "@userEmptyPostTips": {},
-
   "userDiscussionHintPrefix": "in ",
   "@userDiscussionHintPrefix": {},
   
@@ -182,10 +188,22 @@
   "@userDetailsCollapse": {},
   "userDetailsTitle": "Details",
   "@userDetailsTitle": {},
+  "userSectionInfo": "Info",
+  "@userSectionInfo": {},
+  "userSectionBadges": "Badges",
+  "@userSectionBadges": {},
   "userDiscussionCountLabel": "Topics",
   "@userDiscussionCountLabel": {},
   "userCommentCountLabel": "Replies",
   "@userCommentCountLabel": {},
+  "userEmptyTopicsTitle": "No topics yet",
+  "@userEmptyTopicsTitle": {},
+  "userEmptyTopicsTips": "This user has not started any topics yet.",
+  "@userEmptyTopicsTips": {},
+  "userBadgesEmptyTitle": "No badges yet",
+  "@userBadgesEmptyTitle": {},
+  "userBadgesEmptyTips": "This user has no visible badges or group marks yet.",
+  "@userBadgesEmptyTips": {},
   "userFieldHidden": "Hidden",
   "@userFieldHidden": {},
   "userFieldId": "User ID",
@@ -207,9 +225,6 @@
   "accountAppBarTitle": "Account",
   "@accountAppBarTitle": {},
 
-  "authNotLoginTitle": "You are not logged in",
-  "@authNotLoginTitle": {},
-  
   "authNotLoginTips": "Please log in to view your profile information",
   "@authNotLoginTips": {},
 
@@ -219,12 +234,6 @@
   "commonActionSettings": "Settings",
   "@commonActionSettings": {},
   
-  "homeTabPosts": "Posts",
-  "@homeTabPosts": {},
-  
-  "homeTabThemes": "Themes",
-  "@homeTabThemes": {},
-
   "commonNoticeWorkInProgress": "This feature is under development",
   "@commonNoticeWorkInProgress": {},
   
@@ -281,7 +290,21 @@
   
   "aboutCheckUpdate": "Check for Updates",
   "@aboutCheckUpdate": {},
-  
+  "aboutAlreadyLatest": "You're already on the latest version",
+  "@aboutAlreadyLatest": {},
+  "aboutUpdateCheckFailed": "Failed to check for updates",
+  "@aboutUpdateCheckFailed": {},
+  "aboutDownloadUpdate": "Download",
+  "@aboutDownloadUpdate": {},
+  "aboutUpdateNoDescription": "No release notes were provided for this version",
+  "@aboutUpdateNoDescription": {},
+  "aboutUpdateVersionLabel": "Latest version: {version}",
+  "@aboutUpdateVersionLabel": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+
   "aboutAuthor": "Author",
   "@aboutAuthor": {},
   
@@ -399,6 +422,44 @@
   
   "@notificationPostLikedTitle": {},
   "notificationPostLikedDesc": "Post: {content}",
+  "notificationNewPostByUserTitle": "{username} posted a new reply",
+  "@notificationNewPostByUserTitle": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "notificationNewPostByUserDesc": "Discussion: {title}",
+  "@notificationNewPostByUserDesc": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "notificationNewDiscussionByUserTitle": "{username} started a new discussion",
+  "@notificationNewDiscussionByUserTitle": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "notificationNewDiscussionByUserDesc": "Discussion: {title}",
+  "@notificationNewDiscussionByUserDesc": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "notificationNewFollowerTitle": "{username} followed you",
+  "@notificationNewFollowerTitle": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "notificationNewFollowerDesc": "Tap to view profile",
+  "@notificationNewFollowerDesc": {},
+  "notificationQuestDoneTitle": "Quest completed",
+  "@notificationQuestDoneTitle": {},
+  "notificationQuestDoneDesc": "You completed a quest",
+  "@notificationQuestDoneDesc": {},
+  "notificationDiscussionFallback": "Related discussion",
+  "@notificationDiscussionFallback": {},
 
   "notificationBadgeReceivedTitle": "Badge received",
   "@notificationBadgeReceivedTitle": {},
@@ -537,6 +598,8 @@
   "@searchHistoryTitle": {},
   "searchHistoryClearAction": "Clear",
   "@searchHistoryClearAction": {},
+  "searchHistoryClearConfirm": "Clear all search history?",
+  "@searchHistoryClearConfirm": {},
   "searchHistoryDeleteAction": "Delete",
   "@searchHistoryDeleteAction": {},
   "searchResultEmptyTitle": "No related content found",
@@ -731,5 +794,95 @@
   "mainDetailUnsupportedTitle": "No detail pane on this page",
   "@mainDetailUnsupportedTitle": {},
   "mainDetailUnsupportedTips": "Split detail view is currently available for Home posts only",
-  "@mainDetailUnsupportedTips": {}
+  "@mainDetailUnsupportedTips": {},
+  "homeSectionAllTopics": "All topics",
+  "@homeSectionAllTopics": {},
+  "homeSectionFollowing": "Following",
+  "@homeSectionFollowing": {},
+  "homeFollowingSort": "Sort",
+  "@homeFollowingSort": {},
+  "homeFollowingSortHottest": "Hottest",
+  "@homeFollowingSortHottest": {},
+  "homeFollowingSortLatestReply": "Latest replies",
+  "@homeFollowingSortLatestReply": {},
+  "homeFollowingSortNewest": "Newest",
+  "@homeFollowingSortNewest": {},
+  "homeFollowingSortOldest": "Oldest",
+  "@homeFollowingSortOldest": {},
+  "homeFollowingSortMostViews": "Most views",
+  "@homeFollowingSortMostViews": {},
+  "homeFollowingFilter": "Filter",
+  "@homeFollowingFilter": {},
+  "homeFollowingFilterPosts": "Posts",
+  "@homeFollowingFilterPosts": {},
+  "homeFollowingFilterTags": "Tags",
+  "@homeFollowingFilterTags": {},
+  "homeFollowingNotLoginTips": "Log in to view the posts you follow",
+  "@homeFollowingNotLoginTips": {},
+  "homeSectionUsers": "Users",
+  "@homeSectionUsers": {},
+  "homeUserDirectoryNotLoginTips": "Log in to view the user directory",
+  "@homeUserDirectoryNotLoginTips": {},
+  "homeSectionGroups": "Groups",
+  "@homeSectionGroups": {},
+  "homeSectionBadges": "Badges",
+  "@homeSectionBadges": {},
+  "badgePageEmptyTitle": "No badge categories yet",
+  "@badgePageEmptyTitle": {},
+  "badgePageEmptyTips": "Try refreshing later to see newly added community badges.",
+  "@badgePageEmptyTips": {},
+  "badgePageEarnedSuffix": "users earned this badge",
+  "@badgePageEarnedSuffix": {},
+  "homeUserDirectoryEmptyTitle": "No users found",
+  "@homeUserDirectoryEmptyTitle": {},
+  "homeUserDirectoryEmptyTips": "Try refreshing or adjusting the filters.",
+  "@homeUserDirectoryEmptyTips": {},
+  "homeUserDirectorySort": "Sort",
+  "@homeUserDirectorySort": {},
+  "homeUserDirectorySortNewest": "Newest",
+  "@homeUserDirectorySortNewest": {},
+  "homeUserDirectorySortOldest": "Oldest",
+  "@homeUserDirectorySortOldest": {},
+  "homeUserDirectorySortUsernameAsc": "Username (A-Z)",
+  "@homeUserDirectorySortUsernameAsc": {},
+  "homeUserDirectorySortUsernameDesc": "Username (Z-A)",
+  "@homeUserDirectorySortUsernameDesc": {},
+  "homeUserDirectorySortMostTopics": "Most topics",
+  "@homeUserDirectorySortMostTopics": {},
+  "homeUserDirectorySortLeastTopics": "Least topics",
+  "@homeUserDirectorySortLeastTopics": {},
+  "homeUserDirectorySortMostExp": "Most EXP",
+  "@homeUserDirectorySortMostExp": {},
+  "homeUserDirectorySortLeastExp": "Least EXP",
+  "@homeUserDirectorySortLeastExp": {},
+  "homeUserDirectoryFilterGroup": "Group",
+  "@homeUserDirectoryFilterGroup": {},
+  "homeUserDirectoryFilterAll": "All groups",
+  "@homeUserDirectoryFilterAll": {},
+  "homeUserDirectorySearchHint": "Search users",
+  "@homeUserDirectorySearchHint": {},
+  "homeUserDirectoryRefresh": "Refresh",
+  "@homeUserDirectoryRefresh": {},
+  "userAvatarCropTitle": "Upload",
+  "@userAvatarCropTitle": {},
+  "userAvatarCropHint": "Drag and scale the image, then upload a square avatar crop.",
+  "@userAvatarCropHint": {},
+  "userAvatarCropUpload": "Crop and upload",
+  "@userAvatarCropUpload": {},
+  "userAvatarUploadSuccess": "Avatar updated",
+  "@userAvatarUploadSuccess": {},
+  "userAvatarUploadFailed": "Failed to upload avatar",
+  "@userAvatarUploadFailed": {},
+  "userAvatarSelectFailed": "Failed to select image",
+  "@userAvatarSelectFailed": {},
+  "userAvatarInvalidImage": "Unable to read the selected image",
+  "@userAvatarInvalidImage": {},
+  "userBioEditTitle": "Edit bio",
+  "@userBioEditTitle": {},
+  "userBioEditHint": "Write something about yourself",
+  "@userBioEditHint": {},
+  "userBioUpdateSuccess": "Bio updated",
+  "@userBioUpdateSuccess": {},
+  "userBioUpdateFailed": "Failed to update bio",
+  "@userBioUpdateFailed": {}
 }

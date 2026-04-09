@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/forum_info.dart';
+import 'package:star_forum/pages/main/view.dart';
 import 'package:star_forum/pages/setup/controller.dart';
 import 'package:star_forum/pages/setup/pages/finish_page.dart';
 import 'package:star_forum/pages/setup/pages/greeting_page.dart';
@@ -15,8 +16,19 @@ import 'package:get/get.dart';
 
 class SetupPage extends StatefulWidget {
   final bool isSetup;
+  final bool embedded;
+  final VoidCallback? onEmbeddedLeadingPressed;
+  final bool showEmbeddedBack;
+  final VoidCallback? onFinish;
 
-  const SetupPage({super.key, this.isSetup = false});
+  const SetupPage({
+    super.key,
+    this.isSetup = false,
+    this.embedded = false,
+    this.onEmbeddedLeadingPressed,
+    this.showEmbeddedBack = false,
+    this.onFinish,
+  });
 
   @override
   State<SetupPage> createState() => _SetupPageState();
@@ -44,8 +56,22 @@ class _SetupPageState extends State<SetupPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: !(widget.isSetup || widget.embedded),
         leading: widget.isSetup
             ? null
+            : widget.embedded
+            ? Obx(
+                () => IconButton(
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : widget.onEmbeddedLeadingPressed,
+                  icon: Icon(
+                    widget.showEmbeddedBack
+                        ? Icons.arrow_back_rounded
+                        : Icons.close_rounded,
+                  ),
+                ),
+              )
             : Obx(
                 () => IconButton(
                   onPressed: controller.isLoading.value ? null : _onCloseCall,
@@ -59,7 +85,10 @@ class _SetupPageState extends State<SetupPage> {
         children: [
           if (widget.isSetup) GreetingPage(controller: controller),
           if (!Api.hasFixedBaseUrl) SetupSitePage(controller: controller),
-          FinishPage(controller: controller),
+          FinishPage(
+            controller: controller,
+            onFinish: _onFinishSetup,
+          ),
         ],
       ),
     );
@@ -67,5 +96,16 @@ class _SetupPageState extends State<SetupPage> {
 
   void _onCloseCall() {
     Navigator.of(context).pop();
+  }
+
+  void _onFinishSetup() {
+    if (widget.onFinish != null) {
+      widget.onFinish!();
+      return;
+    }
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const MainPage()),
+      (route) => false,
+    );
   }
 }

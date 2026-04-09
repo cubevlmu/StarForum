@@ -30,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -38,7 +38,14 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (m, from, to) async {
-      await m.recreateAllViews();
+      await transaction(() async {
+        await customStatement(
+          'DROP TABLE IF EXISTS db_discussion_excerpt_cache',
+        );
+        await customStatement('DROP TABLE IF EXISTS db_first_posts');
+        await customStatement('DROP TABLE IF EXISTS db_discussions');
+        await m.createAll();
+      });
     },
   );
 }

@@ -54,21 +54,21 @@ class UserInfo {
   }
 
   factory UserInfo.fromBaseData(BaseData data) {
-    Map m = data.attributes;
+    final m = data.attrs;
     final ifo = _parseExpInfo(data);
 
     final u = UserInfo(
       data.id,
-      m["username"],
-      m["displayName"],
-      m["avatarUrl"] ?? "",
-      DateTime.tryParse(m["joinTime"] ?? "") ?? fallbackTime,
-      m["discussionCount"] ?? 0,
-      m["commentCount"] ?? 0,
-      DateTime.tryParse(m["lastSeenAt"] ?? "") ?? fallbackTime,
-      m["email"] ?? "",
-      m["groups"],
-      m["bio"] ?? "",
+      m.string("username"),
+      m.string("displayName"),
+      m.string("avatarUrl"),
+      m.dateTime("joinTime", fallbackTime),
+      m.integer("discussionCount"),
+      m.integer("commentCount"),
+      m.dateTime("lastSeenAt", fallbackTime),
+      m.string("email"),
+      m["groups"] is Groups ? m["groups"] as Groups : null,
+      m.string("bio"),
     );
     u.expInfo = ifo;
     return u;
@@ -103,16 +103,16 @@ class UserInfo {
   );
 
   static ExpInfo? _parseExpInfo(BaseData data) {
-    Map m = data.attributes;
-    if (!data.attributes.containsKey("expLevel")) {
+    final m = data.attrs;
+    if (!m.contains("expLevel")) {
       return null;
     }
     return ExpInfo(
-      m["expLevel"] ?? "",
-      m["expTotal"] ?? 0,
-      m["expPercent"] ?? 0,
-      m["expNext"] ?? "",
-      m["expNextNeed"] ?? 0,
+      m.string("expLevel"),
+      m.integer("expTotal"),
+      m.integer("expPercent"),
+      m.string("expNext"),
+      m.integer("expNextNeed"),
     );
   }
 }

@@ -11,8 +11,8 @@ import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:get/get.dart';
 
-class ThemeListController extends GetxController {
-  ThemeListController();
+class TagListController extends GetxController {
+  TagListController();
   final repo = getIt<TagRepo>();
 
   final RxInt selectId = 0.obs;
@@ -34,22 +34,49 @@ class ThemeListController extends GetxController {
   int offset = 0;
   bool _hasMore = true;
   RxBool isSearching = false.obs;
+  bool _hasLoaded = false;
 
   @override
   void onInit() {
-    primayTag.addAll(repo.getPrimaryTags());
-    tags.addAll(repo.getTags());
-
-    if (primayTag.isNotEmpty) {
-      selectId.value = primayTag.first.id;
-      _doInitialRefresh();
-    }
+    _reloadTagCache();
+    onLoading.value = false;
+    isInitialLoading.value = false;
     super.onInit();
   }
 
-  Future<void> _doInitialRefresh() async {
+  @override
+  void onClose() {
+    scrollController.dispose();
+    refreshController.dispose();
+    super.onClose();
+  }
+
+  void _reloadTagCache() {
+    final previousSelectedId = selectId.value;
+    final primary = repo.getPrimaryTags();
+    final secondary = repo.getTags();
+
+    primayTag.assignAll(primary);
+    tags.assignAll(secondary);
+
+    if (primary.isEmpty) {
+      selectId.value = 0;
+      return;
+    }
+
+    final stillExists = primary.any((tag) => tag.id == previousSelectedId);
+    selectId.value = stillExists ? previousSelectedId : primary.first.id;
+  }
+
+  Future<void> ensureLoaded() async {
+    if (_hasLoaded || onLoading.value || selectId.value == 0) {
+      return;
+    }
+    onLoading.value = true;
+    isInitialLoading.value = true;
     try {
       await onRefresh();
+      _hasLoaded = true;
     } finally {
       onLoading.value = false;
       isInitialLoading.value = false;
@@ -71,7 +98,7 @@ class ThemeListController extends GetxController {
     try {
       final r = repo.getTagById(selectId.value);
       if (r == null) {
-        LogUtil.error("[ThemePage] Empty tag info.");
+        LogUtil.error("[TagPage] Empty tag info.");
         SnackbarUtils.showMessage(
           msg: AppLocalizations.of(Get.context!)!.themeSelectTagHint,
         );
@@ -85,7 +112,7 @@ class ThemeListController extends GetxController {
       );
 
       if (data == null) {
-        LogUtil.error("[ThemePage] empty response");
+        LogUtil.error("[TagPage] empty response");
         return false;
       }
 
@@ -105,7 +132,7 @@ class ThemeListController extends GetxController {
 
       return true;
     } catch (e, s) {
-      LogUtil.errorE("[ThemePage] load error", e, s);
+      LogUtil.errorE("[TagPage] load error", e, s);
       return false;
     } finally {
       isSearching.value = false;
@@ -127,6 +154,7 @@ class ThemeListController extends GetxController {
       refreshController.finishRefresh(IndicatorResult.fail);
     }
     isInitialLoading.value = false;
+    _hasLoaded = true;
   }
 
   Future<void> onLoad() async {
@@ -153,6 +181,28 @@ class ThemeListController extends GetxController {
       refreshController.finishLoad(IndicatorResult.noMore);
     }
     isInitialLoading.value = false;
+  }
+
+  Future<void> reloadTags() async {
+    _reloadTagCache();
+    searchItems.clear();
+    offset = 0;
+    _hasMore = true;
+    _hasLoaded = false;
+    refreshController.resetFooter();
+
+    if (selectId.value == 0) {
+      onLoading.value = false;
+      isInitialLoading.value = false;
+      return;
+    }
+
+    onLoading.value = true;
+    try {
+      await onRefresh();
+    } finally {
+      onLoading.value = false;
+    }
   }
 
   void onTagSelectChange(int id) async {

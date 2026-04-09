@@ -8,8 +8,11 @@ import 'package:get/get.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/post_detail/view.dart';
+import 'package:star_forum/pages/login/view.dart';
 import 'package:star_forum/pages/settings/settings_page.dart';
+import 'package:star_forum/pages/setup/view.dart';
 import 'package:star_forum/pages/user/view.dart';
+import 'package:star_forum/widgets/image_view.dart';
 
 const double kThreePaneBreakPoint = 980;
 
@@ -62,5 +65,50 @@ void openSettingsAdaptive(BuildContext context) {
   Navigator.push(
     context,
     MaterialPageRoute(builder: (_) => const SettingsPage()),
+  );
+}
+
+void openLoginAdaptive(BuildContext context) {
+  final useThreePane = isThreePaneLayout(context);
+  if (Get.isRegistered<MainController>()) {
+    final mainController = Get.find<MainController>();
+    if (useThreePane) {
+      mainController.showLoginDetail();
+      return;
+    }
+  }
+
+  Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));
+}
+
+void openSetupAdaptive(BuildContext context) {
+  final useThreePane = isThreePaneLayout(context);
+  if (Get.isRegistered<MainController>()) {
+    final mainController = Get.find<MainController>();
+    if (useThreePane) {
+      mainController.showSetupDetail();
+      return;
+    }
+  }
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const SetupPage(isSetup: false)),
+  );
+}
+
+void openImagePreviewAdaptive(BuildContext context, String imageUrl) {
+  final useThreePane = isThreePaneLayout(context);
+  if (Get.isRegistered<MainController>()) {
+    final mainController = Get.find<MainController>();
+    if (useThreePane) {
+      mainController.showImageDetail(imageUrl);
+      return;
+    }
+  }
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => ImagePreviewWidget(url: imageUrl)),
   );
 }

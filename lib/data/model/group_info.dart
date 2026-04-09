@@ -13,12 +13,12 @@ class GroupInfo {
   final String icon;
 
   factory GroupInfo.fromBaseData(BaseData data) {
-    var m = data.attributes;
+    final m = data.attrs;
     return GroupInfo(
       id: data.id,
-      name: m["namePlural"] ?? "",
-      color: m["color"] ?? "#FFFFFF",
-      icon: m["icon"] ?? "",
+      name: m.string("namePlural"),
+      color: m.string("color", "#FFFFFF"),
+      icon: m.string("icon"),
     );
   }
 
