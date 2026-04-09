@@ -54,12 +54,13 @@ class SplashScreenController extends GetxController {
       }
 
       final repo = getIt<UserRepo>();
-      final tag = getIt<TagRepo>();
       state.value = l10n.splashStateSyncUser;
-      LogUtil.info("[Splash] Begin to setup user service.");
-      LogUtil.info("[Splash] Begin sync tags.");
+      await repo.setup();
 
-      await Future.wait<void>([repo.setup(), _runTagSync(tag, l10n)]);
+      final tag = getIt<TagRepo>();
+      LogUtil.info("[Splash] Begin sync tags.");
+      state.value = l10n.splashStateSyncTags;
+      await tag.syncTags();
 
       state.value = l10n.splashStateFinished;
       if (!context.mounted) return;
@@ -83,11 +84,6 @@ class SplashScreenController extends GetxController {
     } finally {
       _isSyncing = false;
     }
-  }
-
-  Future<void> _runTagSync(TagRepo tagRepo, AppLocalizations l10n) async {
-    state.value = l10n.splashStateSyncTags;
-    await tagRepo.syncTags();
   }
 
   void openSetupPage() {

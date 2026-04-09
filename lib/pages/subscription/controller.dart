@@ -23,6 +23,12 @@ class SubscriptionController extends GetxController {
   bool _hasMore = true;
   bool _loading = false;
 
+  @override
+  void onInit() {
+    super.onInit();
+    onRefresh();
+  }
+
   void _finishRefreshSafe(IndicatorResult result) {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!isClosed) {
