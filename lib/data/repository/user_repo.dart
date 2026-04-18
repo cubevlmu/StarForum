@@ -20,6 +20,7 @@ class UserRepo {
   UserRepoState _state = .unknown;
   UserInfo? _user;
   final storge = AuthStorage();
+  final RxBool canUpload = false.obs;
 
   UserRepoState get state => _state;
   bool get isLogin => _state == .loggedIn;
@@ -73,6 +74,7 @@ class UserRepo {
       }
 
       await _fetchMe();
+      await refreshForumPermissions();
     } catch (e, s) {
       LogUtil.errorE("[UserRepo] setup failed", e, s);
       await _clearLogin();
@@ -118,6 +120,7 @@ class UserRepo {
 
       _user = me;
       _state = .loggedIn;
+      await refreshForumPermissions();
       _notifyLoginState();
       return true;
     } catch (e, s) {
@@ -140,6 +143,7 @@ class UserRepo {
 
       _user = me;
       _state = .loggedIn;
+      await refreshForumPermissions();
       _notifyLoginState();
       return true;
     } catch (e, s) {
@@ -172,6 +176,7 @@ class UserRepo {
 
     await storge.clear();
     HttpUtils.setToken("");
+    canUpload.value = false;
     LogUtil.debug("[UserRepo] Login state has been cleared.");
     _setNotLogin();
   }
@@ -193,7 +198,23 @@ class UserRepo {
   void _setNotLogin() {
     _user = null;
     _state = .notLogin;
+    canUpload.value = false;
     _notifyLoginState();
+  }
+
+  Future<void> refreshForumPermissions() async {
+    if (!isLogin) {
+      canUpload.value = false;
+      return;
+    }
+
+    try {
+      final (info, _) = await Api.getForumInfo(Api.getBaseUrl, force: true);
+      canUpload.value = info?.canUpload ?? false;
+    } catch (e, s) {
+      LogUtil.errorE("[UserRepo] refresh forum permissions failed", e, s);
+      canUpload.value = false;
+    }
   }
 
   void _notifyLoginState() {

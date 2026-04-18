@@ -10,6 +10,8 @@ import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/editor/view.dart';
+import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/post_detail/widgets/reply_input_sheet.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
@@ -19,6 +21,7 @@ import '../../di/injector.dart';
 
 class ReplyUtil {
   static AppLocalizations get _l10n => AppLocalizations.of(Get.context!)!;
+  static const double _threePaneBreakPoint = 980;
 
   static bool _checkLogin(UserRepo repo) {
     if (!repo.isLogin) {
@@ -28,9 +31,63 @@ class ReplyUtil {
     return true;
   }
 
+  static String replyPrefix(PostInfo post) {
+    return "@\"${post.user?.displayName ?? ""}\"#p${post.id} ";
+  }
+
+  static String replyInitialContent(PostInfo post, String draft) {
+    final prefix = replyPrefix(post);
+    final text = draft.trimLeft();
+    if (text.startsWith(prefix)) {
+      return text;
+    }
+    return "$prefix$text";
+  }
+
+  static Future<bool> submitReplyContent({
+    required String discussionId,
+    required String content,
+    required List<PostInfo> newReplyItems,
+    required Function()? updateWidget,
+    required ScrollController? scrollController,
+  }) async {
+    final repo = getIt<UserRepo>();
+    if (!_checkLogin(repo)) return false;
+
+    final (r, rs) = await Api.createPost(discussionId, content);
+
+    if (!rs) {
+      repo.logout();
+      SnackbarUtils.showMessage(msg: _l10n.authLoginExpired);
+      return false;
+    }
+
+    if (r == null) {
+      SnackbarUtils.showMessage(
+        title: _l10n.postCreateFailedTitle,
+        msg: _l10n.postCreateFailedNetwork,
+      );
+      return false;
+    }
+
+    r.user = repo.user;
+    newReplyItems.insert(0, r);
+    updateWidget?.call();
+
+    scrollController?.animateTo(
+      0,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.linear,
+    );
+
+    SnackbarUtils.showMessage(msg: _l10n.postCreateSuccess);
+    return true;
+  }
+
   static Future<void> showAddReplySheet({
     required BuildContext context,
     required String discussionId,
+    String? replyTargetTitle,
     required List<PostInfo> newReplyItems,
     required Function()? updateWidget,
     required ScrollController? scrollController,
@@ -41,36 +98,29 @@ class ReplyUtil {
     SheetUtil.newBottomSheet(
       context: context,
       widget: ReplyInputSheet(
-        onSubmit: (content) async {
-          final (r, rs) = await Api.createPost(discussionId, content);
-
-          if (!rs) {
-            repo.logout();
-            SnackbarUtils.showMessage(msg: _l10n.authLoginExpired);
-            return false;
-          }
-
-          if (r == null) {
-            SnackbarUtils.showMessage(
-              title: _l10n.postCreateFailedTitle,
-              msg: _l10n.postCreateFailedNetwork,
-            );
-            return false;
-          }
-
-          r.user = repo.user;
-          newReplyItems.insert(0, r);
-          updateWidget?.call();
-
-          scrollController?.animateTo(
-            0,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.linear,
+        onOpenEditor: (draft) {
+          _openReplyEditor(
+            context: context,
+            title: _l10n.editorReplyToTitle(
+              replyTargetTitle ?? _l10n.postActionComment,
+            ),
+            initialContent: draft,
+            onSubmitReply: (content) => submitReplyContent(
+              discussionId: discussionId,
+              content: content,
+              newReplyItems: newReplyItems,
+              updateWidget: updateWidget,
+              scrollController: scrollController,
+            ),
           );
-
-          SnackbarUtils.showMessage(msg: _l10n.postCreateSuccess);
-          return true;
         },
+        onSubmit: (content) => submitReplyContent(
+          discussionId: discussionId,
+          content: content,
+          newReplyItems: newReplyItems,
+          updateWidget: updateWidget,
+          scrollController: scrollController,
+        ),
       ),
     );
   }
@@ -90,41 +140,57 @@ class ReplyUtil {
       context: context,
       widget: ReplyInputSheet(
         hintText: _l10n.replyToUserHint(pi.user?.displayName ?? ""),
-        onSubmit: (content) async {
-          final (r, rs) = await Api.replyToPost(
-            discussionId: discussionId,
-            replyPostId: pi.id,
-            replyUsername: pi.user?.displayName ?? "",
-            content: content,
+        onOpenEditor: (draft) {
+          final initialContent = replyInitialContent(pi, draft);
+          _openReplyEditor(
+            context: context,
+            title: _l10n.editorReplyToTitle(pi.user?.displayName ?? ""),
+            initialContent: initialContent,
+            onSubmitReply: (content) => submitReplyContent(
+              discussionId: discussionId,
+              content: content,
+              newReplyItems: newReplyItems,
+              updateWidget: updateWidget,
+              scrollController: scrollController,
+            ),
           );
-
-          if (!rs) {
-            repo.logout();
-            SnackbarUtils.showMessage(msg: _l10n.authLoginExpired);
-            return false;
-          }
-
-          if (r == null) {
-            SnackbarUtils.showMessage(
-              title: _l10n.postCreateFailedTitle,
-              msg: _l10n.postCreateFailedNetwork,
-            );
-            return false;
-          }
-
-          r.user = repo.user;
-          newReplyItems.insert(0, r);
-          updateWidget?.call();
-
-          scrollController?.animateTo(
-            0,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.linear,
-          );
-
-          SnackbarUtils.showMessage(msg: _l10n.postCreateSuccess);
-          return true;
         },
+        onSubmit: (content) async {
+          return submitReplyContent(
+            discussionId: discussionId,
+            content: replyInitialContent(pi, content),
+            newReplyItems: newReplyItems,
+            updateWidget: updateWidget,
+            scrollController: scrollController,
+          );
+        },
+      ),
+    );
+  }
+
+  static void _openReplyEditor({
+    required BuildContext context,
+    required String title,
+    required String initialContent,
+    required Future<bool> Function(String content) onSubmitReply,
+  }) {
+    if (MediaQuery.sizeOf(context).width >= _threePaneBreakPoint &&
+        Get.isRegistered<MainController>()) {
+      Get.find<MainController>().showReplyEditorDetail(
+        title: title,
+        initialContent: initialContent,
+        onSubmitReply: onSubmitReply,
+      );
+      return;
+    }
+
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => EditorPage.reply(
+          title: title,
+          initialContent: initialContent,
+          onSubmitReply: onSubmitReply,
+        ),
       ),
     );
   }

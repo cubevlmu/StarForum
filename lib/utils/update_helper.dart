@@ -12,7 +12,7 @@ const String kGithubUpdateOwner = 'cubevlmu';
 const String kGithubUpdateRepo = 'StarForum';
 const String kGithubLatestReleaseUrl =
     'https://github.com/$kGithubUpdateOwner/$kGithubUpdateRepo/releases/latest';
-const String kAppVersion = '1.2.0';
+const String kAppVersion = '1.2.5';
 
 String _normalizeVersion(String input) {
   return input.trim();

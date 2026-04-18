@@ -9,6 +9,7 @@ import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
+import 'package:star_forum/widgets/radio_list_dialog.dart';
 
 class SharedDialog {
   static void showDialog2(
@@ -77,6 +78,24 @@ class SharedDialog {
         aAction: aAction,
         bText: bText,
         bAction: bAction,
+      ),
+    );
+  }
+
+  static Future<T?> showRadioListDialog<T>(
+    BuildContext context, {
+    required String title,
+    required Map<String, T> itemNameValueMap,
+    required T groupValue,
+    Function(T? value)? onChanged,
+  }) {
+    return showDialog<T>(
+      context: context,
+      builder: (context) => RadioListDialog<T>(
+        title: title,
+        itemNameValueMap: itemNameValueMap,
+        groupValue: groupValue,
+        onChanged: onChanged,
       ),
     );
   }
@@ -175,11 +194,10 @@ class _LogoutDialog extends StatelessWidget {
   const _LogoutDialog();
 
   void _onSubmit(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final repo = getIt<UserRepo>();
     await repo.logout();
-    SnackbarUtils.showMessage(
-      msg: AppLocalizations.of(context)!.authLogoutSuccess,
-    );
+    SnackbarUtils.showMessage(msg: l10n.authLogoutSuccess);
     if (!context.mounted) return;
     Navigator.pop(context, 'OK');
   }

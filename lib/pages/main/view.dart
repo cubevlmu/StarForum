@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/editor/view.dart';
 import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/notification/controller.dart';
@@ -41,7 +42,9 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void initState() {
-    controller = Get.put(MainController());
+    controller = Get.isRegistered<MainController>()
+        ? Get.find<MainController>()
+        : Get.put(MainController());
     _rootPages = List<Widget?>.filled(
       controller.pageBuilders.length,
       null,
@@ -309,6 +312,21 @@ class _MainPageState extends State<MainPage> {
               ),
             );
             break;
+          case DetailPaneEntryType.editor:
+            final onSubmitReply = currentDetail.editorOnSubmitReply;
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => onSubmitReply == null
+                    ? const EditorPage()
+                    : EditorPage.reply(
+                        title: currentDetail.editorTitle!,
+                        initialContent:
+                            currentDetail.editorInitialContent ?? "",
+                        onSubmitReply: onSubmitReply,
+                      ),
+              ),
+            );
+            break;
         }
         controller.closeDetail();
       });
@@ -457,6 +475,30 @@ class _DetailPane extends StatelessWidget {
           onClose: controller.closeDetail,
           onBack: controller.popDetail,
           canPopDetail: controller.canPopDetail,
+        );
+      case DetailPaneEntryType.editor:
+        final onSubmitReply = detail.editorOnSubmitReply;
+        if (onSubmitReply == null) {
+          return EditorPage(
+            key: ValueKey("DetailEditor:${detail.entryId}"),
+            embedded: true,
+            showEmbeddedBack: controller.canPopDetail,
+            onEmbeddedLeadingPressed: controller.canPopDetail
+                ? controller.popDetail
+                : controller.closeDetail,
+          );
+        }
+
+        return EditorPage.reply(
+          key: ValueKey("DetailReplyEditor:${detail.entryId}"),
+          title: detail.editorTitle!,
+          initialContent: detail.editorInitialContent ?? "",
+          onSubmitReply: onSubmitReply,
+          embedded: true,
+          showEmbeddedBack: controller.canPopDetail,
+          onEmbeddedLeadingPressed: controller.canPopDetail
+              ? controller.popDetail
+              : controller.closeDetail,
         );
     }
   }

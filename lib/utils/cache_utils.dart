@@ -9,13 +9,22 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 class CacheUtils {
   static const String userAvatar = 'userAvatar';
   static const String contentImage = 'content';
+  static const String assetThumb = 'assetThumb';
 
   static final avatarCacheManager = CacheManager(Config(userAvatar));
   static final contentCacheManager = CacheManager(Config(contentImage));
+  static final assetThumbCacheManager = CacheManager(
+    Config(
+      assetThumb,
+      stalePeriod: const Duration(days: 7),
+      maxNrOfCacheObjects: 120,
+    ),
+  );
 
   static final List<CacheManager> cacheMangerList = [
     avatarCacheManager,
     contentCacheManager,
+    assetThumbCacheManager,
   ];
 
   static void clearAllCacheImageMem() {

@@ -33,7 +33,9 @@ class _HomePageState extends State<HomePage>
 
   @override
   void initState() {
-    controller = Get.put(HomeController());
+    controller = Get.isRegistered<HomeController>()
+        ? Get.find<HomeController>()
+        : Get.put(HomeController());
     _tabController = TabController(length: 4, vsync: this);
     super.initState();
   }

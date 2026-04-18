@@ -101,8 +101,8 @@ Locale? _normalizeAppLocale(Locale locale) {
               traditionalCountries.contains(countryCode))) {
         return const Locale.fromSubtags(
           languageCode: 'zh',
-          scriptCode: 'Hans',
-          countryCode: 'CN',
+          scriptCode: 'Hant',
+          countryCode: 'TW',
         );
       }
       return const Locale('zh');

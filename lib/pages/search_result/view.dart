@@ -41,10 +41,12 @@ class _SearchResultPageState extends State<SearchResultPage>
   @override
   void initState() {
     _controllerTag = "SearchResult:${widget.keyWord}:${widget.embedded}";
-    controller = Get.put(
-      SearchResultController(keyWord: widget.keyWord),
-      tag: _controllerTag,
-    );
+    controller = Get.isRegistered<SearchResultController>(tag: _controllerTag)
+        ? Get.find<SearchResultController>(tag: _controllerTag)
+        : Get.put(
+            SearchResultController(keyWord: widget.keyWord),
+            tag: _controllerTag,
+          );
     _keywordController = TextEditingController(text: widget.keyWord);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -58,7 +60,9 @@ class _SearchResultPageState extends State<SearchResultPage>
   @override
   void dispose() {
     _keywordController.dispose();
-    Get.delete<SearchResultController>(tag: _controllerTag);
+    if (Get.isRegistered<SearchResultController>(tag: _controllerTag)) {
+      Get.delete<SearchResultController>(tag: _controllerTag);
+    }
     super.dispose();
   }
 

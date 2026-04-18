@@ -23,7 +23,7 @@ import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/string_util.dart';
 
-enum UserPageSection { info, comments, topics, badges }
+enum UserPageSection { info, comments, topics, badges, assets }
 
 class UserPageController extends GetxController {
   UserPageController({required this.userId});
@@ -330,6 +330,7 @@ class UserPageController extends GetxController {
     switch (section) {
       case UserPageSection.info:
       case UserPageSection.badges:
+      case UserPageSection.assets:
         if (!_infoInitialized && _profileLoadingTask == null) {
           await loadUserData();
         }

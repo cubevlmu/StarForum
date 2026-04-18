@@ -26,7 +26,9 @@ class _AccountPageState extends State<AccountPage>
 
   @override
   void initState() {
-    controller = Get.put(AccountPageController());
+    controller = Get.isRegistered<AccountPageController>()
+        ? Get.find<AccountPageController>()
+        : Get.put(AccountPageController());
     super.initState();
   }
 

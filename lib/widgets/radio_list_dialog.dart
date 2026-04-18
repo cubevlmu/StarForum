@@ -19,20 +19,18 @@ class RadioListDialog<T> extends StatefulWidget {
 }
 
 class _RadioListDialogState<T> extends State<RadioListDialog<T>> {
+  late T? _groupValue;
   late List<Widget> items;
+
   @override
   void initState() {
+    _groupValue = widget.groupValue;
     items = <Widget>[];
     widget.itemNameValueMap.forEach((title, value) {
       items.add(
         RadioListTile(
           value: value,
-          groupValue: widget.groupValue,
           title: Text(title),
-          onChanged: (value) {
-            widget.onChanged?.call(value);
-            setState(() {});
-          },
         ),
       );
     });
@@ -44,7 +42,17 @@ class _RadioListDialogState<T> extends State<RadioListDialog<T>> {
     return AlertDialog(
       scrollable: true,
       title: Text(widget.title),
-      content: Column(children: items),
+      content: RadioGroup<T>(
+        groupValue: _groupValue,
+        onChanged: (value) {
+          widget.onChanged?.call(value);
+          setState(() {
+            _groupValue = value;
+          });
+          Navigator.of(context).pop(value);
+        },
+        child: Column(children: items),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),

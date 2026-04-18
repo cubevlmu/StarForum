@@ -6,10 +6,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/post_list/controller.dart';
-import 'package:star_forum/pages/post_list/create_discuss_util.dart';
 import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/post_card.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
@@ -56,11 +59,12 @@ class _PostListPageState extends State<PostListPage> {
   }
 
   void _onCreateDiscussion() {
-    CreateDiscussUtil.showCreateDiscuss(
-      context: context,
-      updateWidget: () => controller.items.refresh(),
-      scrollController: controller.scrollController,
-    );
+    final repo = getIt<UserRepo>();
+    if (!repo.isLogin) {
+      SnackbarUtils.showError(msg: AppLocalizations.of(context)!.authLoginRequired);
+      return;
+    }
+    openEditorAdaptive(context);
   }
 }
 

@@ -9,7 +9,7 @@ This document outlines the planned features and future direction of the project.
 
 ---
 
-## v1.2.0
+## v1.2.5
 
 - Reimplement the create discussion page and support multimedia uploading.
 - Optimize desktop ui performance.

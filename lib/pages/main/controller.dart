@@ -8,15 +8,20 @@ import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 
 import 'package:star_forum/pages/home/view.dart';
-import 'package:star_forum/pages/login/controller.dart';
 import 'package:star_forum/pages/notification/view.dart';
 import 'package:star_forum/pages/theme_list/view.dart';
 import 'package:star_forum/pages/account/view.dart';
-import 'package:star_forum/pages/post_detail/controller.dart';
-import 'package:star_forum/pages/user/controller.dart';
 import 'package:get/get.dart';
 
-enum DetailPaneEntryType { discussion, user, settings, login, setup, image }
+enum DetailPaneEntryType {
+  discussion,
+  user,
+  settings,
+  login,
+  setup,
+  image,
+  editor,
+}
 
 @immutable
 class DetailPaneEntry {
@@ -26,6 +31,9 @@ class DetailPaneEntry {
     this.discussion,
     this.userId,
     this.imageUrl,
+    this.editorTitle,
+    this.editorInitialContent,
+    this.editorOnSubmitReply,
   });
 
   const DetailPaneEntry.discussion({
@@ -56,11 +64,27 @@ class DetailPaneEntry {
         imageUrl: imageUrl,
       );
 
+  const DetailPaneEntry.editor({
+    required int entryId,
+    String? title,
+    String? initialContent,
+    Future<bool> Function(String content)? onSubmitReply,
+  }) : this._(
+         entryId: entryId,
+         type: DetailPaneEntryType.editor,
+         editorTitle: title,
+         editorInitialContent: initialContent,
+         editorOnSubmitReply: onSubmitReply,
+       );
+
   final int entryId;
   final DetailPaneEntryType type;
   final DiscussionItem? discussion;
   final int? userId;
   final String? imageUrl;
+  final String? editorTitle;
+  final String? editorInitialContent;
+  final Future<bool> Function(String content)? editorOnSubmitReply;
 }
 
 class MainController extends GetxController {
@@ -144,7 +168,29 @@ class MainController extends GetxController {
       return;
     }
     detailStack.add(
-      DetailPaneEntry.image(entryId: _nextDetailEntryId(), imageUrl: imageUrl),
+        DetailPaneEntry.image(entryId: _nextDetailEntryId(), imageUrl: imageUrl),
+    );
+  }
+
+  void showEditorDetail() {
+    if (currentDetail?.type == DetailPaneEntryType.editor) {
+      return;
+    }
+    detailStack.add(DetailPaneEntry.editor(entryId: _nextDetailEntryId()));
+  }
+
+  void showReplyEditorDetail({
+    required String title,
+    required String initialContent,
+    required Future<bool> Function(String content) onSubmitReply,
+  }) {
+    detailStack.add(
+      DetailPaneEntry.editor(
+        entryId: _nextDetailEntryId(),
+        title: title,
+        initialContent: initialContent,
+        onSubmitReply: onSubmitReply,
+      ),
     );
   }
 
@@ -157,46 +203,12 @@ class MainController extends GetxController {
 
   void popDetail() {
     if (detailStack.isEmpty) return;
-    final removed = detailStack.removeLast();
-    _disposeDetailEntryLater(removed);
+    detailStack.removeLast();
   }
 
   void closeDetail() {
     if (detailStack.isEmpty) return;
-    final removedEntries = List<DetailPaneEntry>.from(detailStack);
     detailStack.clear();
-    for (final entry in removedEntries) {
-      _disposeDetailEntryLater(entry);
-    }
-  }
-
-  void _disposeDetailEntryLater(DetailPaneEntry entry) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      switch (entry.type) {
-        case DetailPaneEntryType.discussion:
-          final tag = "PostPage:${entry.discussion!.id}:true";
-          if (Get.isRegistered<PostPageController>(tag: tag)) {
-            Get.delete<PostPageController>(tag: tag);
-          }
-          break;
-        case DetailPaneEntryType.user:
-          final tag = "user_space:${entry.userId}";
-          if (Get.isRegistered<UserPageController>(tag: tag)) {
-            Get.delete<UserPageController>(tag: tag);
-          }
-          break;
-        case DetailPaneEntryType.settings:
-          break;
-        case DetailPaneEntryType.login:
-          if (Get.isRegistered<LoginController>()) {
-            Get.delete<LoginController>();
-          }
-          break;
-        case DetailPaneEntryType.setup:
-        case DetailPaneEntryType.image:
-          break;
-      }
-    });
   }
 
   int _nextDetailEntryId() {

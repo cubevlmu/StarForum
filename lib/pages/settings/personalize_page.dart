@@ -19,16 +19,13 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(
-      PersonalizeSettingsController(),
-      tag: runtimeType.toString(),
-    );
-  }
-
-  @override
-  void dispose() {
-    Get.delete<PersonalizeSettingsController>(tag: runtimeType.toString());
-    super.dispose();
+    controller =
+        Get.isRegistered<PersonalizeSettingsController>(tag: runtimeType.toString())
+        ? Get.find<PersonalizeSettingsController>(tag: runtimeType.toString())
+        : Get.put(
+            PersonalizeSettingsController(),
+            tag: runtimeType.toString(),
+          );
   }
 
   @override

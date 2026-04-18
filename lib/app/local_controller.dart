@@ -14,8 +14,8 @@ class LocaleController extends GetxController {
   static const Locale _simplifiedChineseLocale = Locale('zh');
   static const Locale _traditionalChineseLocale = Locale.fromSubtags(
     languageCode: 'zh',
-    scriptCode: 'Hans',
-    countryCode: 'CN',
+    scriptCode: 'Hant',
+    countryCode: 'TW',
   );
 
   final Rx<Locale?> _locale = Rx<Locale?>(null);
