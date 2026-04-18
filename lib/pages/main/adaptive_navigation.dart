@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/pages/editor/view.dart';
 import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/post_detail/view.dart';
 import 'package:star_forum/pages/login/view.dart';
@@ -110,5 +111,21 @@ void openImagePreviewAdaptive(BuildContext context, String imageUrl) {
   Navigator.push(
     context,
     MaterialPageRoute(builder: (_) => ImagePreviewWidget(url: imageUrl)),
+  );
+}
+
+void openEditorAdaptive(BuildContext context) {
+  final useThreePane = isThreePaneLayout(context);
+  if (Get.isRegistered<MainController>()) {
+    final mainController = Get.find<MainController>();
+    if (useThreePane) {
+      mainController.showEditorDetail();
+      return;
+    }
+  }
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const EditorPage()),
   );
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:star_forum/widgets/radio_list_dialog.dart';
+import 'package:star_forum/widgets/shared_dialog.dart';
 
 class SettingsRadiosTile<T> extends StatefulWidget {
   const SettingsRadiosTile(
@@ -36,22 +36,17 @@ class _SettingsRadiosTileState<T> extends State<SettingsRadiosTile<T>> {
       title: Text(widget.title),
       subtitle: Text(widget.subTitle),
       trailing: Text(widget.buildTrailingText()),
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) => RadioListDialog(
-            title: widget.title,
-            itemNameValueMap: widget.itemNameValue,
-            groupValue: widget.buildGroupValue(),
-            onChanged: (value) {
-              if (value != null) widget.applyValue(value);
-              Navigator.of(context).pop();
-              setState(
-                () {},
-              );
-            },
-          ),
+      onTap: () async {
+        final value = await SharedDialog.showRadioListDialog<T>(
+          context,
+          title: widget.title,
+          itemNameValueMap: widget.itemNameValue,
+          groupValue: widget.buildGroupValue(),
         );
+        if (value != null) {
+          widget.applyValue(value);
+          setState(() {});
+        }
       },
     );
   }

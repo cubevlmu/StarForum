@@ -101,4 +101,12 @@ class SearchPageController extends GetxController {
     super.onReady();
     _initData();
   }
+
+  @override
+  void onClose() {
+    textEditingController.dispose();
+    textFeildFocusNode.dispose();
+    onSearchRequested = null;
+    super.onClose();
+  }
 }

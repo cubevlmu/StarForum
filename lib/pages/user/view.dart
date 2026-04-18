@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/assets/view.dart';
 import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
@@ -52,7 +53,6 @@ class UserPage extends StatefulWidget {
 class _UserPageState extends State<UserPage>
     with SingleTickerProviderStateMixin {
   late final UserPageController controller;
-  late final bool _shouldDeleteControllerOnDispose;
   late final TabController _tabController;
 
   @override
@@ -65,9 +65,11 @@ class _UserPageState extends State<UserPage>
         tag: widget.tag,
       );
     }
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: widget.isAccountPage ? 5 : 4,
+      vsync: this,
+    );
     controller.currentSection.value = UserPageSection.info;
-    _shouldDeleteControllerOnDispose = !widget.embedded;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       controller.ensureSectionLoaded(UserPageSection.info);
@@ -78,10 +80,6 @@ class _UserPageState extends State<UserPage>
   @override
   void dispose() {
     _tabController.dispose();
-    if (_shouldDeleteControllerOnDispose &&
-        Get.isRegistered<UserPageController>(tag: widget.tag)) {
-      Get.delete<UserPageController>(tag: widget.tag);
-    }
     super.dispose();
   }
 
@@ -140,6 +138,7 @@ class _UserPageState extends State<UserPage>
           child: _UserSectionBody(
             controller: controller,
             isAccountPage: widget.isAccountPage,
+            showAssetsSection: widget.isAccountPage,
           ),
         ),
       ],
@@ -177,6 +176,13 @@ class _UserSectionTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final sections = <UserPageSection>[
+      UserPageSection.info,
+      UserPageSection.comments,
+      UserPageSection.topics,
+      UserPageSection.badges,
+      if (tabController.length > 4) UserPageSection.assets,
+    ];
 
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -184,13 +190,13 @@ class _UserSectionTabs extends StatelessWidget {
         controller: tabController,
         isScrollable: true,
         tabAlignment: TabAlignment.start,
-        onTap: (index) =>
-            controller.selectSection(UserPageSection.values[index]),
+        onTap: (index) => controller.selectSection(sections[index]),
         tabs: [
           Tab(text: l10n.userSectionInfo),
           Tab(text: l10n.userCommentCountLabel),
           Tab(text: l10n.userDiscussionCountLabel),
           Tab(text: l10n.userSectionBadges),
+          if (tabController.length > 4) Tab(text: l10n.userSectionAssets),
         ],
       ),
     );
@@ -201,10 +207,12 @@ class _UserSectionBody extends StatelessWidget {
   const _UserSectionBody({
     required this.controller,
     required this.isAccountPage,
+    required this.showAssetsSection,
   });
 
   final UserPageController controller;
   final bool isAccountPage;
+  final bool showAssetsSection;
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +229,14 @@ class _UserSectionBody extends StatelessWidget {
           return _UserTopicsSection(controller: controller);
         case UserPageSection.badges:
           return _UserBadgesSection(controller: controller);
+        case UserPageSection.assets:
+          if (showAssetsSection) {
+            return const AssetsPage(embedded: true);
+          }
+          return _UserInfoSection(
+            controller: controller,
+            isAccountPage: isAccountPage,
+          );
       }
     });
   }

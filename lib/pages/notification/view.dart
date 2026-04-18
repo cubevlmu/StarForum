@@ -28,7 +28,9 @@ class _NotificationPageState extends State<NotificationPage>
 
   @override
   void initState() {
-    controller = Get.put(NotificationPageController());
+    controller = Get.isRegistered<NotificationPageController>()
+        ? Get.find<NotificationPageController>()
+        : Get.put(NotificationPageController());
     tabController = TabController(
       length: NotificationTab.values.length,
       vsync: this,

@@ -1,5 +1,5 @@
 {
-  "@@locale": "zh_Hans_CN",
+  "@@locale": "zh_Hant_TW",
   
   "mainHomePage": "首頁",
   "@mainHomePage": {},
@@ -66,6 +66,48 @@
 
   "postCreateSubmit": "發表",
   "@postCreateSubmit": {},
+  "editorPageTitle": "發表主題",
+  "@editorPageTitle": {},
+  "editorSelectTagAction": "選擇標籤",
+  "@editorSelectTagAction": {},
+  "editorTagPrimaryPlaceholder": "請選擇一個主標籤",
+  "@editorTagPrimaryPlaceholder": {},
+  "editorPrimaryTagSection": "主標籤",
+  "@editorPrimaryTagSection": {},
+  "editorSecondaryTagSection": "普通標籤",
+  "@editorSecondaryTagSection": {},
+  "editorAddPollAction": "新增投票",
+  "@editorAddPollAction": {},
+  "editorPollAddedAction": "已新增投票",
+  "@editorPollAddedAction": {},
+  "editorToolbarHeading": "標題",
+  "@editorToolbarHeading": {},
+  "editorToolbarBold": "粗體",
+  "@editorToolbarBold": {},
+  "editorToolbarItalic": "斜體",
+  "@editorToolbarItalic": {},
+  "editorToolbarStrike": "刪除線",
+  "@editorToolbarStrike": {},
+  "editorToolbarQuote": "引用",
+  "@editorToolbarQuote": {},
+  "editorToolbarCode": "程式碼",
+  "@editorToolbarCode": {},
+  "editorToolbarLink": "連結",
+  "@editorToolbarLink": {},
+  "editorToolbarImage": "圖片",
+  "@editorToolbarImage": {},
+  "editorToolbarBulletList": "無序清單",
+  "@editorToolbarBulletList": {},
+  "editorToolbarNumberList": "有序清單",
+  "@editorToolbarNumberList": {},
+  "editorToolbarMention": "提及",
+  "@editorToolbarMention": {},
+  "editorToolbarEmoji": "表情",
+  "@editorToolbarEmoji": {},
+  "editorToolbarMore": "更多",
+  "@editorToolbarMore": {},
+  "editorToolbarMyFiles": "我的檔案",
+  "@editorToolbarMyFiles": {},
 
   "tagDialogTitle": "選擇標籤",
   "@tagDialogTitle": {},
@@ -186,6 +228,8 @@
   "@userSectionInfo": {},
   "userSectionBadges": "徽章",
   "@userSectionBadges": {},
+  "userSectionAssets": "資源",
+  "@userSectionAssets": {},
   "userDiscussionCountLabel": "主題",
   "@userDiscussionCountLabel": {},
   "userCommentCountLabel": "回覆",
@@ -526,6 +570,14 @@
 
   "replyInputHint": "寫下您的回覆…",
   "@replyInputHint": {},
+  "replyOpenEditor": "展開編輯器",
+  "@replyOpenEditor": {},
+  "editorReplyToTitle": "回覆到: {target}",
+  "@editorReplyToTitle": {
+    "placeholders": {
+      "target": {}
+    }
+  },
 
   "imageSaveTooltip": "儲存圖片",
   "@imageSaveTooltip": {},
@@ -873,5 +925,51 @@
   "userBioUpdateSuccess": "簽名已更新",
   "@userBioUpdateSuccess": {},
   "userBioUpdateFailed": "簽名更新失敗",
-  "@userBioUpdateFailed": {}
+  "@userBioUpdateFailed": {},
+  "assetsManagerTitle": "媒體管理器",
+  "@assetsManagerTitle": {},
+  "assetsUpload": "上傳",
+  "@assetsUpload": {},
+  "assetsUploadDenied": "目前帳號沒有上傳權限",
+  "@assetsUploadDenied": {},
+  "assetsUploadSuccess": "檔案已上傳",
+  "@assetsUploadSuccess": {},
+  "assetsUploadFailed": "檔案上傳失敗",
+  "@assetsUploadFailed": {},
+  "assetsMyFiles": "我的檔案",
+  "@assetsMyFiles": {},
+  "assetsSharedMedia": "共享媒體",
+  "@assetsSharedMedia": {},
+  "assetsEmptyTitle": "還沒有上傳檔案",
+  "@assetsEmptyTitle": {},
+  "assetsEmptyTips": "上傳後的圖片和檔案會出現在這裡。",
+  "@assetsEmptyTips": {},
+  "assetsCancel": "取消",
+  "@assetsCancel": {},
+  "assetsNoSelection": "未選擇任何檔案",
+  "@assetsNoSelection": {},
+  "assetsUseSelected": "使用檔案",
+  "@assetsUseSelected": {},
+  "assetsHideFile": "隱藏檔案",
+  "@assetsHideFile": {},
+  "assetsDeleteFile": "刪除檔案",
+  "@assetsDeleteFile": {},
+  "assetsDeleteConfirm": "確定刪除「{name}」嗎？",
+  "@assetsDeleteConfirm": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "assetsDeleteSuccess": "檔案已刪除",
+  "@assetsDeleteSuccess": {},
+  "assetsDeleteFailed": "檔案刪除失敗",
+  "@assetsDeleteFailed": {},
+  "assetsImagePreview": "圖片預覽",
+  "@assetsImagePreview": {},
+  "assetsFileSize": "{size}",
+  "@assetsFileSize": {
+    "placeholders": {
+      "size": {}
+    }
+  }
 }

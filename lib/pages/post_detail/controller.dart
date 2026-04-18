@@ -137,14 +137,14 @@ class PostPageController extends GetxController {
 
     final ok = await _loadReplies(reset: true);
 
-    refreshController.finishRefresh(
+    _finishRefreshSafely(
       ok ? IndicatorResult.success : IndicatorResult.fail,
     );
 
-    refreshController.finishLoad(
+    _finishLoadSafely(
       _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
     );
-    isReplyLoading.value = false;
+    _setReplyLoadingSafely(false);
   }
 
   Future<void> onReplyLoad() async {
@@ -153,25 +153,25 @@ class PostPageController extends GetxController {
     }
 
     if (_loading) {
-      refreshController.finishLoad(IndicatorResult.fail);
-      isReplyLoading.value = false;
+      _finishLoadSafely(IndicatorResult.fail);
+      _setReplyLoadingSafely(false);
       return;
     }
 
     if (!_hasMore) {
-      refreshController.finishLoad(IndicatorResult.noMore);
-      isReplyLoading.value = false;
+      _finishLoadSafely(IndicatorResult.noMore);
+      _setReplyLoadingSafely(false);
       return;
     }
 
     final ok = await _loadReplies();
 
-    refreshController.finishLoad(
+    _finishLoadSafely(
       ok
           ? (_hasMore ? IndicatorResult.success : IndicatorResult.noMore)
           : IndicatorResult.fail,
     );
-    isReplyLoading.value = false;
+    _setReplyLoadingSafely(false);
   }
 
   Future<bool> _loadReplies({bool reset = false}) async {
@@ -227,10 +227,32 @@ class PostPageController extends GetxController {
     }
   }
 
+  void _finishRefreshSafely(IndicatorResult result) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isClosed) return;
+      refreshController.finishRefresh(result);
+    });
+  }
+
+  void _finishLoadSafely(IndicatorResult result) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isClosed) return;
+      refreshController.finishLoad(result);
+    });
+  }
+
+  void _setReplyLoadingSafely(bool value) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isClosed) return;
+      isReplyLoading.value = value;
+    });
+  }
+
   Future<void> showAddReplySheet(BuildContext context) async {
     await ReplyUtil.showAddReplySheet(
       context: context,
       discussionId: discussion.id,
+      replyTargetTitle: discussion.title,
       newReplyItems: newReplyItems,
       updateWidget: () {},
       scrollController: scrollController,

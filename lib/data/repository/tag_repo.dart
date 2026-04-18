@@ -52,22 +52,26 @@ class TagRepo {
   List<TagInfo> getRootTagsForUI() {
     if (_tags == null) return const [];
 
-    final Map<int, TagInfo> all = {};
+    final Map<int, List<TagInfo>> childrenMap = {};
+    final roots = <TagInfo>[];
 
-    for (final root in _tags!.tags.values) {
-      all[root.id] = root;
-      _collect(root, all);
+    for (final tag in _tags!.all.values) {
+      tag.children = tag.position == null ? null : SplayTreeMap<int, TagInfo>();
     }
 
-    final Map<int, List<TagInfo>> childrenMap = {};
+    for (final tag in _tags!.all.values) {
+      if (tag.position == null) {
+        continue;
+      }
 
-    for (final tag in all.values) {
-      if (tag.isChild && tag.parent > 0) {
-        childrenMap.putIfAbsent(tag.parent, () => []).add(tag);
+      if (tag.isChild && tag.parentId != null) {
+        childrenMap.putIfAbsent(tag.parentId!, () => []).add(tag);
+      } else {
+        roots.add(tag);
       }
     }
 
-    for (final root in _tags!.tags.values) {
+    for (final root in roots) {
       final list = childrenMap[root.id];
       if (list != null && list.isNotEmpty) {
         root.children ??= SplayTreeMap();
@@ -77,17 +81,8 @@ class TagRepo {
       }
     }
 
-    return _tags!.tags.values.toList();
-  }
-
-  void _collect(TagInfo tag, Map<int, TagInfo> all) {
-    final children = tag.children;
-    if (children == null) return;
-
-    for (final c in children.values) {
-      all[c.id] = c;
-      _collect(c, all);
-    }
+    roots.sort((a, b) => (a.position ?? 1 << 30).compareTo(b.position ?? 1 << 30));
+    return roots;
   }
 
   List<TagInfo> getTags() {

@@ -40,14 +40,10 @@ class _SetupPageState extends State<SetupPage> {
 
   @override
   void initState() {
-    controller = Get.put(SetupPageController());
+    controller = Get.isRegistered<SetupPageController>()
+        ? Get.find<SetupPageController>()
+        : Get.put(SetupPageController());
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    Get.delete<SetupPageController>();
-    super.dispose();
   }
 
   @override

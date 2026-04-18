@@ -19,11 +19,13 @@ import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/state_manager.dart';
 
 enum SplashStage { loading, failed }
+enum SplashProgressStep { initNetwork, syncUser, syncTags, finished }
 
 class SplashScreenController extends GetxController {
   final state = "".obs;
   final stage = SplashStage.loading.obs;
   final errorDetail = RxnString();
+  final progressStep = SplashProgressStep.initNetwork.obs;
   bool _isSyncing = false;
 
   @override
@@ -44,6 +46,7 @@ class SplashScreenController extends GetxController {
     _isSyncing = true;
     stage.value = SplashStage.loading;
     errorDetail.value = null;
+    progressStep.value = SplashProgressStep.initNetwork;
 
     try {
       state.value = l10n.splashStateInitNetwork;
@@ -54,14 +57,17 @@ class SplashScreenController extends GetxController {
       }
 
       final repo = getIt<UserRepo>();
+      progressStep.value = SplashProgressStep.syncUser;
       state.value = l10n.splashStateSyncUser;
       await repo.setup();
 
       final tag = getIt<TagRepo>();
       LogUtil.info("[Splash] Begin sync tags.");
+      progressStep.value = SplashProgressStep.syncTags;
       state.value = l10n.splashStateSyncTags;
       await tag.syncTags();
 
+      progressStep.value = SplashProgressStep.finished;
       state.value = l10n.splashStateFinished;
       if (!context.mounted) return;
       Navigator.of(context).pushAndRemoveUntil(

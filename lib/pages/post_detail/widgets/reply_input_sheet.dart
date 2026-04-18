@@ -11,10 +11,12 @@ class ReplyInputSheet extends StatefulWidget {
   const ReplyInputSheet({
     super.key,
     this.hintText,
+    this.onOpenEditor,
     required this.onSubmit,
   });
 
   final String? hintText;
+  final ValueChanged<String>? onOpenEditor;
   final Future<bool> Function(String content) onSubmit;
 
   @override
@@ -48,12 +50,15 @@ class _ReplyInputSheetState extends State<ReplyInputSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Row(
               children: [
                 Expanded(
@@ -64,22 +69,39 @@ class _ReplyInputSheetState extends State<ReplyInputSheet> {
                     minLines: 1,
                     maxLines: 4,
                     decoration: InputDecoration(
-                      hintText: widget.hintText ?? AppLocalizations.of(context)!.replyInputHint,
+                      hintText: widget.hintText ?? l10n.replyInputHint,
                       border: InputBorder.none,
                     ),
                     onSubmitted: (_) => _submit(),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.send),
+                  tooltip: l10n.replyOpenEditor,
+                  onPressed: _isSubmitting || widget.onOpenEditor == null
+                      ? null
+                      : () {
+                          final draft = _controller.text;
+                          Navigator.of(context).pop();
+                          widget.onOpenEditor!(draft);
+                        },
+                  icon: const Icon(Icons.open_in_full_rounded),
+                ),
+                IconButton(
+                  icon: _isSubmitting
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.4,
+                            color: colorScheme.primary,
+                          ),
+                        )
+                      : const Icon(Icons.send),
                   onPressed: _isSubmitting ? null : _submit,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 2),
-          if (_isSubmitting)
-            const LinearProgressIndicator(minHeight: 2),
         ],
       ),
     );

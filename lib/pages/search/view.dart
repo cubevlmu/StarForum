@@ -36,13 +36,10 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    _controllerTag =
-        "SearchPage:${widget.embedded}:${widget.defaultInputSearchWord ?? ""}:${identityHashCode(this)}";
-    controller = Get.put(
-      SearchPageController(),
-      tag: _controllerTag,
-      permanent: false,
-    );
+    _controllerTag = "SearchPage:${widget.embedded}";
+    controller = Get.isRegistered<SearchPageController>(tag: _controllerTag)
+        ? Get.find<SearchPageController>(tag: _controllerTag)
+        : Get.put(SearchPageController(), tag: _controllerTag);
     controller.onSearchRequested = widget.onSearchRequested;
 
     controller.defaultSearchWord = "";

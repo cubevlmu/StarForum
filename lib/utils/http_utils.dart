@@ -4,13 +4,112 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'dart:io';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter/widgets.dart';
 import 'package:star_forum/data/api/api_constants.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
+
+String? _proxyFromEnvironment() {
+  final env = Platform.environment;
+  for (final key in const [
+    'HTTPS_PROXY',
+    'https_proxy',
+    'HTTP_PROXY',
+    'http_proxy',
+    'ALL_PROXY',
+    'all_proxy',
+  ]) {
+    final value = env[key]?.trim();
+    if (value != null && value.isNotEmpty) {
+      return value;
+    }
+  }
+  return null;
+}
+
+String? _extractWindowsProxyServer(String raw) {
+  final value = raw.trim();
+  if (value.isEmpty) {
+    return null;
+  }
+  if (!value.contains('=')) {
+    return value;
+  }
+
+  final entries = value.split(';');
+  for (final scheme in const ['https', 'http']) {
+    for (final entry in entries) {
+      final idx = entry.indexOf('=');
+      if (idx <= 0) continue;
+      final key = entry.substring(0, idx).trim().toLowerCase();
+      final proxy = entry.substring(idx + 1).trim();
+      if (key == scheme && proxy.isNotEmpty) {
+        return proxy;
+      }
+    }
+  }
+
+  for (final entry in entries) {
+    final idx = entry.indexOf('=');
+    if (idx <= 0) continue;
+    final proxy = entry.substring(idx + 1).trim();
+    if (proxy.isNotEmpty) {
+      return proxy;
+    }
+  }
+  return null;
+}
+
+String? _queryWindowsProxy() {
+  if (!Platform.isWindows) {
+    return null;
+  }
+
+  const keyPath =
+      r'HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings';
+  final enabled = Process.runSync('reg', ['query', keyPath, '/v', 'ProxyEnable']);
+  if (enabled.exitCode != 0 || !enabled.stdout.toString().contains('0x1')) {
+    return null;
+  }
+
+  final proxy = Process.runSync('reg', ['query', keyPath, '/v', 'ProxyServer']);
+  if (proxy.exitCode != 0) {
+    return null;
+  }
+
+  final lines = proxy.stdout.toString().split(RegExp(r'[\r\n]+'));
+  for (final line in lines) {
+    if (!line.contains('ProxyServer')) continue;
+    final parts = line.trim().split(RegExp(r'\s{2,}'));
+    if (parts.length < 3) continue;
+    return _extractWindowsProxyServer(parts.last);
+  }
+  return null;
+}
+
+String? _normalizeProxyHostPort(String value) {
+  final proxy = value.trim();
+  if (proxy.isEmpty) {
+    return null;
+  }
+  final uri = Uri.tryParse(proxy);
+  if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
+    final port = uri.hasPort ? ':${uri.port}' : '';
+    return '${uri.host}$port';
+  }
+  return proxy;
+}
+
+String? _resolveSystemProxy() {
+  final proxy = _proxyFromEnvironment() ?? _queryWindowsProxy();
+  return proxy == null ? null : _normalizeProxyHostPort(proxy);
+}
 
 class HttpUtils {
   static final HttpUtils _instance = HttpUtils._internal();
@@ -78,6 +177,19 @@ class HttpUtils {
     );
     dio = Dio(options);
     dio.transformer = BackgroundTransformer();
+    final proxy = _resolveSystemProxy();
+    if (proxy != null) {
+      dio.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          client.idleTimeout = const Duration(seconds: 15);
+          client.maxConnectionsPerHost = 6;
+          client.findProxy = (uri) => 'PROXY $proxy';
+          return client;
+        },
+      );
+      LogUtil.info('[Http] System proxy enabled: $proxy');
+    }
 
     dio.interceptors.add(ErrorInterceptor());
   }

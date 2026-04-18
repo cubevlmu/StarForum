@@ -6,6 +6,7 @@ import 'package:star_forum/data/api/api_constants.dart';
 import 'package:star_forum/data/api/api_guard.dart';
 import 'package:star_forum/data/api/api_log.dart';
 import 'package:star_forum/data/model/notifications.dart';
+import 'package:star_forum/data/model/uploads.dart';
 import 'package:star_forum/data/model/user_item.dart';
 import 'package:star_forum/utils/http_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -33,6 +34,7 @@ enum _ApiParseKind {
   postInfo,
   notificationInfoList,
   notificationsInfo,
+  uploadFileList,
   userInfo,
   loginResult,
 }
@@ -50,6 +52,39 @@ enum UserSort {
 }
 
 enum FollowingSort { hottest, latestReply, newest, oldest, mostViews }
+
+@immutable
+class ApiUploadFile {
+  const ApiUploadFile({required this.fileName, this.path, this.bytes});
+
+  final String fileName;
+  final String? path;
+  final Uint8List? bytes;
+
+  Future<MultipartFile> toMultipartFile() {
+    final contentType = MultipartFile.lookupMediaType(fileName);
+    final filePath = path;
+    if (filePath != null && filePath.isNotEmpty) {
+      return MultipartFile.fromFile(
+        filePath,
+        filename: fileName,
+        contentType: contentType,
+      );
+    }
+
+    final data = bytes;
+    if (data == null || data.isEmpty) {
+      throw StateError('Upload file data is empty: $fileName');
+    }
+    return Future.value(
+      MultipartFile.fromBytes(
+        data,
+        filename: fileName,
+        contentType: contentType,
+      ),
+    );
+  }
+}
 
 @immutable
 class _ApiParseRequest {
@@ -99,6 +134,8 @@ Object? _parseApiPayload(_ApiParseRequest request) {
       return NotificationInfoList.fromMap(_apiAsJsonMap(request.data));
     case _ApiParseKind.notificationsInfo:
       return NotificationsInfo.fromMap(_apiAsJsonMap(request.data));
+    case _ApiParseKind.uploadFileList:
+      return UploadFileList.fromMap(_apiAsJsonMap(request.data));
     case _ApiParseKind.userInfo:
       return UserInfo.fromMap(_apiAsJsonMap(request.data));
     case _ApiParseKind.loginResult:
@@ -126,6 +163,24 @@ class Api {
 
   static String? _getFixedBaseUrl() {
     return _normalizeBaseUrl(ApiConstants.fixedApi);
+  }
+
+  static String _cacheKey(String method, String url) => '$method $url';
+
+  static void _invalidateDiscussionCaches() {
+    ApiGuard.invalidateRequestCache(
+      (key) => key.contains('/api/discussions') || key.contains('/api/posts'),
+    );
+  }
+
+  static void _invalidateNotificationCaches() {
+    ApiGuard.invalidateRequestCache(
+      (key) => key.contains('/api/notifications'),
+    );
+  }
+
+  static void _invalidateUserCaches() {
+    ApiGuard.invalidateRequestCache((key) => key.contains('/api/users'));
   }
 
   static Future<T> _parseInBackground<T>(
@@ -331,6 +386,9 @@ class Api {
         options: Options(contentType: 'application/json'),
       );
 
+      if (resp.statusCode == 200) {
+        _invalidateUserCaches();
+      }
       return resp.statusCode == 200;
     } catch (e, s) {
       ApiLog.exception("updateUser", "[PATCH]", e, s);
@@ -448,55 +506,53 @@ class Api {
   ///
   /// This method also uses an in-memory cache and returns `_buffered` for the
   /// same URL when available.
-  static Future<(ForumInfo?, int)> getForumInfo(String url) async {
+  static Future<(ForumInfo?, int)> getForumInfo(
+    String url, {
+    bool force = false,
+  }) async {
     if (url.endsWith('/')) {
       url = url.substring(0, url.length - 1);
     }
-    if (_buffered != null && _buffered?.url == url) {
+    if (!force && _buffered != null && _buffered?.url == url) {
       ApiLog.ok("getForumInfo", "GET", "Local buffered. Url $url");
       return (_buffered, 0);
     }
 
-    final sw = Stopwatch()..start();
-    try {
-      final response = await _utils.get("$url/api");
-      final result = await _parseInBackground<ForumInfo>(
-        response.data,
-        _ApiParseKind.forumInfo,
-      );
-      sw.stop();
-
-      final time = sw.elapsedMilliseconds;
-      int lagLevel = 0;
-      if (time <= 500) {
-        lagLevel = 0;
-      } else if (time <= 1000) {
-        lagLevel = 1;
-      } else if (time <= 2000) {
-        lagLevel = 2;
-      } else if (time <= 5000) {
-        lagLevel = 3;
-      } else if (time < 10000) {
-        lagLevel = 4;
-      } else {
-        lagLevel = 5;
-      }
-      ApiLog.ok("getForumInfo", "[GET] cost=${sw.elapsedMilliseconds}ms");
-
-      _buffered = result;
-      return (result, lagLevel);
-    } catch (e, s) {
-      sw.stop();
-
-      ApiLog.exception(
-        "getForumInfo",
-        "[GET] cost=${sw.elapsedMilliseconds}ms",
-        e,
-        s,
-      );
+    var totalMs = -1;
+    final result = await ApiGuard.runPhased<ForumInfo?, String, Response>(
+      name: "getForumInfo",
+      method: "GET",
+      prepare: () async => "$url/api",
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (response, _) =>
+          _parseInBackground<ForumInfo>(response.data, _ApiParseKind.forumInfo),
+      fallback: null,
+      onFinished: (total, prepareMs, requestMs, parseMs, parsed) {
+        totalMs = total;
+      },
+    );
+    if (result == null) {
       _buffered = null;
       return (null, -1);
     }
+
+    final time = totalMs;
+    int lagLevel = 0;
+    if (time <= 500) {
+      lagLevel = 0;
+    } else if (time <= 1000) {
+      lagLevel = 1;
+    } else if (time <= 2000) {
+      lagLevel = 2;
+    } else if (time <= 5000) {
+      lagLevel = 3;
+    } else if (time < 10000) {
+      lagLevel = 4;
+    } else {
+      lagLevel = 5;
+    }
+    _buffered = result;
+    return (result, lagLevel);
   }
 
   /// Fetches the tag list from `/api/tags`.
@@ -504,16 +560,19 @@ class Api {
   /// The returned tag data is organized into the `Tags` structure, including
   /// parent-child relationships, so UI code can render it directly.
   static Future<Tags?> getTags() async {
-    return ApiGuard.run(
+    final url = "$_baseUrl/api/tags";
+    return ApiGuard.runPhased(
       name: "getTags",
       method: "GET",
-      call: () async {
-        return _parseInBackground<Tags>(
-          (await _utils.get("$_baseUrl/api/tags")).data,
-          _ApiParseKind.tags,
-        );
-      },
+      prepare: () async => url,
+      request: (url) => _utils.get(url),
+      parse: (resp, _) =>
+          _parseInBackground<Tags>(resp.data, _ApiParseKind.tags),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', url),
+        ttl: const Duration(minutes: 5),
+      ),
     );
   }
 
@@ -538,6 +597,9 @@ class Api {
           data: body,
         );
 
+        if (r.statusCode == 200) {
+          _invalidateDiscussionCaches();
+        }
         return r.statusCode == 200;
       },
       fallback: false,
@@ -549,18 +611,21 @@ class Api {
   /// The request currently includes `user` and `firstPost`, which is suitable
   /// for discussion detail pages.
   static Future<DiscussionInfo?> getDiscussionById(String id) async {
-    return ApiGuard.run(
+    final requestUrl = "$_baseUrl/api/discussions/$id?include=user,firstPost";
+    return ApiGuard.runPhased(
       name: "getDiscussionById",
       method: "GET",
-      call: () async {
-        return _parseInBackground<DiscussionInfo>(
-          (await _utils.get(
-            "$_baseUrl/api/discussions/$id?include=user,firstPost",
-          )).data,
-          _ApiParseKind.discussionInfo,
-        );
-      },
+      prepare: () async => requestUrl,
+      request: (url) => _utils.get(url),
+      parse: (resp, _) => _parseInBackground<DiscussionInfo>(
+        resp.data,
+        _ApiParseKind.discussionInfo,
+      ),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: const Duration(seconds: 30),
+      ),
     );
   }
 
@@ -585,6 +650,8 @@ class Api {
       'page[limit]': limit.toString(),
 
       'include': 'user,lastPostedUser,tags,firstPost',
+      'fields[discussions]':
+          'title,createdAt,lastPostedAt,lastPostNumber,commentCount,views,subscription,user,lastPostedUser,firstPost,tags',
       'fields[users]': 'username,displayName,avatarUrl',
       'fields[tags]':
           'name,description,slug,discussionCount,position,lastPostedAt,isChild,canStartDiscussion',
@@ -595,20 +662,23 @@ class Api {
       params['filter[q]'] = 'tag:${Uri.encodeComponent(tagSlug)}';
     }
 
-    return ApiGuard.run(
+    final requestUrl = Uri.parse(
+      "$_baseUrl/api/discussions",
+    ).replace(queryParameters: params).toString();
+    return ApiGuard.runPhased(
       name: "getDiscussionList",
       method: "GET",
-      call: () async {
-        final uri = Uri.parse(
-          "$_baseUrl/api/discussions",
-        ).replace(queryParameters: params);
-        final resp = await _utils.get(uri.toString());
-        return _parseInBackground<PagedDiscussions>(
-          resp.data,
-          _ApiParseKind.pagedDiscussions,
-        );
-      },
+      prepare: () async => requestUrl,
+      request: (url) => _utils.get(url),
+      parse: (resp, _) async =>
+          compute(PagedDiscussions.fromMapFast, _apiAsJsonMap(resp.data)),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: offset == 0
+            ? const Duration(seconds: 20)
+            : const Duration(seconds: 45),
+      ),
     );
   }
 
@@ -623,6 +693,8 @@ class Api {
       'page[offset]': offset.toString(),
       'page[limit]': limit.toString(),
       'include': 'user,lastPostedUser,tags,firstPost',
+      'fields[discussions]':
+          'title,createdAt,lastPostedAt,lastPostNumber,commentCount,views,subscription,user,lastPostedUser,firstPost,tags',
       'fields[users]': 'username,displayName,avatarUrl',
       'fields[tags]': 'name,slug,color',
       'fields[posts]': 'createdAt,contentHtml,editedAt,likesCount',
@@ -632,22 +704,23 @@ class Api {
       params['sort'] = sortKey;
     }
 
-    return ApiGuard.run(
+    final requestUrl = Uri.parse(
+      "$_baseUrl/api/discussions",
+    ).replace(queryParameters: params).toString();
+    return ApiGuard.runPhased(
       name: "getFollowingDiscussionList",
       method: "GET",
-      call: () async {
-        final uri = Uri.parse(
-          "$_baseUrl/api/discussions",
-        ).replace(queryParameters: params);
-
-        final resp = await _utils.get(uri.toString());
-
-        return _parseInBackground<PagedDiscussions>(
-          resp.data,
-          _ApiParseKind.pagedDiscussions,
-        );
-      },
+      prepare: () async => requestUrl,
+      request: (url) => _utils.get(url),
+      parse: (resp, _) async =>
+          compute(PagedDiscussions.fromMapFast, _apiAsJsonMap(resp.data)),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: offset == 0
+            ? const Duration(seconds: 15)
+            : const Duration(seconds: 30),
+      ),
     );
   }
 
@@ -673,15 +746,13 @@ class Api {
         "&page[offset]=$offset"
         "&page[limit]=$limit";
 
-    return ApiGuard.run(
+    return ApiGuard.runPhased(
       name: "searchDiscuss",
       method: "GET",
-      call: () async {
-        return _parseInBackground<Discussions>(
-          (await _utils.get(url)).data,
-          _ApiParseKind.discussions,
-        );
-      },
+      prepare: () async => url,
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (resp, _) async =>
+          compute(Discussions.fromMapFast, _apiAsJsonMap(resp.data)),
       fallback: null,
     );
   }
@@ -702,28 +773,31 @@ class Api {
       'page[offset]': offset.toString(),
       'page[limit]': limit.toString(),
 
+      'fields[discussions]':
+          'title,createdAt,lastPostedAt,lastPostNumber,commentCount,views,subscription,user,lastPostedUser,firstPost,tags',
       'fields[users]': 'username,displayName,avatarUrl',
       'fields[tags]':
           'name,description,slug,discussionCount,position,lastPostedAt,isChild,canStartDiscussion',
       'fields[posts]': 'createdAt,contentHtml,editedAt,likesCount',
     };
 
-    return ApiGuard.run(
+    final requestUrl = Uri.parse(
+      "$_baseUrl/api/discussions",
+    ).replace(queryParameters: params).toString();
+    return ApiGuard.runPhased(
       name: "getDiscussByTag",
       method: "GET",
-      call: () async {
-        final uri = Uri.parse(
-          "$_baseUrl/api/discussions",
-        ).replace(queryParameters: params);
-
-        final resp = await _utils.get(uri.toString());
-
-        return _parseInBackground<Discussions>(
-          resp.data,
-          _ApiParseKind.discussions,
-        );
-      },
+      prepare: () async => requestUrl,
+      request: (url) => _utils.get(url),
+      parse: (resp, _) async =>
+          compute(Discussions.fromMapFast, _apiAsJsonMap(resp.data)),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: offset == 0
+            ? const Duration(seconds: 20)
+            : const Duration(seconds: 45),
+      ),
     );
   }
 
@@ -738,12 +812,14 @@ class Api {
         "&sort=number"
         "&page[limit]=1";
 
-    return ApiGuard.run(
+    return ApiGuard.runPhased(
       name: "getFirstPost",
       method: "GET",
-      call: () async {
+      prepare: () async => url,
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (resp, _) async {
         final data = await _parseInBackground<Posts>(
-          (await _utils.get(url)).data,
+          resp.data,
           _ApiParseKind.posts,
         );
         final posts = data.posts;
@@ -785,23 +861,25 @@ class Api {
       },
     };
 
-    return ApiGuard.runWithToken(
+    return ApiGuard.runPhasedWithToken(
       name: "createDiscussion",
       method: "POST",
-      call: () async {
-        var r = await _utils.post(
-          "$_baseUrl/api/discussions",
-          data: m,
-          options: Options(contentType: 'application/vnd.api+json'),
-        );
-        if (r?.statusCode == 201) {
-          return _parseNullableInBackground<DiscussionInfo>(
-            r?.data,
+      prepare: () async => m,
+      request: (body) => _utils.post(
+        "$_baseUrl/api/discussions",
+        data: body,
+        options: Options(contentType: 'application/vnd.api+json'),
+      ),
+      parse: (resp, _) async {
+        if (resp?.statusCode == 201) {
+          final parsed = await _parseNullableInBackground<DiscussionInfo>(
+            resp?.data,
             _ApiParseKind.discussionInfo,
           );
-        } else {
-          return null;
+          _invalidateDiscussionCaches();
+          return parsed;
         }
+        return null;
       },
       fallback: null,
     );
@@ -834,16 +912,19 @@ class Api {
         "&page[offset]=$offset"
         "&page[limit]=$limit&include=user";
 
-    return ApiGuard.run(
+    final requestUrl = url;
+    return ApiGuard.runPhased(
       name: "getPosts",
       method: "GET",
-      call: () async {
-        return _parseInBackground<Posts>(
-          (await _utils.get(url)).data,
-          _ApiParseKind.posts,
-        );
-      },
+      prepare: () async => requestUrl,
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (resp, _) =>
+          _parseInBackground<Posts>(resp.data, _ApiParseKind.posts),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: const Duration(seconds: 30),
+      ),
     );
   }
 
@@ -854,16 +935,19 @@ class Api {
   static Future<Posts?> getPostsById(List<int> l) async {
     var url = "$_baseUrl/api/posts?filter[id]=${l.join(",")}";
 
-    return ApiGuard.run(
+    final requestUrl = url;
+    return ApiGuard.runPhased(
       name: "getPostsById",
       method: "GET",
-      call: () async {
-        return _parseInBackground<Posts>(
-          (await _utils.get(url)).data,
-          _ApiParseKind.posts,
-        );
-      },
+      prepare: () async => requestUrl,
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (resp, _) =>
+          _parseInBackground<Posts>(resp.data, _ApiParseKind.posts),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: const Duration(seconds: 30),
+      ),
     );
   }
 
@@ -874,16 +958,19 @@ class Api {
   static Future<Posts?> getPost(String id) async {
     var url = "$_baseUrl/api/posts?filter[id]=$id";
 
-    return ApiGuard.run(
+    final requestUrl = url;
+    return ApiGuard.runPhased(
       name: "getPostsById",
       method: "GET",
-      call: () async {
-        return _parseInBackground<Posts>(
-          (await _utils.get(url)).data,
-          _ApiParseKind.posts,
-        );
-      },
+      prepare: () async => requestUrl,
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (resp, _) =>
+          _parseInBackground<Posts>(resp.data, _ApiParseKind.posts),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: const Duration(seconds: 30),
+      ),
     );
   }
 
@@ -907,14 +994,18 @@ class Api {
       },
     };
 
-    return ApiGuard.runWithToken(
+    return ApiGuard.runPhasedWithToken(
       name: "createPost",
       method: "POST",
-      call: () async {
-        return _parseNullableInBackground<PostInfo>(
-          (await _utils.post("$_baseUrl/api/posts", data: m))?.data,
+      prepare: () async => m,
+      request: (body) => _utils.post("$_baseUrl/api/posts", data: body),
+      parse: (resp, _) async {
+        final parsed = await _parseNullableInBackground<PostInfo>(
+          resp?.data,
           _ApiParseKind.postInfo,
         );
+        _invalidateDiscussionCaches();
+        return parsed;
       },
       fallback: null,
     );
@@ -948,14 +1039,18 @@ class Api {
       },
     };
 
-    return ApiGuard.runWithToken(
+    return ApiGuard.runPhasedWithToken(
       name: "likePost",
       method: "POST",
-      call: () async {
-        return _parseInBackground<PostInfo>(
-          (await _utils.patch("$_baseUrl/api/posts/$id", data: m)).data,
+      prepare: () async => m,
+      request: (body) => _utils.patch("$_baseUrl/api/posts/$id", data: body),
+      parse: (resp, _) async {
+        final parsed = await _parseInBackground<PostInfo>(
+          resp.data,
           _ApiParseKind.postInfo,
         );
+        _invalidateDiscussionCaches();
+        return parsed;
       },
       fallback: null,
     );
@@ -981,6 +1076,7 @@ class Api {
           },
         );
         if (r.statusCode == 200) {
+          _invalidateDiscussionCaches();
           return true;
         }
         return false;
@@ -1049,16 +1145,99 @@ class Api {
   }) async {
     final reqUrl = url ?? "$_baseUrl/api/notifications?page[limit]=20";
 
-    return ApiGuard.runWithToken(
+    return ApiGuard.runPhasedWithToken(
       name: "getNotification",
       method: "GET",
-      call: () async {
-        return _parseInBackground<NotificationInfoList>(
-          (await _utils.get(reqUrl)).data,
-          _ApiParseKind.notificationInfoList,
-        );
-      },
+      prepare: () async => reqUrl,
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (resp, _) => _parseInBackground<NotificationInfoList>(
+        resp.data,
+        _ApiParseKind.notificationInfoList,
+      ),
       fallback: null,
+    );
+  }
+
+  /// Fetches files uploaded by a user from FoF Uploads.
+  ///
+  /// Pass [url] to follow server-provided pagination links such as
+  /// `UploadFileList.links.next`. Otherwise this loads the first page for
+  /// [userId] with offset pagination.
+  static Future<(UploadFileList?, bool)> getUploads({
+    required int userId,
+    int offset = 0,
+    int limit = 15,
+    String? url,
+  }) async {
+    final requestUrl =
+        url ??
+        Uri.parse("$_baseUrl/api/fof/uploads")
+            .replace(
+              queryParameters: {
+                'filter[user]': userId.toString(),
+                'page[offset]': offset.toString(),
+                'page[limit]': limit.toString(),
+              },
+            )
+            .toString();
+
+    return ApiGuard.runPhasedWithToken(
+      name: "getUploads",
+      method: "GET",
+      prepare: () async => requestUrl,
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (resp, _) => _parseInBackground<UploadFileList>(
+        resp.data,
+        _ApiParseKind.uploadFileList,
+      ),
+      fallback: null,
+      extra: "(user=$userId offset=$offset)",
+    );
+  }
+
+  static Future<(UploadFileList?, bool)> uploadFiles(
+    List<ApiUploadFile> files,
+  ) async {
+    if (files.isEmpty) {
+      return (UploadFileList(list: const [], links: Links.empty), true);
+    }
+
+    return ApiGuard.runPhasedWithToken(
+      name: "uploadFiles",
+      method: "POST",
+      prepare: () async {
+        final formData = FormData();
+        for (final file in files) {
+          formData.files.add(MapEntry('files[]', await file.toMultipartFile()));
+        }
+        return formData;
+      },
+      request: (formData) => _utils.post(
+        "$_baseUrl/api/fof/upload",
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      ),
+      parse: (resp, _) => _parseInBackground<UploadFileList>(
+        resp.data,
+        _ApiParseKind.uploadFileList,
+      ),
+      fallback: null,
+      extra: "(count=${files.length})",
+    );
+  }
+
+  static Future<(bool, bool)> deleteUploadFile(String uuid) async {
+    return ApiGuard.runPhasedWithToken(
+      name: "deleteUploadFile",
+      method: "POST",
+      prepare: () async => uuid,
+      request: (uuid) => _utils.post(
+        "$_baseUrl/api/fof/upload/delete/$uuid",
+        options: Options(headers: {'X-HTTP-Method-Override': 'DELETE'}),
+      ),
+      parse: (resp, _) async => resp.statusCode == 204,
+      fallback: false,
+      extra: "(uuid=$uuid)",
     );
   }
 
@@ -1092,14 +1271,21 @@ class Api {
   /// This is typically used to follow server-provided pagination links such as
   /// `links.next` or `links.prev`.
   static Future<NotificationInfoList?> getNotificationByUrl(String url) async {
-    return ApiGuard.run(
+    final requestUrl = url;
+    return ApiGuard.runPhased(
       name: "getNotificationByUrl",
       method: "GET",
-      call: () async => _parseInBackground<NotificationInfoList>(
-        (await _utils.get(url)).data,
+      prepare: () async => requestUrl,
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (resp, _) => _parseInBackground<NotificationInfoList>(
+        resp.data,
         _ApiParseKind.notificationInfoList,
       ),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: const Duration(seconds: 10),
+      ),
     );
   }
 
@@ -1115,13 +1301,20 @@ class Api {
         "attributes": {"isRead": true},
       },
     };
-    return ApiGuard.run(
+    return ApiGuard.runPhased(
       name: "setNotificationIsRead",
       method: "PATCH",
-      call: () async => _parseInBackground<NotificationsInfo>(
-        (await _utils.patch("$_baseUrl/api/notifications/$id", data: m)).data,
-        _ApiParseKind.notificationsInfo,
-      ),
+      prepare: () async => m,
+      request: (body) =>
+          _utils.patch("$_baseUrl/api/notifications/$id", data: body),
+      parse: (resp, _) async {
+        final parsed = await _parseInBackground<NotificationsInfo>(
+          resp.data,
+          _ApiParseKind.notificationsInfo,
+        );
+        _invalidateNotificationCaches();
+        return parsed;
+      },
       fallback: null,
     );
   }
@@ -1136,6 +1329,7 @@ class Api {
       call: () async {
         var r = await _utils.post("$_baseUrl/api/notifications/read");
         if (r?.statusCode == 204) {
+          _invalidateNotificationCaches();
           return true;
         }
         return false;
@@ -1155,6 +1349,9 @@ class Api {
           options: Options(headers: {'X-HTTP-Method-Override': 'DELETE'}),
         );
 
+        if (r.statusCode == 204) {
+          _invalidateNotificationCaches();
+        }
         return r.statusCode == 204;
       },
       fallback: false,
@@ -1170,28 +1367,31 @@ class Api {
     int offset = 0,
     int limit = 20,
   }) async {
-    return ApiGuard.run(
+    final requestUrl = Uri.parse("$_baseUrl/api/posts")
+        .replace(
+          queryParameters: {
+            'filter[author]': username,
+            'page[offset]': offset.toString(),
+            'page[limit]': limit.toString(),
+            'sort': '-createdAt',
+            'include': 'user,discussion',
+            'filter[type]': 'comment',
+          },
+        )
+        .toString();
+    return ApiGuard.runPhased(
       name: "getPostsByAuthor",
       method: "GET",
-      call: () async {
-        final params = <String, String>{
-          'filter[author]': username,
-          'page[offset]': offset.toString(),
-          'page[limit]': limit.toString(),
-          'sort': '-createdAt',
-          'include': 'user,discussion',
-          'filter[type]': 'comment',
-        };
-
-        final uri = Uri.parse(
-          "$_baseUrl/api/posts",
-        ).replace(queryParameters: params);
-
-        final resp = await _utils.get(uri.toString());
-        return _parseInBackground<Posts>(resp.data, _ApiParseKind.posts);
-      },
+      prepare: () async => requestUrl,
+      request: (url) => _utils.get(url),
+      parse: (resp, _) =>
+          _parseInBackground<Posts>(resp.data, _ApiParseKind.posts),
       fallback: null,
       extra: "(user=$username offset=$offset)",
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: const Duration(seconds: 20),
+      ),
     );
   }
 
@@ -1223,14 +1423,19 @@ class Api {
   /// This is useful when the server has already returned an absolute link and
   /// the caller does not want to rebuild the path manually.
   static Future<UserInfo?> getUserByUrl(String url) async {
-    return ApiGuard.run(
+    final requestUrl = url;
+    return ApiGuard.runPhased(
       name: "getUserByUrl",
       method: "GET",
-      call: () async => _parseInBackground<UserInfo>(
-        (await _utils.get(url)).data,
-        _ApiParseKind.userInfo,
-      ),
+      prepare: () async => requestUrl,
+      request: (requestUrl) => _utils.get(requestUrl),
+      parse: (resp, _) =>
+          _parseInBackground<UserInfo>(resp.data, _ApiParseKind.userInfo),
       fallback: null,
+      cachePolicy: ApiRequestCachePolicy(
+        key: _cacheKey('GET', requestUrl),
+        ttl: const Duration(seconds: 30),
+      ),
     );
   }
 
@@ -1243,21 +1448,18 @@ class Api {
   /// Returns the token and user ID, or `null` if login fails.
   /// This currently supports both `Map` and JSON-string response bodies.
   static Future<LoginResult?> login(String username, String password) async {
-    return ApiGuard.run(
+    return ApiGuard.runPhased(
       name: "login",
       method: "POST",
-      call: () async {
-        Response<dynamic>? result;
+      prepare: () async {
         LogUtil.debug("$_baseUrl/api/token");
-        result = (await _utils.post(
-          "$_baseUrl/api/token",
-          data: {"identification": username, "password": password},
-        ));
-        return _parseNullableInBackground<LoginResult>(
-          result?.data,
-          _ApiParseKind.loginResult,
-        );
+        return {"identification": username, "password": password};
       },
+      request: (body) => _utils.post("$_baseUrl/api/token", data: body),
+      parse: (resp, _) => _parseNullableInBackground<LoginResult>(
+        resp?.data,
+        _ApiParseKind.loginResult,
+      ),
       fallback: null,
     );
   }

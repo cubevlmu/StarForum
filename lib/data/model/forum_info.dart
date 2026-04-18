@@ -16,6 +16,7 @@ class ForumInfo {
   final String welcomeTitle;
   final String welcomeMessage;
   final String logoUrl;
+  final bool canUpload;
 
   static ForumInfo empty = ForumInfo(
     url: "",
@@ -24,8 +25,9 @@ class ForumInfo {
     welcomeTitle: "",
     welcomeMessage: "",
     logoUrl: "",
+    canUpload: false,
   );
-  
+
   const ForumInfo({
     required this.url,
     required this.title,
@@ -33,6 +35,7 @@ class ForumInfo {
     required this.welcomeTitle,
     required this.welcomeMessage,
     required this.logoUrl,
+    required this.canUpload,
   });
 
   factory ForumInfo.fromMap(Map map) {
@@ -49,6 +52,7 @@ class ForumInfo {
         welcomeTitle: info.string("welcomeTitle"),
         welcomeMessage: info.string("welcomeMessage"),
         logoUrl: info.string("logoUrl"),
+        canUpload: info.boolean("fof-upload.canUpload"),
       );
     }
     return empty;

@@ -115,4 +115,11 @@ class SearchResultController extends GetxController
     }
     isInitialLoading.value = false;
   }
+
+  @override
+  void onClose() {
+    refreshController.dispose();
+    scrollController.dispose();
+    super.onClose();
+  }
 }

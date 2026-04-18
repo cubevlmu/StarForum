@@ -107,34 +107,30 @@ class _LanguageSection extends StatelessWidget {
       orElse: () => languages.first,
     );
 
-    return _SettingsSection(
-      title: AppLocalizations.of(context)!.settingsLanguage,
-      subtitle: currentLanguage.label(context),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: SegmentedButton<Locale>(
-            segments: [
-              for (final language in languages)
-                ButtonSegment<Locale>(
-                  value: language.locale,
-                  icon: Icon(_languageIcon(language.locale)),
-                  label: Text(language.label(context)),
-                ),
-            ],
-            selected: {currentLanguage.locale},
-            multiSelectionEnabled: false,
-            emptySelectionAllowed: false,
-            showSelectedIcon: false,
-            onSelectionChanged: (value) {
-              if (value.isNotEmpty) {
-                onChanged(value.first);
-              }
-            },
-          ),
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(_languageIcon(currentLanguage.locale)),
+          title: Text(AppLocalizations.of(context)!.settingsLanguage),
+          subtitle: Text(currentLanguage.label(context)),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () async {
+            final selected = await SharedDialog.showRadioListDialog<Locale>(
+              context,
+              title: AppLocalizations.of(context)!.settingsLanguageSelect,
+              itemNameValueMap: {
+                for (final language in languages)
+                  language.label(context): language.locale,
+              },
+              groupValue: currentLanguage.locale,
+            );
+            if (selected != null) {
+              onChanged(selected);
+            }
+          },
         ),
-      ),
+        const Divider(height: 1, thickness: 0.5),
+      ],
     );
   }
 
@@ -146,29 +142,6 @@ class _LanguageSection extends StatelessWidget {
       return Icons.translate_rounded;
     }
     return Icons.language_rounded;
-  }
-}
-
-class _SettingsSection extends StatelessWidget {
-  const _SettingsSection({
-    required this.title,
-    required this.subtitle,
-    required this.child,
-  });
-
-  final String title;
-  final String subtitle;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(title: Text(title), subtitle: Text(subtitle)),
-        child,
-        const Divider(height: 1, thickness: 0.5),
-      ],
-    );
   }
 }
 

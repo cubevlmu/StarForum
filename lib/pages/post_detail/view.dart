@@ -37,7 +37,6 @@ class _PostPageState extends State<PostPage>
   bool get wantKeepAlive => true;
   late PostPageController controller;
   late String controllerTag;
-  late final bool _shouldDeleteControllerOnDispose;
 
   @override
   void initState() {
@@ -50,7 +49,6 @@ class _PostPageState extends State<PostPage>
         tag: controllerTag,
       );
     }
-    _shouldDeleteControllerOnDispose = !widget.embedded;
     if (controller.replyItems.isEmpty && controller.newReplyItems.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -62,8 +60,7 @@ class _PostPageState extends State<PostPage>
 
   @override
   void dispose() {
-    if (_shouldDeleteControllerOnDispose &&
-        Get.isRegistered<PostPageController>(tag: controllerTag)) {
+    if (Get.isRegistered<PostPageController>(tag: controllerTag)) {
       Get.delete<PostPageController>(tag: controllerTag);
     }
     super.dispose();
