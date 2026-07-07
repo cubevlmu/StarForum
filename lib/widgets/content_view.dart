@@ -8,11 +8,15 @@ import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
-import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/app/forum_icons.dart';
+import 'package:star_forum/data/repository/forum_repo.dart';
+import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
+import 'package:star_forum/widgets/image_view.dart';
+import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
@@ -335,7 +339,7 @@ class _ContentInlineLink extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.reply_rounded,
+            ForumIcons.reply,
             size: ContentView.textSize,
             color: colorScheme.primary,
           ),
@@ -368,8 +372,12 @@ class _ContentInlineLink extends StatelessWidget {
           launchUrlString(target);
           break;
         case ContentLikeType.kUserMention:
-          final id = int.parse(target.replaceAll("${Api.getBaseUrl}/u/", ""));
-          openUserAdaptive(context, id);
+          final baseUrl = getIt<ForumRepository>().baseUrl;
+          final id = int.parse(target.replaceAll("$baseUrl/u/", ""));
+          FuiNavigation.openDetail(
+            context,
+            builder: (_) => UserPage(userId: id, embedded: true),
+          );
           break;
         case ContentLikeType.kReply:
           SnackbarUtils.showMessage(
@@ -423,7 +431,10 @@ class _ContentInlineImage extends StatelessWidget {
   }
 
   void _previewImage(BuildContext context) {
-    openImagePreviewAdaptive(context, url);
+    FuiNavigation.openDetail(
+      context,
+      builder: (_) => ImagePreviewWidget(url: url, embedded: true),
+    );
   }
 }
 

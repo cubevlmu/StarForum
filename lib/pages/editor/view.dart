@@ -5,7 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
+import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/model/uploads.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
@@ -14,18 +16,16 @@ import 'package:star_forum/pages/assets/view.dart';
 import 'package:star_forum/pages/editor/controller.dart';
 import 'package:star_forum/pages/editor/widgets/tag_dialog.dart';
 import 'package:star_forum/pages/post_list/create_discuss_util.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 
 @immutable
 class EditorPage extends StatefulWidget {
-  const EditorPage({
-    super.key,
-    this.embedded = false,
-    this.showEmbeddedBack = false,
-    this.onEmbeddedLeadingPressed,
-  }) : title = null,
-       initialContent = null,
-       onSubmitReply = null;
+  const EditorPage({super.key, this.embedded = false})
+    : title = null,
+      initialContent = null,
+      onSubmitReply = null;
 
   const EditorPage.reply({
     super.key,
@@ -33,13 +33,9 @@ class EditorPage extends StatefulWidget {
     required this.initialContent,
     required this.onSubmitReply,
     this.embedded = false,
-    this.showEmbeddedBack = false,
-    this.onEmbeddedLeadingPressed,
   });
 
   final bool embedded;
-  final bool showEmbeddedBack;
-  final VoidCallback? onEmbeddedLeadingPressed;
   final String? title;
   final String? initialContent;
   final Future<bool> Function(String content)? onSubmitReply;
@@ -56,7 +52,7 @@ class _EditorPageState extends State<EditorPage> {
 
   @override
   void initState() {
-    _controllerTag = "EditorPage:${identityHashCode(this)}";
+    _controllerTag = 'EditorPage:${identityHashCode(this)}';
     controller = Get.put(EditorController(), tag: _controllerTag);
     final initialContent = widget.initialContent;
     if (initialContent != null && initialContent.isNotEmpty) {
@@ -79,64 +75,115 @@ class _EditorPageState extends State<EditorPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = context.colors;
+    final mediaQuery = MediaQuery.of(context);
+    final hideEditorMeta =
+        mediaQuery.size.width < 700 &&
+        mediaQuery.viewInsets.bottom > 0 &&
+        controller.contentFocusNode.hasFocus;
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: !widget.embedded,
-        leading: widget.embedded
-            ? IconButton(
-                icon: Icon(
-                  widget.showEmbeddedBack
-                      ? Icons.arrow_back_rounded
-                      : Icons.close_rounded,
+      backgroundColor: colors.background,
+      resizeToAvoidBottomInset: true,
+      bottomNavigationBar: Obx(() {
+        final isSubmitting = controller.isSubmitting.value;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(height: 1, color: colors.border),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  FUITokens.gap8,
+                  FUITokens.gap6,
+                  FUITokens.gap12,
+                  FUITokens.gap6,
                 ),
-                onPressed: widget.onEmbeddedLeadingPressed,
-              )
-            : null,
-        title: Text(widget.title ?? l10n.editorPageTitle),
-      ),
+                child: _EditorFooter(
+                  controller: controller,
+                  isSubmitting: isSubmitting,
+                  onSubmit: () => _submit(context),
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
       body: SafeArea(
+        bottom: false,
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 920),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Obx(() {
-                final isSubmitting = controller.isSubmitting.value;
-                return Column(
-                  children: [
-                    if (!widget.isReplyMode) ...[
-                      _EditorTagField(
-                        label: controller.buildTagLabel(l10n.tagDialogTitle),
-                        enabled: !isSubmitting,
-                        onTap: () => _showTagDialog(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    FUITokens.pagePadding,
+                    FUITokens.gap12,
+                    FUITokens.pagePadding,
+                    FUITokens.gap8,
+                  ),
+                  child: FuiPageHead(
+                    title: widget.title ?? l10n.editorPageTitle,
+                  ),
+                ),
+
+                Expanded(
+                  child: Obx(() {
+                    final isSubmitting = controller.isSubmitting.value;
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        FUITokens.pagePadding,
+                        0,
+                        FUITokens.pagePadding,
+                        FUITokens.gap8,
                       ),
-                      const SizedBox(height: 12),
-                      _EditorTitleField(
-                        controller: controller,
-                        enabled: !isSubmitting,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 160),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeOutCubic,
+                            child: !widget.isReplyMode && !hideEditorMeta
+                                ? Column(
+                                    key: const ValueKey('editor-meta'),
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _EditorTagField(
+                                        label: controller.buildTagLabel(
+                                          l10n.tagDialogTitle,
+                                        ),
+                                        enabled: !isSubmitting,
+                                        onTap: () => _showTagDialog(context),
+                                      ),
+                                      const SizedBox(height: FUITokens.gap10),
+                                      _EditorTitleField(
+                                        controller: controller,
+                                        enabled: !isSubmitting,
+                                      ),
+                                      const SizedBox(height: FUITokens.gap10),
+                                    ],
+                                  )
+                                : const SizedBox.shrink(
+                                    key: ValueKey('editor-meta-hidden'),
+                                  ),
+                          ),
+                          Expanded(
+                            child: _EditorBodyField(
+                              controller: controller,
+                              enabled: !isSubmitting,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                    ],
-                    Expanded(
-                      child: _EditorBodyField(
-                        controller: controller,
-                        enabled: !isSubmitting,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Divider(color: colorScheme.outlineVariant, height: 1),
-                    const SizedBox(height: 8),
-                    _EditorFooter(
-                      controller: controller,
-                      isSubmitting: isSubmitting,
-                      onSubmit: () => _submit(context),
-                    ),
-                  ],
-                );
-              }),
+                    );
+                  }),
+                ),
+              ],
             ),
           ),
         ),
@@ -145,23 +192,14 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   Future<void> _showTagDialog(BuildContext context) async {
-    if (controller.isSubmitting.value) {
-      return;
-    }
+    if (controller.isSubmitting.value) return;
 
     final repo = controller.tagRepo;
-    if (!repo.isReady) {
-      await repo.syncTags();
-    }
-    if (!mounted) {
-      return;
-    }
+    if (!repo.isReady) await repo.syncTags();
+    if (!mounted) return;
 
     final l10n = AppLocalizations.of(this.context)!;
-    final primaryTags = repo
-        .getPrimaryTags()
-        .where((tag) => tag.canStartDiscussion)
-        .toList();
+    final primaryTags = repo.getRootTagsForUI();
     final primaryTagIds = primaryTags.map((tag) => tag.id).toSet();
     final secondaryTags = repo
         .getTags()
@@ -169,8 +207,18 @@ class _EditorPageState extends State<EditorPage> {
           (tag) => tag.canStartDiscussion && !primaryTagIds.contains(tag.id),
         )
         .toList();
+    bool hasSelectableTag(Iterable<TagInfo> tags) {
+      for (final tag in tags) {
+        if (tag.canStartDiscussion) return true;
+        final children = tag.children?.values;
+        if (children != null && hasSelectableTag(children)) return true;
+      }
+      return false;
+    }
 
-    if (primaryTags.isEmpty) {
+    final canStartDiscussion =
+        hasSelectableTag(primaryTags) || secondaryTags.isNotEmpty;
+    if (!canStartDiscussion) {
       SnackbarUtils.showMessage(msg: l10n.themeSelectTagHint);
       return;
     }
@@ -182,9 +230,7 @@ class _EditorPageState extends State<EditorPage> {
       initialPrimaryTag: controller.primaryTag.value,
       initialSecondaryTags: controller.secondaryTags,
     );
-    if (selected == null) {
-      return;
-    }
+    if (selected == null) return;
     controller.applyTagSelection(
       primary: selected.primaryTag,
       secondary: selected.secondaryTags,
@@ -192,9 +238,7 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   Future<void> _submit(BuildContext context) async {
-    if (controller.isSubmitting.value) {
-      return;
-    }
+    if (controller.isSubmitting.value) return;
 
     final l10n = AppLocalizations.of(context)!;
     final title = controller.titleController.text.trim();
@@ -204,7 +248,6 @@ class _EditorPageState extends State<EditorPage> {
       SnackbarUtils.showMessage(msg: l10n.commonNoticeTitleContentEmpty);
       return;
     }
-
     if (!widget.isReplyMode && title.length < 6) {
       SnackbarUtils.showMessage(msg: l10n.commonNoticeTitleTooShort);
       return;
@@ -214,11 +257,9 @@ class _EditorPageState extends State<EditorPage> {
       controller.isSubmitting.value = true;
       try {
         final ok = await widget.onSubmitReply!(content);
-        if (!mounted || !ok) {
-          return;
-        }
+        if (!mounted || !ok) return;
         if (widget.embedded) {
-          widget.onEmbeddedLeadingPressed?.call();
+          FuiNavigation.closeCurrent(this.context);
           return;
         }
         Navigator.of(this.context).pop();
@@ -242,16 +283,14 @@ class _EditorPageState extends State<EditorPage> {
     controller.isSubmitting.value = true;
     try {
       final ok = await CreateDiscussUtil.submitDiscussion(
+        context: this.context,
         tags: tags,
         title: title,
         content: content,
       );
-      if (!mounted || !ok) {
-        return;
-      }
-
+      if (!mounted || !ok) return;
       if (widget.embedded) {
-        widget.onEmbeddedLeadingPressed?.call();
+        FuiNavigation.closeCurrent(this.context);
         return;
       }
       Navigator.of(this.context).pop();
@@ -274,49 +313,51 @@ class _EditorTagField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final selected = label != AppLocalizations.of(context)!.tagDialogTitle;
+    final colors = context.colors;
+    final hasTag = label != AppLocalizations.of(context)!.tagDialogTitle;
 
-    return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: enabled ? onTap : null,
-        child: Ink(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: colorScheme.outlineVariant),
+    return FUISurface(
+      onTap: enabled ? onTap : null,
+      padding: const EdgeInsets.fromLTRB(
+        FUITokens.gap14,
+        FUITokens.gap12,
+        FUITokens.gap12,
+        FUITokens.gap12,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: hasTag ? colors.primarySoft : colors.surfaceAlt,
+              borderRadius: BorderRadius.circular(FUITokens.radiusSm),
+            ),
+            child: Icon(
+              ForumIcons.tags,
+              size: FUITokens.iconSm,
+              color: hasTag ? colors.primary : colors.textTertiary,
+            ),
           ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.sell_outlined,
-                size: 18,
-                color: selected
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
+          const SizedBox(width: FUITokens.gap12),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: hasTag ? colors.textPrimary : colors.textTertiary,
+                fontSize: 14,
+                fontWeight: hasTag ? FontWeight.w600 : FontWeight.w400,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: selected
-                        ? colorScheme.onSurface
-                        : colorScheme.onSurfaceVariant,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ],
+            ),
           ),
-        ),
+          Icon(
+            FUIIcons.chevronDown,
+            size: FUITokens.iconMd,
+            color: colors.textTertiary,
+          ),
+        ],
       ),
     );
   }
@@ -330,25 +371,33 @@ class _EditorTitleField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
+    return FUISurface(
+      padding: EdgeInsets.zero,
       child: TextField(
         controller: controller.titleController,
         enabled: enabled,
         textInputAction: TextInputAction.next,
-        style: Theme.of(
-          context,
-        ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: colors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
         decoration: InputDecoration(
           hintText: l10n.postCreateTitleHint,
-          contentPadding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+          hintStyle: TextStyle(
+            color: colors.textTertiary,
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(
+            FUITokens.gap14,
+            FUITokens.gap14,
+            FUITokens.gap14,
+            FUITokens.gap14,
+          ),
           border: InputBorder.none,
         ),
       ),
@@ -364,15 +413,11 @@ class _EditorBodyField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
+    return FUISurface(
+      padding: EdgeInsets.zero,
       child: TextField(
         controller: controller.contentController,
         focusNode: controller.contentFocusNode,
@@ -382,10 +427,13 @@ class _EditorBodyField extends StatelessWidget {
         minLines: null,
         keyboardType: TextInputType.multiline,
         textCapitalization: TextCapitalization.sentences,
+        textAlignVertical: TextAlignVertical.top,
+        style: TextStyle(color: colors.textPrimary, fontSize: 14, height: 1.6),
         decoration: InputDecoration(
           hintText: l10n.postCreateContentHint,
+          hintStyle: TextStyle(color: colors.textTertiary, fontSize: 14),
           alignLabelWithHint: true,
-          contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          contentPadding: const EdgeInsets.all(FUITokens.gap14),
           border: InputBorder.none,
         ),
       ),
@@ -408,115 +456,106 @@ class _EditorFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final userRepo = getIt<UserRepo>();
-
     final canUpload = userRepo.canUpload.value;
-    final actions = <_EditorToolbarAction>[
-      _EditorToolbarAction(
-        icon: Icons.title_rounded,
-        tooltip: l10n.editorToolbarHeading,
-        onTap: () => controller.insertLinePrefix("# "),
+
+    final actions = <_ToolbarAction>[
+      _ToolbarAction(
+        FluentIcons.text_header_1_24_regular,
+        l10n.editorToolbarHeading,
+        () => controller.insertLinePrefix('# '),
       ),
-      _EditorToolbarAction(
-        icon: Icons.format_bold_rounded,
-        tooltip: l10n.editorToolbarBold,
-        onTap: () => controller.insertWrap("**"),
+      _ToolbarAction(
+        FluentIcons.text_bold_24_regular,
+        l10n.editorToolbarBold,
+        () => controller.insertWrap('**'),
       ),
-      _EditorToolbarAction(
-        icon: Icons.format_italic_rounded,
-        tooltip: l10n.editorToolbarItalic,
-        onTap: () => controller.insertWrap("_"),
+      _ToolbarAction(
+        FluentIcons.text_italic_24_regular,
+        l10n.editorToolbarItalic,
+        () => controller.insertWrap('_'),
       ),
-      _EditorToolbarAction(
-        icon: Icons.format_strikethrough_rounded,
-        tooltip: l10n.editorToolbarStrike,
-        onTap: () => controller.insertWrap("~~"),
+      _ToolbarAction(
+        FluentIcons.text_strikethrough_24_regular,
+        l10n.editorToolbarStrike,
+        () => controller.insertWrap('~~'),
       ),
-      _EditorToolbarAction(
-        icon: Icons.format_quote_rounded,
-        tooltip: l10n.editorToolbarQuote,
-        onTap: () => controller.insertLinePrefix("> "),
+      _ToolbarAction(
+        FluentIcons.text_quote_24_regular,
+        l10n.editorToolbarQuote,
+        () => controller.insertLinePrefix('> '),
       ),
-      _EditorToolbarAction(
-        icon: Icons.code_rounded,
-        tooltip: l10n.editorToolbarCode,
-        onTap: () => controller.insertWrap("`"),
+      _ToolbarAction(
+        FluentIcons.code_24_regular,
+        l10n.editorToolbarCode,
+        () => controller.insertWrap('`'),
       ),
-      _EditorToolbarAction(
-        icon: Icons.link_rounded,
-        tooltip: l10n.editorToolbarLink,
-        onTap: () =>
-            controller.insertSnippet("[文字](https://)", cursorOffset: 1),
+      _ToolbarAction(
+        FluentIcons.link_24_regular,
+        l10n.editorToolbarLink,
+        () => controller.insertSnippet('[文字](https://)', cursorOffset: 1),
       ),
-      _EditorToolbarAction(
-        icon: Icons.image_outlined,
-        tooltip: l10n.editorToolbarImage,
-        onTap: () => controller.insertSnippet("![](https://)", cursorOffset: 4),
+      _ToolbarAction(
+        ForumIcons.image,
+        l10n.editorToolbarImage,
+        () => controller.insertSnippet('![](https://)', cursorOffset: 4),
       ),
-      _EditorToolbarAction(
-        icon: Icons.format_list_bulleted_rounded,
-        tooltip: l10n.editorToolbarBulletList,
-        onTap: () => controller.insertLinePrefix("- "),
+      _ToolbarAction(
+        FluentIcons.text_bullet_list_ltr_24_regular,
+        l10n.editorToolbarBulletList,
+        () => controller.insertLinePrefix('- '),
       ),
-      _EditorToolbarAction(
-        icon: Icons.format_list_numbered_rounded,
-        tooltip: l10n.editorToolbarNumberList,
-        onTap: () => controller.insertLinePrefix("1. "),
+      _ToolbarAction(
+        FluentIcons.text_number_list_ltr_24_regular,
+        l10n.editorToolbarNumberList,
+        () => controller.insertLinePrefix('1. '),
       ),
-      _EditorToolbarAction(
-        icon: Icons.alternate_email_rounded,
-        tooltip: l10n.editorToolbarMention,
-        onTap: () => controller.insertSnippet("@"),
+      _ToolbarAction(
+        ForumIcons.mention,
+        l10n.editorToolbarMention,
+        () => controller.insertSnippet('@'),
       ),
-      _EditorToolbarAction(
-        icon: Icons.sentiment_satisfied_alt_rounded,
-        tooltip: l10n.editorToolbarEmoji,
-        onTap: () => controller.insertSnippet(":)"),
+      _ToolbarAction(
+        FluentIcons.emoji_24_regular,
+        l10n.editorToolbarEmoji,
+        () => controller.insertSnippet(':)'),
       ),
       if (canUpload)
-        _EditorToolbarAction(
-          icon: Icons.folder_outlined,
-          tooltip: l10n.editorToolbarMyFiles,
-          onTap: () => isSubmitting ? null : _openAssetsDialog(context),
+        _ToolbarAction(
+          ForumIcons.folder,
+          l10n.editorToolbarMyFiles,
+          () => isSubmitting ? null : _openAssetsDialog(context),
         ),
     ];
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: actions.map((action) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: IconButton(
-                    onPressed: isSubmitting ? null : action.onTap,
-                    tooltip: action.tooltip,
-                    icon: Icon(action.icon),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                );
-              }).toList(),
+              children: actions
+                  .map(
+                    (a) => Padding(
+                      padding: const EdgeInsets.only(right: FUITokens.gap2),
+                      child: FUIIconButton(
+                        icon: a.icon,
+                        tooltip: a.tooltip,
+                        variant: FUIIconButtonVariant.ghost,
+                        onPressed: isSubmitting ? null : a.onTap,
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        FilledButton.icon(
-          onPressed: onSubmit,
-          icon: isSubmitting
-              ? SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).colorScheme.onPrimary,
-                    ),
-                  ),
-                )
-              : const Icon(Icons.send_rounded),
-          label: Text(l10n.postCreateSubmit),
+        const SizedBox(width: FUITokens.gap10),
+        FUIButton(
+          label: l10n.postCreateSubmit,
+          icon: ForumIcons.send,
+          loading: isSubmitting,
+          onPressed: isSubmitting ? null : () => onSubmit(),
         ),
       ],
     );
@@ -525,37 +564,28 @@ class _EditorFooter extends StatelessWidget {
   Future<void> _openAssetsDialog(BuildContext context) async {
     final file = await showDialog<UploadFileInfo>(
       context: context,
-      builder: (context) {
-        return Dialog(
-          clipBehavior: Clip.antiAlias,
-          insetPadding: const EdgeInsets.all(16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760, maxHeight: 560),
-            child: AssetsPage(
-              embedded: true,
-              selectionEnabled: true,
-              onSelected: (file) => Navigator.of(context).pop(file),
-            ),
+      builder: (context) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        insetPadding: const EdgeInsets.all(16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760, maxHeight: 560),
+          child: AssetsPage(
+            embedded: true,
+            selectionEnabled: true,
+            onSelected: (file) => Navigator.of(context).pop(file),
           ),
-        );
-      },
+        ),
+      ),
     );
     final bbcode = file?.bbcode.trim();
-    if (bbcode == null || bbcode.isEmpty) {
-      return;
-    }
+    if (bbcode == null || bbcode.isEmpty) return;
     controller.insertTextAtCursor('$bbcode\n');
   }
 }
 
-class _EditorToolbarAction {
-  const _EditorToolbarAction({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
+class _ToolbarAction {
+  const _ToolbarAction(this.icon, this.tooltip, this.onTap);
   final IconData icon;
   final String tooltip;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 }

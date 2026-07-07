@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/pages/search_result/view.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/storage_utils.dart';
@@ -20,6 +21,7 @@ class SearchPageController extends GetxController {
   final RxList<String> historySearchedWords = <String>[].obs;
   final box = StorageUtils.history;
   ValueChanged<String>? onSearchRequested;
+  bool _isClosed = false;
 
   void onSearchWordChanged(String keyWord) {
     if (keyWord.isNotEmpty) {
@@ -39,8 +41,8 @@ class SearchPageController extends GetxController {
         return;
       }
       Navigator.of(Get.context!).pushReplacement(
-        GetPageRoute(
-          page: () => SearchResultPage(
+        FuiPageRoute(
+          builder: (_) => SearchResultPage(
             key: ValueKey('SearchResultPage:$safeKeyWord'),
             keyWord: safeKeyWord,
           ),
@@ -86,24 +88,28 @@ class SearchPageController extends GetxController {
     );
   }
 
-  Future<void> _initData() async {
+  void _initData() {
     _refreshHistoryWord();
-    textFeildFocusNode.addListener(() {
-      if (textFeildFocusNode.hasFocus &&
-          textEditingController.text.isNotEmpty) {
-        showEditDelete.value = true;
-      }
-    });
+    textFeildFocusNode.addListener(_handleFocusChanged);
+  }
+
+  void _handleFocusChanged() {
+    if (_isClosed) return;
+    if (textFeildFocusNode.hasFocus && textEditingController.text.isNotEmpty) {
+      showEditDelete.value = true;
+    }
   }
 
   @override
-  void onReady() {
-    super.onReady();
+  void onInit() {
+    super.onInit();
     _initData();
   }
 
   @override
   void onClose() {
+    _isClosed = true;
+    textFeildFocusNode.removeListener(_handleFocusChanged);
     textEditingController.dispose();
     textFeildFocusNode.dispose();
     onSearchRequested = null;

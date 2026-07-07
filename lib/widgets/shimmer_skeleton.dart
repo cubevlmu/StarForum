@@ -46,16 +46,16 @@ class _SkeletonShimmerState extends State<SkeletonShimmer>
             colorScheme.surfaceBright,
           )
         : Color.alphaBlend(
-            Colors.white.withValues(alpha: 0.38),
-            colorScheme.surface,
+            Colors.white.withValues(alpha: 0.72),
+            colorScheme.surfaceContainerLow,
           );
     final baseTone = Color.alphaBlend(
-      colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.045),
+      colorScheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.11),
       baseSurface,
     );
     final highlightTone = Color.alphaBlend(
       (isDark ? Colors.white : Colors.black).withValues(
-        alpha: isDark ? 0.05 : 0.025,
+        alpha: isDark ? 0.05 : 0.045,
       ),
       highlightSurface,
     );
@@ -143,10 +143,14 @@ class SkeletonBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FractionallySizedBox(
-      widthFactor: widthFactor,
+    final width = 220.0 * widthFactor.clamp(0.1, 1.0);
+    return Align(
       alignment: Alignment.centerLeft,
-      child: Container(height: height, decoration: decoration),
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: DecoratedBox(decoration: decoration),
+      ),
     );
   }
 }

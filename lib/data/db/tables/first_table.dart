@@ -14,7 +14,7 @@ class DbFirstPosts extends Table {
 
   /// firstPost.updatedAt
   DateTimeColumn get updatedAt => dateTime()();
-  
+
   /// firstPost.likeCount
   IntColumn get likeCount => integer()();
 

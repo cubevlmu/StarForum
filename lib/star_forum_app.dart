@@ -1,6 +1,4 @@
-import 'dart:ui';
-
-import 'package:dynamic_color/dynamic_color.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
@@ -17,12 +15,16 @@ class StarForumApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localeController = Get.find<LocaleController>();
+    final theme = SettingsUtil.currentTheme;
+    final customAccent = theme == AppTheme.dynamic
+        ? null
+        : _accentFromTheme(theme);
 
-    return DynamicColorBuilder(
-      builder: (lightDynamic, darkDynamic) {
-        final currentTheme = SettingsUtil.currentTheme;
-        final themeMode = SettingsUtil.currentThemeMode;
-
+    return FuiDynamicThemeBuilder(
+      useSystemAccent: theme == AppTheme.dynamic,
+      lightAccent: customAccent?.light,
+      darkAccent: customAccent?.dark,
+      builder: (context, lightTheme, darkTheme) {
         return GetMaterialApp(
           title: 'StarForum',
           localizationsDelegates: const [
@@ -47,21 +49,11 @@ class StarForumApp extends StatelessWidget {
             }
             return const Locale('en');
           },
-          scrollBehavior: const _DesktopScrollBehavior(),
+          scrollBehavior: FuiTheme.scrollBehavior,
           useInheritedMediaQuery: true,
-          themeMode: themeMode,
-          theme: ThemeData(
-            colorScheme: currentTheme == AppTheme.dynamic
-                ? lightDynamic ?? AppTheme.dynamic.themeDataLight.colorScheme
-                : currentTheme.themeDataLight.colorScheme,
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: currentTheme == AppTheme.dynamic
-                ? darkDynamic ?? AppTheme.dynamic.themeDataDark.colorScheme
-                : currentTheme.themeDataDark.colorScheme,
-            useMaterial3: true,
-          ),
+          themeMode: SettingsUtil.currentThemeMode,
+          theme: lightTheme,
+          darkTheme: darkTheme,
           home: const SplashScreen(),
           builder: (context, child) {
             if (child == null) {
@@ -87,6 +79,23 @@ class StarForumApp extends StatelessWidget {
   }
 }
 
+({FuiAccent light, FuiAccent dark}) _accentFromTheme(AppTheme theme) {
+  return (
+    light: FuiAccent.fromColorScheme(
+      ColorScheme.fromSeed(
+        seedColor: theme.seedColor,
+        brightness: Brightness.light,
+      ),
+    ),
+    dark: FuiAccent.fromColorScheme(
+      ColorScheme.fromSeed(
+        seedColor: theme.seedColor,
+        brightness: Brightness.dark,
+      ),
+    ),
+  );
+}
+
 Locale? _normalizeAppLocale(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
@@ -109,16 +118,4 @@ Locale? _normalizeAppLocale(Locale locale) {
     default:
       return null;
   }
-}
-
-class _DesktopScrollBehavior extends MaterialScrollBehavior {
-  const _DesktopScrollBehavior();
-
-  @override
-  Set<PointerDeviceKind> get dragDevices => {
-    PointerDeviceKind.touch,
-    PointerDeviceKind.mouse,
-    PointerDeviceKind.stylus,
-    PointerDeviceKind.trackpad,
-  };
 }

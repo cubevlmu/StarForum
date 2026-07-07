@@ -9,27 +9,27 @@ class PostListLoadingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const itemExtent = 150.0;
-    final viewportHeight = MediaQuery.sizeOf(context).height;
-    final count = (viewportHeight / itemExtent).ceil().clamp(
-      minItems ?? 4,
-      maxItems ?? 12,
-    );
-
-    return SkeletonShimmer(
-      duration: const Duration(milliseconds: 1450),
-      highlightStrength: 0.18,
-      builder: (context, palette) {
-        return Column(
-          children: List<Widget>.generate(
-            count,
-            (index) => _PostListLoadingRow(
-              pillDecoration: palette.line(),
-              circleDecoration: palette.circle(),
-            ),
-          ),
-        );
-      },
+    final count = (minItems ?? 3).clamp(1, maxItems ?? 3);
+    return ClipRect(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: SkeletonShimmer(
+          duration: const Duration(milliseconds: 1450),
+          highlightStrength: 0.18,
+          builder: (context, palette) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: List<Widget>.generate(
+                count,
+                (index) => _PostListLoadingRow(
+                  pillDecoration: palette.line(),
+                  circleDecoration: palette.circle(),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }

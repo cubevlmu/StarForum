@@ -1,30 +1,40 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
- * @LastEditors: cubevlmu khfahqp@gmail.com
+ * @LastEditors: khfahqp khfahqp@gmail.com
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
+import 'package:star_forum/app/forum_icons.dart';
+import 'package:star_forum/app/forum_layout.dart';
+import 'package:star_forum/data/model/badge.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/post_detail/view.dart';
 import 'package:star_forum/pages/assets/view.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
-import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
 import 'package:star_forum/pages/user/controller.dart';
+import 'package:star_forum/utils/html_utils.dart';
+import 'package:star_forum/utils/shared_dialog.dart' as shared;
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/avatar.dart';
-import 'package:star_forum/widgets/discussion_list_item_card.dart';
+import 'package:star_forum/widgets/forum_button_group.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/shimmer_skeleton.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
+import 'package:star_forum/widgets/two_column_loading_skeleton.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/widgets/forum/forum_discussion_tile.dart';
+import 'package:star_forum/widgets/forum/forum_meta_row.dart';
 
 part 'pages/badges_page.dart';
 part 'pages/avatar_crop_dialog.dart';
@@ -83,56 +93,14 @@ class _UserPageState extends State<UserPage>
     super.dispose();
   }
 
-  PreferredSizeWidget? _buildAppBar(BuildContext context) {
-    if (widget.isAccountPage && widget.userId > 0) return null;
-
-    final mainController = widget.embedded && Get.isRegistered<MainController>()
-        ? Get.find<MainController>()
-        : null;
-
-    return AppBar(
-      automaticallyImplyLeading: !widget.embedded,
-      leading: widget.embedded
-          ? IconButton(
-              onPressed: () {
-                if (mainController == null) return;
-                if (mainController.canPopDetail) {
-                  mainController.popDetail();
-                  return;
-                }
-                mainController.closeDetail();
-              },
-              icon: Icon(
-                mainController?.canPopDetail == true
-                    ? Icons.arrow_back_rounded
-                    : Icons.close_rounded,
-              ),
-            )
-          : null,
-      title: widget.embedded
-          ? Obx(
-              () => Text(
-                controller.info?.displayName ??
-                    (widget.isAccountPage
-                        ? AppLocalizations.of(context)!.userCenter
-                        : AppLocalizations.of(context)!.userAppBarTitle),
-              ),
-            )
-          : Text(AppLocalizations.of(context)!.userAppBarTitle),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(2),
-        child: Obx(() {
-          return controller.isLoading.value
-              ? const LinearProgressIndicator()
-              : const SizedBox.shrink();
-        }),
-      ),
-    );
-  }
-
   Widget _buildBody(BuildContext context) {
     return Column(
       children: [
+        if (!widget.isAccountPage || widget.userId <= 0)
+          _UserPageHead(
+            controller: controller,
+            isAccountPage: widget.isAccountPage,
+          ),
         _UserSectionTabs(controller: controller, tabController: _tabController),
         Expanded(
           child: _UserSectionBody(
@@ -160,7 +128,42 @@ class _UserPageState extends State<UserPage>
       );
     }
 
-    return Scaffold(appBar: _buildAppBar(context), body: _buildBody(context));
+    return Scaffold(
+      backgroundColor: context.colors.background,
+      body: SafeArea(bottom: false, child: _buildBody(context)),
+    );
+  }
+}
+
+class _UserPageHead extends StatelessWidget {
+  const _UserPageHead({required this.controller, required this.isAccountPage});
+
+  final UserPageController controller;
+  final bool isAccountPage;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      children: [
+        Padding(
+          padding: ForumLayout.pageHeadPadding,
+          child: Obx(
+            () => FuiPageHead(
+              title:
+                  controller.info?.displayName ??
+                  (isAccountPage ? l10n.userCenter : l10n.userAppBarTitle),
+              subtitle: isAccountPage ? l10n.userCenterSub : l10n.userAppBarSub,
+            ),
+          ),
+        ),
+        Obx(
+          () => controller.isLoading.value
+              ? const LinearProgressIndicator(minHeight: 2)
+              : const SizedBox(height: 2),
+        ),
+      ],
+    );
   }
 }
 
@@ -184,20 +187,54 @@ class _UserSectionTabs extends StatelessWidget {
       if (tabController.length > 4) UserPageSection.assets,
     ];
 
-    return Material(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: TabBar(
-        controller: tabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        onTap: (index) => controller.selectSection(sections[index]),
-        tabs: [
-          Tab(text: l10n.userSectionInfo),
-          Tab(text: l10n.userCommentCountLabel),
-          Tab(text: l10n.userDiscussionCountLabel),
-          Tab(text: l10n.userSectionBadges),
-          if (tabController.length > 4) Tab(text: l10n.userSectionAssets),
-        ],
+    final tabs = <({UserPageSection section, ForumButtonGroupItem item})>[
+      (
+        section: UserPageSection.info,
+        item: ForumButtonGroupItem(
+          icon: FUIIcons.info,
+          label: l10n.userSectionInfo,
+        ),
+      ),
+      (
+        section: UserPageSection.comments,
+        item: ForumButtonGroupItem(
+          icon: ForumIcons.comments,
+          label: l10n.userCommentCountLabel,
+        ),
+      ),
+      (
+        section: UserPageSection.topics,
+        item: ForumButtonGroupItem(
+          icon: ForumIcons.forum,
+          label: l10n.userDiscussionCountLabel,
+        ),
+      ),
+      (
+        section: UserPageSection.badges,
+        item: ForumButtonGroupItem(
+          icon: ForumIcons.badge,
+          label: l10n.userSectionBadges,
+        ),
+      ),
+      if (tabController.length > 4)
+        (
+          section: UserPageSection.assets,
+          item: ForumButtonGroupItem(
+            icon: ForumIcons.folder,
+            label: l10n.userSectionAssets,
+          ),
+        ),
+    ];
+    return Obx(
+      () => ForumButtonGroup(
+        items: [for (final tab in tabs) tab.item],
+        selectedIndex: tabs.indexWhere(
+          (tab) => tab.section == controller.currentSection.value,
+        ),
+        onSelected: (index) {
+          tabController.animateTo(index);
+          controller.selectSection(sections[index]);
+        },
       ),
     );
   }

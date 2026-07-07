@@ -1,11 +1,14 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/data/model/uploads.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/assets/controller.dart';
 import 'package:star_forum/utils/cache_utils.dart';
+import 'package:star_forum/utils/shared_dialog.dart' as shared;
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/widgets/cached_network_image.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
@@ -105,7 +108,7 @@ class _AssetsBody extends StatelessWidget {
         childBuilder: (context, physics) {
           return CustomScrollView(
             controller: controller.scrollController,
-            cacheExtent: 320,
+            scrollCacheExtent: const ScrollCacheExtent.pixels(320),
             physics: isLoading ? const NeverScrollableScrollPhysics() : physics,
             slivers: [
               SliverToBoxAdapter(
@@ -180,17 +183,15 @@ class _AssetsHeader extends StatelessWidget {
             final canUpload = controller.userRepo.canUpload.value;
             return Tooltip(
               message: canUpload ? l10n.assetsUpload : l10n.assetsUploadDenied,
-              child: FilledButton.tonalIcon(
+              child: FUIButton(
+                label: l10n.assetsUpload,
+                icon: FUIIcons.update,
+                variant: FUIButtonVariant.secondary,
+                small: true,
+                loading: uploading,
                 onPressed: uploading || !canUpload
                     ? null
                     : () => pickAndUploadWithNotice(context, controller),
-                icon: uploading
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.file_upload_outlined),
-                label: Text(l10n.assetsUpload),
               ),
             );
           }),
@@ -508,27 +509,16 @@ class _AssetActions extends StatelessWidget {
 
   Future<void> _confirmDelete(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.assetsDeleteFile),
-          content: Text(l10n.assetsDeleteConfirm(file.baseName)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(l10n.commonActionCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(l10n.commonActionConfirm),
-            ),
-          ],
-        );
-      },
+    final confirmed = await shared.SharedDialog.showConfirmDialog(
+      context,
+      title: l10n.assetsDeleteFile,
+      content: l10n.assetsDeleteConfirm(file.baseName),
+      cancelText: l10n.commonActionCancel,
+      confirmText: l10n.commonActionConfirm,
+      variant: shared.SharedDialogVariant.danger,
     );
 
-    if (confirmed != true) {
+    if (!confirmed) {
       return;
     }
 
@@ -573,17 +563,21 @@ class _AssetsFooter extends StatelessWidget {
             final selected = controller.selectedFile.value;
             return Row(
               children: [
-                TextButton(onPressed: onCancel, child: Text(l10n.assetsCancel)),
+                FUIButton(
+                  label: l10n.assetsCancel,
+                  variant: FUIButtonVariant.secondary,
+                  small: true,
+                  onPressed: onCancel,
+                ),
                 const Spacer(),
-                FilledButton(
+                FUIButton(
+                  label: selected == null
+                      ? l10n.assetsNoSelection
+                      : l10n.assetsUseSelected,
+                  small: true,
                   onPressed: selected == null
                       ? null
                       : () => onUseSelected(selected),
-                  child: Text(
-                    selected == null
-                        ? l10n.assetsNoSelection
-                        : l10n.assetsUseSelected,
-                  ),
                 ),
               ],
             );

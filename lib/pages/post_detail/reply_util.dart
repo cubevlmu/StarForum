@@ -5,13 +5,13 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/posts.dart';
+import 'package:star_forum/data/repository/post_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/editor/view.dart';
-import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/post_detail/widgets/reply_input_sheet.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
@@ -21,7 +21,6 @@ import '../../di/injector.dart';
 
 class ReplyUtil {
   static AppLocalizations get _l10n => AppLocalizations.of(Get.context!)!;
-  static const double _threePaneBreakPoint = 980;
 
   static bool _checkLogin(UserRepo repo) {
     if (!repo.isLogin) {
@@ -53,17 +52,19 @@ class ReplyUtil {
   }) async {
     final repo = getIt<UserRepo>();
     if (!_checkLogin(repo)) return false;
+    final postRepo = getIt<PostRepository>();
 
-    final (r, rs) = await Api.createPost(discussionId, content);
+    final result = await postRepo.createPost(discussionId, content);
 
-    if (!rs) {
+    if (result.isTokenExpired) {
       repo.logout();
       SnackbarUtils.showMessage(msg: _l10n.authLoginExpired);
       return false;
     }
 
+    final r = result.data;
     if (r == null) {
-      SnackbarUtils.showMessage(
+      SnackbarUtils.showError(
         title: _l10n.postCreateFailedTitle,
         msg: _l10n.postCreateFailedNetwork,
       );
@@ -80,7 +81,7 @@ class ReplyUtil {
       curve: Curves.linear,
     );
 
-    SnackbarUtils.showMessage(msg: _l10n.postCreateSuccess);
+    SnackbarUtils.showSuccess(msg: _l10n.postCreateSuccess);
     return true;
   }
 
@@ -174,23 +175,13 @@ class ReplyUtil {
     required String initialContent,
     required Future<bool> Function(String content) onSubmitReply,
   }) {
-    if (MediaQuery.sizeOf(context).width >= _threePaneBreakPoint &&
-        Get.isRegistered<MainController>()) {
-      Get.find<MainController>().showReplyEditorDetail(
+    FuiNavigation.openDetail(
+      context,
+      builder: (_) => EditorPage.reply(
         title: title,
         initialContent: initialContent,
         onSubmitReply: onSubmitReply,
-      );
-      return;
-    }
-
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(
-        builder: (_) => EditorPage.reply(
-          title: title,
-          initialContent: initialContent,
-          onSubmitReply: onSubmitReply,
-        ),
+        embedded: true,
       ),
     );
   }
@@ -201,15 +192,17 @@ class ReplyUtil {
       SnackbarUtils.showMessage(msg: _l10n.authLoginRequired);
       return null;
     }
+    final postRepo = getIt<PostRepository>();
 
     try {
-      final (r, rs) = await Api.likePost(item.id.toString(), true);
-      if (!rs) {
+      final result = await postRepo.likePost(item.id.toString(), true);
+      if (result.isTokenExpired) {
         repo.logout();
         SnackbarUtils.showMessage(msg: _l10n.authLoginExpired);
         return null;
       }
 
+      final r = result.data;
       if (r == null) {
         LogUtil.error("[PostPage] failed to like post with empty response");
         SnackbarUtils.showMessage(

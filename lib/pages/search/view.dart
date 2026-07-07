@@ -1,16 +1,17 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
  * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/search/controller.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/utils/setting_util.dart';
 import 'package:star_forum/utils/storage_utils.dart';
 import 'package:star_forum/widgets/shared_dialog.dart';
-import 'package:get/get.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({
@@ -20,6 +21,7 @@ class SearchPage extends StatefulWidget {
     this.onClose,
     this.onSearchRequested,
   });
+
   final String? defaultInputSearchWord;
   final bool embedded;
   final VoidCallback? onClose;
@@ -36,13 +38,10 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    _controllerTag = "SearchPage:${widget.embedded}";
-    controller = Get.isRegistered<SearchPageController>(tag: _controllerTag)
-        ? Get.find<SearchPageController>(tag: _controllerTag)
-        : Get.put(SearchPageController(), tag: _controllerTag);
+    _controllerTag = 'SearchPage:${widget.embedded}:${identityHashCode(this)}';
+    controller = Get.put(SearchPageController(), tag: _controllerTag);
     controller.onSearchRequested = widget.onSearchRequested;
-
-    controller.defaultSearchWord = "";
+    controller.defaultSearchWord = '';
     if (widget.defaultInputSearchWord != null) {
       controller.textEditingController.text = widget.defaultInputSearchWord!;
     }
@@ -57,172 +56,264 @@ class _SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
-  Widget _defaultHintView() {
-    final l10n = AppLocalizations.of(context)!;
-    final showSearchHistory = SettingsUtil.getValue(
-      SettingsStorageKeys.showSearchHistory,
-      defaultValue: true,
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final body = Column(
+      children: [
+        _SearchBar(
+          controller: controller,
+          embedded: widget.embedded,
+          onClose: widget.onClose ?? () => Navigator.of(context).maybePop(),
+        ),
+        Expanded(child: _HistoryBody(controller: controller)),
+      ],
     );
 
-    if (!showSearchHistory) {
-      return Center(child: Text(l10n.searchStartHint));
+    if (widget.embedded) {
+      return SafeArea(bottom: false, child: body);
     }
-
-    return Obx(() {
-      final history = controller.historySearchedWords;
-      if (history.isEmpty) {
-        return _SearchEmptyView(
-          title: l10n.searchHistoryTitle,
-          message: l10n.searchStartHint,
-        );
-      }
-
-      return ListView.separated(
-        padding: const EdgeInsets.only(top: 12, bottom: 24),
-        itemCount: history.length + 1,
-        separatorBuilder: (context, index) {
-          if (index == 0) {
-            return const SizedBox(height: 4);
-          }
-          return const Divider(height: 1, thickness: 0.5);
-        },
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return _SearchHistoryHeader(
-              title: l10n.searchHistoryTitle,
-              onClear: controller.clearAllSearchedWords,
-            );
-          }
-
-          final word = history[index - 1];
-          return _SearchHistoryItem(
-            word: word,
-            onTap: () {
-              controller.setTextFieldText(word);
-              controller.search(word);
-            },
-            onDelete: () => controller.deleteSearchedWord(word),
-          );
-        },
-      );
-    });
+    return Scaffold(
+      backgroundColor: colors.background,
+      body: SafeArea(child: body),
+    );
   }
+}
 
-  AppBar _appBar(BuildContext context) {
-    return AppBar(
-      automaticallyImplyLeading: !widget.embedded,
-      leading: widget.embedded
-          ? IconButton(
-              onPressed: widget.onClose,
-              icon: const Icon(Icons.arrow_back_outlined),
-            )
-          : null,
-      shape: UnderlineInputBorder(
-        borderSide: BorderSide(color: Theme.of(context).dividerColor),
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({
+    required this.controller,
+    required this.embedded,
+    required this.onClose,
+  });
+
+  final SearchPageController controller;
+  final bool embedded;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        FUITokens.pagePadding,
+        FUITokens.gap12,
+        FUITokens.pagePadding,
+        FUITokens.gap8,
       ),
-      title: Row(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          SizedBox.square(
+            dimension: 44,
+            child: IconButton(
+              icon: const Icon(FUIIcons.chevronLeft),
+              color: colors.textSecondary,
+              style: IconButton.styleFrom(
+                minimumSize: const Size(44, 44),
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(FUITokens.radiusSm),
+                ),
+              ),
+              onPressed: onClose,
+            ),
+          ),
+          const SizedBox(width: FUITokens.gap10),
           Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    focusNode: controller.textFeildFocusNode,
-                    controller: controller.textEditingController,
-                    onChanged: controller.onSearchWordChanged,
-                    autofocus: true,
-                    onEditingComplete: () {
-                      controller.search(controller.textEditingController.text);
-                    },
-                    style: const TextStyle(fontSize: 18),
-                    decoration: InputDecoration(
-                      suffixIcon: Obx(
-                        () => Offstage(
-                          offstage: controller.showEditDelete.isFalse,
-                          child: IconButton(
+            child: SizedBox(
+              height: 44,
+              child: TextField(
+                focusNode: controller.textFeildFocusNode,
+                controller: controller.textEditingController,
+                onChanged: controller.onSearchWordChanged,
+                autofocus: false,
+                style: TextStyle(fontSize: 14, color: colors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.searchStartHint,
+                  filled: true,
+                  fillColor: colors.surface,
+                  prefixIcon: Icon(
+                    FUIIcons.search,
+                    size: FUITokens.iconMd,
+                    color: colors.textTertiary,
+                  ),
+                  suffixIcon: Obx(
+                    () => controller.showEditDelete.isTrue
+                        ? IconButton(
                             icon: const Icon(Icons.close_rounded),
                             onPressed: () {
                               controller.textEditingController.clear();
                               controller.showEditDelete.value = false;
                             },
-                          ),
-                        ),
-                      ),
-                      border: InputBorder.none,
-                      hintText: "",
-                    ),
+                          )
+                        : const SizedBox.shrink(),
                   ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(FUITokens.radiusMd),
+                    borderSide: BorderSide(color: colors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(FUITokens.radiusMd),
+                    borderSide: BorderSide(color: colors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(FUITokens.radiusMd),
+                    borderSide: BorderSide(color: colors.primary, width: 1.4),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
-              ],
+                onEditingComplete: () =>
+                    controller.search(controller.textEditingController.text),
+              ),
             ),
           ),
-          SizedBox(
-            width: 70,
+          const SizedBox(width: FUITokens.gap8),
+          SizedBox.square(
+            dimension: 44,
             child: IconButton(
-              onPressed: () {
-                controller.search(controller.textEditingController.text);
-              },
-              icon: const Icon(Icons.search_rounded),
+              icon: const Icon(FUIIcons.search),
+              color: colors.primary,
+              tooltip: AppLocalizations.of(context)!.searchStartHint,
+              style: IconButton.styleFrom(
+                minimumSize: const Size(44, 44),
+                padding: EdgeInsets.zero,
+                backgroundColor: colors.primarySoft,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(FUITokens.radiusMd),
+                ),
+              ),
+              onPressed: () =>
+                  controller.search(controller.textEditingController.text),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.embedded) {
-      return Column(
-        children: [
-          _appBar(context),
-          Expanded(
-            child: SafeArea(
-              top: false,
-              child: Container(child: _defaultHintView()),
-            ),
-          ),
-        ],
-      );
-    }
-    return Scaffold(
-      appBar: _appBar(context),
-      body: SafeArea(child: Container(child: _defaultHintView())),
     );
   }
 }
 
-class _SearchHistoryHeader extends StatelessWidget {
-  const _SearchHistoryHeader({required this.title, required this.onClear});
+class _HistoryBody extends StatelessWidget {
+  const _HistoryBody({required this.controller});
 
-  final String title;
-  final VoidCallback onClear;
+  final SearchPageController controller;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+    final showHistory = SettingsUtil.getValue(
+      SettingsStorageKeys.showSearchHistory,
+      defaultValue: true,
+    );
+    if (!showHistory) {
+      return Center(
+        child: Text(
+          AppLocalizations.of(context)!.searchStartHint,
+          style: TextStyle(color: context.colors.textTertiary, fontSize: 13),
+        ),
+      );
+    }
+
+    return Obx(() {
+      final history = controller.historySearchedWords;
+      final l10n = AppLocalizations.of(context)!;
+
+      if (history.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                FUIIcons.search,
+                size: 40,
+                color: context.colors.textTertiary,
+              ),
+              const SizedBox(height: FUITokens.gap12),
+              Text(
+                l10n.searchHistoryTitle,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: context.colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: FUITokens.gap6),
+              Text(
+                l10n.searchStartHint,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: context.colors.textSecondary,
+                ),
+              ),
+            ],
           ),
-          const Spacer(),
-          TextButton.icon(
-            onPressed: () => _showClearConfirmDialog(context),
-            icon: const Icon(Icons.delete_sweep_outlined),
-            label: Text(AppLocalizations.of(context)!.searchHistoryClearAction),
+        );
+      }
+
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(
+          FUITokens.pagePadding,
+          FUITokens.gap4,
+          FUITokens.pagePadding,
+          FUITokens.gap24,
+        ),
+        children: [
+          // header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(2, 0, 0, FUITokens.gap8),
+            child: Row(
+              children: [
+                Text(
+                  l10n.searchHistoryTitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.textSecondary,
+                  ),
+                ),
+                const Spacer(),
+                FUIIconButton(
+                  icon: FUIIcons.delete,
+                  variant: FUIIconButtonVariant.ghost,
+                  tooltip: l10n.searchHistoryClearAction,
+                  onPressed: () => _confirmClear(context, l10n, controller),
+                ),
+              ],
+            ),
+          ),
+          FUISurface(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                for (int i = 0; i < history.length; i++) ...[
+                  if (i != 0) Divider(height: 1, color: context.colors.border),
+                  FUITile(
+                    title: history[i],
+                    icon: Icons.history_rounded,
+                    showChevron: false,
+                    trailing: FUIIconButton(
+                      icon: FUIIcons.close,
+                      onPressed: () =>
+                          controller.deleteSearchedWord(history[i]),
+                    ),
+                    onTap: () {
+                      controller.setTextFieldText(history[i]);
+                      controller.search(history[i]);
+                    },
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
-      ),
-    );
+      );
+    });
   }
 
-  void _showClearConfirmDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+  void _confirmClear(
+    BuildContext context,
+    AppLocalizations l10n,
+    SearchPageController controller,
+  ) {
     SharedDialog.showDialog2(
       context,
       l10n.dialogConfirmTitle,
@@ -232,71 +323,8 @@ class _SearchHistoryHeader extends StatelessWidget {
       l10n.dialogYes,
       () {
         Navigator.pop(context);
-        onClear();
+        controller.clearAllSearchedWords();
       },
-    );
-  }
-}
-
-class _SearchHistoryItem extends StatelessWidget {
-  const _SearchHistoryItem({
-    required this.word,
-    required this.onTap,
-    required this.onDelete,
-  });
-
-  final String word;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.history_rounded),
-      title: Text(word, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: IconButton(
-        onPressed: onDelete,
-        icon: const Icon(Icons.close_rounded),
-        tooltip: AppLocalizations.of(context)!.searchHistoryDeleteAction,
-      ),
-      onTap: onTap,
-    );
-  }
-}
-
-class _SearchEmptyView extends StatelessWidget {
-  const _SearchEmptyView({required this.title, required this.message});
-
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.history_toggle_off_rounded,
-              size: 40,
-              color: colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

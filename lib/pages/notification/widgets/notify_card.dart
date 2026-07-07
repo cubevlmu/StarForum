@@ -5,15 +5,18 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/data/model/notifications.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
+import 'package:star_forum/pages/user/view.dart';
+import 'package:star_forum/pages/post_detail/view.dart';
 import 'package:star_forum/pages/notification/controller.dart';
 import 'package:star_forum/utils/html_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/avatar.dart';
 import 'package:get/get.dart';
+import 'package:fin_ui/fin_ui.dart';
 
 (String, String) buildMsg(BuildContext context, NotificationsInfo info) {
   if (info.cachedTitle != null && info.cachedDesc != null) {
@@ -135,6 +138,7 @@ class NotifyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (title, desc) = buildMsg(context, item);
     final colorScheme = Theme.of(context).colorScheme;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final typeMeta = _buildTypeMeta(context, item.contentType);
     final canOpenDiscussion =
@@ -154,163 +158,153 @@ class NotifyCard extends StatelessWidget {
         : colorScheme.onSurfaceVariant;
 
     return RepaintBoundary(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Material(
-          color: item.isRead
-              ? colorScheme.surfaceContainerLow
-              : colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: item.isRead
-                  ? colorScheme.outlineVariant
-                  : colorScheme.primary.withValues(alpha: 0.24),
-            ),
+      child: Material(
+        color: item.isRead ? colors.surface : colors.primarySoft,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(FUITokens.radiusLg),
+          side: BorderSide(
+            color: item.isRead
+                ? colors.border
+                : colors.primary.withValues(alpha: 0.22),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: (canOpenDiscussion || canOpenUser)
-                ? () => naviToPage(context)
-                : null,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  InkResponse(
-                    onTap: () => _openUserSpace(context),
-                    radius: 26,
-                    child: AvatarWidget(
-                      avatarUrl: item.fromUser?.avatarUrl ?? "",
-                      radius: 22,
-                      placeholder: item.fromUser?.displayName[0] ?? "U",
-                    ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: (canOpenDiscussion || canOpenUser)
+              ? () => naviToPage(context)
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkResponse(
+                  onTap: () => _openUserSpace(context),
+                  radius: 26,
+                  child: AvatarWidget(
+                    avatarUrl: item.fromUser?.avatarUrl ?? "",
+                    radius: 22,
+                    placeholder: item.fromUser?.displayName[0] ?? "U",
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                const SizedBox(width: FUITokens.gap10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                typeMeta.icon,
-                                size: 16,
-                                color: item.isRead
-                                    ? typeMeta.color.withValues(alpha: 0.55)
-                                    : typeMeta.color,
+                          _NotifyTypeIcon(meta: typeMeta, dimmed: item.isRead),
+                          const SizedBox(width: FUITokens.gap8),
+                          Expanded(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: titleColor,
                               ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: titleColor,
-                                  ),
-                                ),
-                              ),
-                              if (!item.isRead)
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.only(left: 6),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            desc,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: bodyColor,
-                              height: 1.3,
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              if (item.fromUser != null)
-                                Flexible(
-                                  child: Text(
-                                    item.fromUser!.displayName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: textTheme.labelMedium?.copyWith(
-                                      color: metaColor,
-                                    ),
-                                  ),
-                                ),
-                              const SizedBox(width: 6),
-                              Text(
-                                "·",
+                          if (!item.isRead)
+                            Container(
+                              width: 7,
+                              height: 7,
+                              margin: const EdgeInsets.only(
+                                left: FUITokens.gap6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: FUITokens.gap6),
+                      Text(
+                        desc,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: bodyColor,
+                          height: 1.32,
+                        ),
+                      ),
+                      const SizedBox(height: FUITokens.gap8),
+                      Row(
+                        children: [
+                          if (item.fromUser != null)
+                            Flexible(
+                              child: Text(
+                                item.fromUser!.displayName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: textTheme.labelMedium?.copyWith(
                                   color: metaColor,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _formatTime(item.createdAt),
-                                style: textTheme.labelMedium?.copyWith(
-                                  color: metaColor,
-                                ),
-                              ),
-                            ],
+                            ),
+                          const SizedBox(width: FUITokens.gap6),
+                          Text(
+                            "·",
+                            style: textTheme.labelMedium?.copyWith(
+                              color: metaColor,
+                            ),
+                          ),
+                          const SizedBox(width: FUITokens.gap6),
+                          Text(
+                            _formatTime(item.createdAt),
+                            style: textTheme.labelMedium?.copyWith(
+                              color: metaColor,
+                            ),
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8, right: 2, top: 2),
-                    child: Obx(() {
-                      final isMarkReadLoading =
-                          controller.activeItemId.value == item.id &&
-                          controller.activeItemAction.value ==
-                              NotificationItemAction.markRead;
-                      final isOpenLoading =
-                          controller.activeItemId.value == item.id &&
-                          controller.activeItemAction.value ==
-                              NotificationItemAction.openDiscussion;
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: FUITokens.gap6),
+                  child: Obx(() {
+                    final isMarkReadLoading =
+                        controller.activeItemId.value == item.id &&
+                        controller.activeItemAction.value ==
+                            NotificationItemAction.markRead;
+                    final isOpenLoading =
+                        controller.activeItemId.value == item.id &&
+                        controller.activeItemAction.value ==
+                            NotificationItemAction.openDiscussion;
 
-                      return Column(
-                        children: [
-                          IconButton(
+                    return Column(
+                      children: [
+                        if (isMarkReadLoading)
+                          SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: Center(
+                              child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colors.primary,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          FUIIconButton(
+                            icon: item.isRead
+                                ? FUIIcons.check
+                                : FUIIcons.checkmark,
                             tooltip: item.isRead
                                 ? null
                                 : AppLocalizations.of(
                                     context,
                                   )!.notificationMarkReadSuccess,
-                            icon: isMarkReadLoading
-                                ? SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: colorScheme.primary,
-                                    ),
-                                  )
-                                : Icon(
-                                    item.isRead
-                                        ? Icons.done_all_rounded
-                                        : Icons.done_outline_rounded,
-                                  ),
-                            color: item.isRead
-                                ? colorScheme.outline
-                                : colorScheme.onSurfaceVariant,
+                            selected: !item.isRead,
                             onPressed:
                                 item.isRead ||
                                     isMarkReadLoading ||
@@ -320,29 +314,31 @@ class NotifyCard extends StatelessWidget {
                                     await controller.checkAsRead(item.id);
                                   },
                           ),
-                          if (canOpenDiscussion || canOpenUser)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: isOpenLoading
-                                  ? SizedBox(
-                                      width: 20,
-                                      height: 20,
+                        if (canOpenDiscussion || canOpenUser)
+                          isOpenLoading
+                              ? SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 18,
+                                      height: 18,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: colorScheme.primary,
+                                        color: colors.primary,
                                       ),
-                                    )
-                                  : Icon(
-                                      Icons.chevron_right_rounded,
-                                      color: colorScheme.onSurfaceVariant,
                                     ),
-                            ),
-                        ],
-                      );
-                    }),
-                  ),
-                ],
-              ),
+                                  ),
+                                )
+                              : FUIIconButton(
+                                  icon: FUIIcons.chevronRight,
+                                  onPressed: () => naviToPage(context),
+                                ),
+                      ],
+                    );
+                  }),
+                ),
+              ],
             ),
           ),
         ),
@@ -355,7 +351,10 @@ class NotifyCard extends StatelessWidget {
   }
 
   void _openUserSpace(BuildContext context) {
-    openUserAdaptive(context, item.fromUser?.id ?? -1);
+    FuiNavigation.openDetail(
+      context,
+      builder: (_) => UserPage(userId: item.fromUser?.id ?? -1, embedded: true),
+    );
   }
 
   _NotifyTypeMeta _buildTypeMeta(BuildContext context, String contentType) {
@@ -363,47 +362,44 @@ class NotifyCard extends StatelessWidget {
     switch (contentType) {
       case "postMentioned":
         return _NotifyTypeMeta(
-          icon: Icons.alternate_email_rounded,
+          icon: ForumIcons.mention,
           color: colorScheme.secondary,
         );
       case "postLiked":
-        return _NotifyTypeMeta(
-          icon: Icons.favorite_border_rounded,
-          color: Colors.redAccent,
-        );
+        return _NotifyTypeMeta(icon: ForumIcons.like, color: Colors.redAccent);
       case "warning":
         return _NotifyTypeMeta(
-          icon: Icons.warning_amber_rounded,
+          icon: FUIIcons.warning,
           color: colorScheme.error,
         );
       case "newPostByUser":
         return _NotifyTypeMeta(
-          icon: Icons.reply_rounded,
+          icon: ForumIcons.reply,
           color: colorScheme.primary,
         );
       case "newDiscussionByUser":
         return _NotifyTypeMeta(
-          icon: Icons.edit_note_rounded,
+          icon: ForumIcons.compose,
           color: colorScheme.primary,
         );
       case "newFollower":
         return _NotifyTypeMeta(
-          icon: Icons.person_add_alt_1_rounded,
+          icon: ForumIcons.follow,
           color: colorScheme.tertiary,
         );
       case "badgeReceived":
         return _NotifyTypeMeta(
-          icon: Icons.workspace_premium_outlined,
+          icon: ForumIcons.badge,
           color: colorScheme.tertiary,
         );
       case "levelUpdated":
         return _NotifyTypeMeta(
-          icon: Icons.trending_up_rounded,
+          icon: ForumIcons.level,
           color: colorScheme.primary,
         );
       default:
         return _NotifyTypeMeta(
-          icon: Icons.notifications_none_rounded,
+          icon: ForumIcons.notifications,
           color: colorScheme.onSurfaceVariant,
         );
     }
@@ -421,7 +417,10 @@ class NotifyCard extends StatelessWidget {
         return;
       }
       if (!context.mounted) return;
-      openDiscussionAdaptive(context, r);
+      FuiNavigation.openDetail(
+        context,
+        builder: (_) => PostPage(item: r, embedded: true),
+      );
       return;
     }
 
@@ -439,7 +438,10 @@ class NotifyCard extends StatelessWidget {
         return;
       }
       if (!context.mounted) return;
-      openDiscussionAdaptive(context, r);
+      FuiNavigation.openDetail(
+        context,
+        builder: (_) => PostPage(item: r, embedded: true),
+      );
       return;
     }
 
@@ -449,8 +451,32 @@ class NotifyCard extends StatelessWidget {
       if (userId == null || userId < 0) {
         return;
       }
-      openUserAdaptive(context, userId);
+      FuiNavigation.openDetail(
+        context,
+        builder: (_) => UserPage(userId: userId, embedded: true),
+      );
     }
+  }
+}
+
+class _NotifyTypeIcon extends StatelessWidget {
+  const _NotifyTypeIcon({required this.meta, required this.dimmed});
+
+  final _NotifyTypeMeta meta;
+  final bool dimmed;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = dimmed ? meta.color.withValues(alpha: 0.55) : meta.color;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: meta.color.withValues(alpha: dimmed ? 0.08 : 0.12),
+        borderRadius: BorderRadius.circular(FUITokens.radiusSm),
+      ),
+      child: Icon(meta.icon, size: 16, color: color),
+    );
   }
 }
 

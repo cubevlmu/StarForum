@@ -513,24 +513,20 @@ class _AvatarCropDialogState extends State<_AvatarCropDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
+                  FUIButton(
+                    label: AppLocalizations.of(context)!.commonActionCancel,
+                    variant: FUIButtonVariant.secondary,
+                    small: true,
                     onPressed: _submitting
                         ? null
                         : () => Navigator.of(context).pop(),
-                    child: Text(
-                      AppLocalizations.of(context)!.commonActionCancel,
-                    ),
                   ),
                   const SizedBox(width: 12),
-                  FilledButton(
+                  FUIButton(
+                    label: l10n.userAvatarCropUpload,
+                    small: true,
+                    loading: _submitting,
                     onPressed: _submitting ? null : _submitCrop,
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.userAvatarCropUpload),
                   ),
                 ],
               ),

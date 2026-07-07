@@ -6,11 +6,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/posts.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
+import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/reply_util.dart';
-import 'package:star_forum/utils/string_util.dart';
-import 'package:star_forum/widgets/avatar.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/widgets/forum/forum_meta_row.dart';
+import 'package:star_forum/widgets/forum/forum_post_card.dart';
 import 'package:star_forum/widgets/content_view.dart';
 import 'package:get/get.dart';
 
@@ -34,128 +37,45 @@ class _PostItemWidgetState extends State<PostItemWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  AvatarWidget(
-                    avatarUrl: widget.reply.user?.avatarUrl ?? "",
-                    radius: 45 / 2,
-                    onPressed: () {
-                      if (widget.isUserPage) return;
-                      openUserAdaptive(context, widget.reply.userId);
-                    },
-                    cacheWidthHeight: 200,
-                    placeholder: widget.reply.user?.displayName[0] ?? "",
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 10),
-                      child: GestureDetector(
-                        onTap: () {
-                          if (widget.isUserPage) return;
-                          openUserAdaptive(context, widget.reply.userId);
-                        },
+    final l10n = AppLocalizations.of(context)!;
+    final user = widget.reply.user;
+    final avatarUrl = user?.avatarUrl ?? "";
+    final author = UserInfo.displayLabel(user, fallbackId: widget.reply.userId);
+    final createdAt = widget.reply.editedAt.isEmpty
+        ? widget.reply.createdAt
+        : widget.reply.editedAt;
+    final canInteract = !widget.isUserPage;
+    final canOpenUser = canInteract && widget.reply.userId > 0;
 
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    widget.reply.user?.displayName ?? "",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: Text(
-                                    widget.reply.editedAt.isEmpty
-                                        ? widget.reply.createdAt
-                                        : widget.reply.editedAt,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Theme.of(context).hintColor,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 5,
-                        right: 10,
-                        left: 10,
-                      ),
-                      child: ContentView(content: widget.reply.contentHtml),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 5,
-                        bottom: 0,
-                        left: 5,
-                      ),
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: _ThumUpButton(
-                              likeNum: widget.reply.likes,
-                              selected: false,
-                              isLoading: _isLikeSubmitting,
-                              onPressed: widget.isUserPage || _isLikeSubmitting
-                                  ? null
-                                  : _handleLikePressed,
-                            ),
-                          ),
-                          if (!widget.isUserPage)
-                            Flexible(
-                              child: _ReplyButton(
-                                postItem: widget.reply,
-                                controllerTag: widget.controllerTag ?? "",
-                                updateWidget: () {},
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          FUITokens.pagePadding,
+          FUITokens.gap4,
+          FUITokens.pagePadding,
+          FUITokens.gap4,
         ),
-      ],
+        child: ForumPostCard(
+          author: author,
+          avatarUrl: avatarUrl,
+          meta: [if (createdAt.isNotEmpty) ForumMetaItem(label: createdAt)],
+          content: ContentView(content: widget.reply.contentHtml),
+          likeCount: widget.reply.likes,
+          isLiked: widget.reply.isLiked,
+          likeLabel: l10n.commonLike,
+          replyLabel: l10n.postActionComment,
+          likeLoading: _isLikeSubmitting,
+          showReply: canInteract,
+          onAuthorTap: canOpenUser
+              ? () => FuiNavigation.openDetail(
+                  context,
+                  builder: (_) =>
+                      UserPage(userId: widget.reply.userId, embedded: true),
+                )
+              : null,
+          onLike: canInteract && !_isLikeSubmitting ? _handleLikePressed : null,
+          onReply: canInteract ? () => _handleReplyPressed(context) : null,
+        ),
       ),
     );
   }
@@ -170,6 +90,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
       if (r != null && mounted) {
         setState(() {
           widget.reply.likes = r.likes;
+          widget.reply.isLiked = r.isLiked;
         });
       }
     } finally {
@@ -180,101 +101,18 @@ class _PostItemWidgetState extends State<PostItemWidget> {
       }
     }
   }
-}
 
-class _ThumUpButton extends StatelessWidget {
-  const _ThumUpButton({
-    required this.onPressed,
-    required this.likeNum,
-    required this.isLoading,
-    this.selected = false,
-  });
-  final Function()? onPressed;
-  final bool selected;
-  final int likeNum;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ButtonStyle(
-        visualDensity: VisualDensity.standard,
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        ),
-        foregroundColor: selected == true
-            ? WidgetStatePropertyAll(Theme.of(context).colorScheme.onPrimary)
-            : null,
-        backgroundColor: selected == true
-            ? WidgetStatePropertyAll(Theme.of(context).colorScheme.primary)
-            : null,
-        elevation: const WidgetStatePropertyAll(0),
-        minimumSize: const WidgetStatePropertyAll(Size(40, 36)),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isLoading)
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: selected == true
-                    ? Theme.of(context).colorScheme.onPrimary
-                    : Theme.of(context).colorScheme.primary,
-              ),
-            )
-          else
-            const Icon(Icons.thumb_up_rounded, size: 16),
-          const SizedBox(width: 6),
-          Text(StringUtil.numFormat(likeNum), style: textTheme.labelMedium),
-        ],
-      ),
+  void _handleReplyPressed(BuildContext context) {
+    final controller = Get.find<PostPageController>(
+      tag: widget.controllerTag ?? "",
     );
-  }
-}
-
-class _ReplyButton extends StatelessWidget {
-  const _ReplyButton({
-    required this.postItem,
-    required this.controllerTag,
-    required this.updateWidget,
-  });
-  final PostInfo postItem;
-  final String controllerTag;
-  final Function() updateWidget;
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: const ButtonStyle(
-        visualDensity: VisualDensity.standard,
-        padding: WidgetStatePropertyAll(
-          EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        ),
-        elevation: WidgetStatePropertyAll(0),
-        minimumSize: WidgetStatePropertyAll(Size(40, 36)),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      onPressed: () async {
-        final controller = Get.find<PostPageController>(tag: controllerTag);
-        ReplyUtil.showAddReplySheet2(
-          context: context,
-          discussionId: controller.getId(),
-          pi: postItem,
-          newReplyItems: controller.newReplyItems,
-          updateWidget: updateWidget,
-          scrollController: null,
-        );
-      },
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [Icon(Icons.reply_rounded, size: 16)],
-      ),
+    ReplyUtil.showAddReplySheet2(
+      context: context,
+      discussionId: controller.getId(),
+      pi: widget.reply,
+      newReplyItems: controller.newReplyItems,
+      updateWidget: () {},
+      scrollController: null,
     );
   }
 }

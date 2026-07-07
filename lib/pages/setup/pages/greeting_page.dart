@@ -1,167 +1,154 @@
-/*
- * @Author: cubevlmu khfahqp@gmail.com
- * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
- */
-
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/setup/controller.dart';
 import 'package:star_forum/pages/setup/widgets/setup_body_view.dart';
 import 'package:star_forum/pages/setup/widgets/setup_next_button.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/app/forum_icons.dart';
+import 'package:star_forum/utils/shared_dialog.dart' as shared;
 import 'package:star_forum/widgets/license_view.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 class GreetingPage extends StatelessWidget {
+  const GreetingPage({super.key, required this.controller});
+
   final SetupPageController controller;
 
-  const GreetingPage({super.key, required this.controller});
-  Future<void> _showTosDialog(BuildContext context) {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          icon: const Icon(Icons.balance),
-          title: Text(AppLocalizations.of(context)!.setupLicenseTitle),
-          content: const LicenseView(),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(AppLocalizations.of(context)!.commonActionDisagree),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                controller.checkGreet();
-              },
-              child: Text(AppLocalizations.of(context)!.commonActionAgree),
-            ),
-          ],
-        );
-      },
-    );
+  Future<void> _showLicense(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return shared.SharedDialog.showContentDialog(
+      context,
+      title: l10n.setupLicenseTitle,
+      content: const LicenseView(),
+      cancelText: l10n.commonActionDisagree,
+      confirmText: l10n.commonActionAgree,
+      icon: Icons.balance_rounded,
+      confirmAction: controller.checkGreet,
+    ).then((_) {});
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return SetupBodyView(
       title: l10n.setupGreetingTitle,
       secondaryTitle: l10n.setupGreetingSubtitle,
-      body: Column(
-        children: [
-          Column(
-            children: [
-              _FeatureItem(
-                icon: Icons.chat_bubble_outline,
-                text: l10n.setupFeatureDiscuss,
-              ),
-              const SizedBox(height: 12),
-              _FeatureItem(
-                icon: Icons.notifications_none,
-                text: l10n.setupFeatureNoti,
-              ),
-              const SizedBox(height: 12),
-              _FeatureItem(
-                icon: Icons.bookmark_border,
-                text: l10n.setupFeatureBookmark,
-              ),
-            ],
+      leading: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          color: context.colors.primarySoft,
+          borderRadius: BorderRadius.circular(FUITokens.radiusXl),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(FUITokens.radiusXl),
+          child: Image.asset(
+            'assets/images/icon.png',
+            cacheWidth: 128,
+            cacheHeight: 128,
           ),
-
-          const SizedBox(height: 80),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.info_outline, size: 20, color: colorScheme.outline),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.setupLicenseReadAgreeTips,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.outline,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      onPressed: () => _showTosDialog(context),
-                      child: Text(
-                        l10n.setupViewLicense,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.primary,
+        ),
+      ),
+      body: FUISurface(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            _FeatureItem(
+              icon: ForumIcons.forum,
+              text: l10n.setupFeatureDiscuss,
+            ),
+            const SizedBox(height: FUITokens.gap14),
+            _FeatureItem(
+              icon: FUIIcons.notification,
+              text: l10n.setupFeatureNoti,
+            ),
+            const SizedBox(height: FUITokens.gap14),
+            _FeatureItem(
+              icon: ForumIcons.bookmark,
+              text: l10n.setupFeatureBookmark,
+            ),
+            const SizedBox(height: FUITokens.gap16),
+            Divider(color: context.colors.border),
+            const SizedBox(height: FUITokens.gap12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  FUIIcons.info,
+                  size: FUITokens.iconMd,
+                  color: context.colors.textTertiary,
+                ),
+                const SizedBox(width: FUITokens.gap10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.setupLicenseReadAgreeTips,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.colors.textSecondary,
+                          height: 1.4,
                         ),
                       ),
-                    ),
-                  ],
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: () => _showLicense(context),
+                        child: Text(l10n.setupViewLicense),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
-      action: Obx(() {
-        if (controller.isLoading.value) {
-          return Row(
-            mainAxisSize: .min,
-            crossAxisAlignment: .end,
-            children: [
-              const RefreshProgressIndicator(),
-              const SizedBox(width: 5),
-              SetupNextButton(
-                icon: Icons.check_circle_outline,
-                text: l10n.commonActionAgreeAndContinue,
-                onTap: null,
-              ),
-            ],
-          );
-        }
-
-        return SetupNextButton(
-          icon: Icons.check_circle_outline,
+      action: Obx(
+        () => SetupNextButton(
+          icon: FUIIcons.checkmark,
           text: l10n.commonActionAgreeAndContinue,
-          onTap: () async => controller.checkGreet(),
-        );
-      }),
+          loading: controller.isLoading.value,
+          onTap: controller.isLoading.value ? null : controller.checkGreet,
+        ),
+      ),
     );
   }
 }
 
-@immutable
 class _FeatureItem extends StatelessWidget {
+  const _FeatureItem({required this.icon, required this.text});
+
   final IconData icon;
   final String text;
 
-  const _FeatureItem({required this.icon, required this.text});
-
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 22, color: colorScheme.primary),
-        const SizedBox(width: 12),
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: context.colors.primarySoft,
+            borderRadius: BorderRadius.circular(FUITokens.radiusSm),
+          ),
+          child: Icon(
+            icon,
+            size: FUITokens.iconMd,
+            color: context.colors.primary,
+          ),
+        ),
+        const SizedBox(width: FUITokens.gap12),
         Expanded(
           child: Text(
             text,
-            style: textTheme.labelMedium?.copyWith(
-              color: colorScheme.secondary,
-              fontSize: 15,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.colors.textPrimary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),

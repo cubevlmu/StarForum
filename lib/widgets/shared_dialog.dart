@@ -1,17 +1,14 @@
-/*
- * @Author: cubevlmu khfahqp@gmail.com
- * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
- */
-
+import 'package:fin_ui/fin_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/utils/shared_dialog.dart' as shared;
 import 'package:star_forum/utils/snackbar_utils.dart';
-import 'package:star_forum/widgets/radio_list_dialog.dart';
 
 class SharedDialog {
+  const SharedDialog._();
+
   static void showDialog2(
     BuildContext context,
     String title,
@@ -21,21 +18,32 @@ class SharedDialog {
     String bText,
     Function() bAction,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => _SimpleDialog(
-        title: title,
-        content: content,
-        aText: aText,
-        aAction: aAction,
-        bText: bText,
-        bAction: bAction,
-      ),
+    shared.SharedDialog.showConfirmDialog(
+      context,
+      title: title,
+      content: content,
+      cancelText: aText,
+      confirmText: bText,
+      cancelAction: aAction,
+      confirmAction: bAction,
     );
   }
 
   static void showLogoutDialog(BuildContext context) {
-    showDialog(context: context, builder: (context) => const _LogoutDialog());
+    final l10n = AppLocalizations.of(context)!;
+    shared.SharedDialog.showConfirmDialog(
+      context,
+      title: l10n.authLogoutDialogTitle,
+      content: l10n.authLogoutDialogContent,
+      cancelText: l10n.commonActionCancel,
+      confirmText: l10n.commonActionConfirm,
+      variant: shared.SharedDialogVariant.warning,
+      confirmAction: () async {
+        final repo = getIt<UserRepo>();
+        await repo.logout();
+        SnackbarUtils.showMessage(msg: l10n.authLogoutSuccess);
+      },
+    );
   }
 
   static void showNumberDialog(
@@ -47,17 +55,31 @@ class SharedDialog {
     String bText,
     Function(int) bAction,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => _NumberDialog(
-        title: title,
-        content: content,
-        aText: aText,
-        aAction: aAction,
-        bText: bText,
-        bAction: bAction,
+    final controller = TextEditingController();
+    shared.SharedDialog.showContentDialog(
+      context,
+      title: title,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(content),
+          const SizedBox(height: FUITokens.gap12),
+          FUITextField(
+            controller: controller,
+            hintText: AppLocalizations.of(context)!.dialogInputNumberHint,
+            keyboardType: TextInputType.number,
+          ),
+        ],
       ),
-    );
+      cancelText: aText,
+      confirmText: bText,
+      cancelAction: aAction,
+      confirmAction: () {
+        final value = int.tryParse(controller.text);
+        if (value != null) bAction(value);
+      },
+    ).whenComplete(controller.dispose);
   }
 
   static void showInputDialog(
@@ -69,17 +91,27 @@ class SharedDialog {
     String bText,
     Function(String) bAction,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => _InputDialog(
-        title: title,
-        content: content,
-        aText: aText,
-        aAction: aAction,
-        bText: bText,
-        bAction: bAction,
+    final controller = TextEditingController();
+    shared.SharedDialog.showContentDialog(
+      context,
+      title: title,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(content),
+          const SizedBox(height: FUITokens.gap12),
+          FUITextField(
+            controller: controller,
+            hintText: AppLocalizations.of(context)!.dialogInputTextHint,
+          ),
+        ],
       ),
-    );
+      cancelText: aText,
+      confirmText: bText,
+      cancelAction: aAction,
+      confirmAction: () => bAction(controller.text),
+    ).whenComplete(controller.dispose);
   }
 
   static Future<T?> showRadioListDialog<T>(
@@ -88,192 +120,33 @@ class SharedDialog {
     required Map<String, T> itemNameValueMap,
     required T groupValue,
     Function(T? value)? onChanged,
-  }) {
-    return showDialog<T>(
-      context: context,
-      builder: (context) => RadioListDialog<T>(
-        title: title,
-        itemNameValueMap: itemNameValueMap,
-        groupValue: groupValue,
-        onChanged: onChanged,
+  }) async {
+    T? selected = groupValue;
+    final confirmed = await shared.SharedDialog.showContentDialog(
+      context,
+      title: title,
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final entry in itemNameValueMap.entries)
+                FUITile(
+                  title: entry.key,
+                  icon: entry.value == selected
+                      ? FUIIcons.check
+                      : FUIIcons.chevronRight,
+                  showChevron: false,
+                  onTap: () {
+                    setState(() => selected = entry.value);
+                    onChanged?.call(entry.value);
+                  },
+                ),
+            ],
+          );
+        },
       ),
     );
-  }
-}
-
-class _SimpleDialog extends StatelessWidget {
-  final String title;
-  final String content;
-  final String aText;
-  final Function() aAction;
-  final String bText;
-  final Function() bAction;
-
-  const _SimpleDialog({
-    required this.title,
-    required this.content,
-    required this.aText,
-    required this.aAction,
-    required this.bText,
-    required this.bAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(title),
-      content: Text(content),
-      actions: <Widget>[
-        TextButton(onPressed: aAction, child: Text(aText)),
-        TextButton(onPressed: bAction, child: Text(bText)),
-      ],
-    );
-  }
-}
-
-class _NumberDialog extends StatelessWidget {
-  final String title;
-  final String content;
-  final String aText;
-  final Function() aAction;
-  final String bText;
-  final Function(int) bAction;
-
-  const _NumberDialog({
-    required this.title,
-    required this.content,
-    required this.aText,
-    required this.aAction,
-    required this.bText,
-    required this.bAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = TextEditingController();
-
-    return AlertDialog(
-      title: Text(title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(content),
-          const SizedBox(height: 12),
-          TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: AppLocalizations.of(context)!.dialogInputNumberHint,
-            ),
-          ),
-        ],
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-            aAction();
-          },
-          child: Text(aText),
-        ),
-        TextButton(
-          onPressed: () {
-            final value = int.tryParse(controller.text);
-            if (value == null) return;
-            Navigator.pop(context);
-            bAction(value);
-          },
-          child: Text(bText),
-        ),
-      ],
-    );
-  }
-}
-
-class _LogoutDialog extends StatelessWidget {
-  const _LogoutDialog();
-
-  void _onSubmit(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
-    final repo = getIt<UserRepo>();
-    await repo.logout();
-    SnackbarUtils.showMessage(msg: l10n.authLogoutSuccess);
-    if (!context.mounted) return;
-    Navigator.pop(context, 'OK');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(AppLocalizations.of(context)!.authLogoutDialogTitle),
-      content: Text(AppLocalizations.of(context)!.authLogoutDialogContent),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.pop(context, 'Cancel'),
-          child: Text(AppLocalizations.of(context)!.commonActionCancel),
-        ),
-        TextButton(
-          onPressed: () => _onSubmit(context),
-          child: Text(AppLocalizations.of(context)!.commonActionConfirm),
-        ),
-      ],
-    );
-  }
-}
-
-class _InputDialog extends StatelessWidget {
-  final String title;
-  final String content;
-  final String aText;
-  final Function() aAction;
-  final String bText;
-  final Function(String) bAction;
-
-  const _InputDialog({
-    required this.title,
-    required this.content,
-    required this.aText,
-    required this.aAction,
-    required this.bText,
-    required this.bAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = TextEditingController();
-
-    return AlertDialog(
-      title: Text(title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(content),
-          const SizedBox(height: 12),
-          TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: AppLocalizations.of(context)!.dialogInputTextHint,
-            ),
-          ),
-        ],
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-            aAction();
-          },
-          child: Text(aText),
-        ),
-        TextButton(
-          onPressed: () {
-            final value = controller.text;
-            Navigator.pop(context);
-            bAction(value);
-          },
-          child: Text(bText),
-        ),
-      ],
-    );
+    return confirmed ? selected : null;
   }
 }

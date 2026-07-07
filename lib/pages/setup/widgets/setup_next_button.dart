@@ -1,39 +1,28 @@
-/*
- * @Author: cubevlmu khfahqp@gmail.com
- * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
- */
-
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
 
-@immutable
 class SetupNextButton extends StatelessWidget {
-  final IconData icon;
-  final String? text;
-  final Function()? onTap;
-
   const SetupNextButton({
     super.key,
     required this.icon,
     this.text,
     required this.onTap,
+    this.loading = false,
   });
+
+  final IconData icon;
+  final String? text;
+  final VoidCallback? onTap;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
-    if (text == null) {
-      return FloatingActionButton(
-        heroTag: null,
-        onPressed: onTap,
-        child: Icon(icon),
-      );
-    }
-    return FloatingActionButton.extended(
-      heroTag: null,
+    return FUIButton(
+      label: text ?? MaterialLocalizations.of(context).continueButtonLabel,
+      icon: loading ? null : icon,
+      loading: loading,
+      fullWidth: true,
       onPressed: onTap,
-      enableFeedback: onTap != null,
-      icon: Icon(icon),
-      label: Text(text ?? ""),
     );
   }
 }

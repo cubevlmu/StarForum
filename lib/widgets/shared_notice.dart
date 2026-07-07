@@ -5,8 +5,9 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
+import 'package:star_forum/pages/login/view.dart';
 
 class WorkInProgressNotice extends StatelessWidget {
   const WorkInProgressNotice({super.key});
@@ -96,7 +97,7 @@ class NotLoginNotice extends StatelessWidget {
   }
 
   void _onLoginBtnPressed(BuildContext context) {
-    openLoginAdaptive(context);
+    FuiNavigation.openDetail(context, builder: (_) => const LoginPage(embedded: true));
   }
 }
 

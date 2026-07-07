@@ -6,14 +6,18 @@
 
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/data/model/badge.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/model/discussions.dart';
 import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/post_repo.dart';
+import 'package:star_forum/data/repository/repo_result.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
@@ -42,6 +46,7 @@ class UserPageController extends GetxController {
   final Rx<UserPageSection> currentSection = UserPageSection.info.obs;
   final RxList<PostInfo> comments = <PostInfo>[].obs;
   final RxList<DiscussionInfo> topics = <DiscussionInfo>[].obs;
+  final RxList<UserBadge> badges = <UserBadge>[].obs;
   final RxMap<int, DiscussionInfo> commentDiscussions =
       <int, DiscussionInfo>{}.obs;
 
@@ -55,6 +60,8 @@ class UserPageController extends GetxController {
   bool _isTopicsSyncing = false;
 
   final repo = getIt<UserRepo>();
+  final postRepo = getIt<PostRepository>();
+  final discussionRepo = getIt<DiscussionRepository>();
 
   final int userId;
   int currentPage = 1;
@@ -62,14 +69,18 @@ class UserPageController extends GetxController {
   final RxBool isProfileLoading = false.obs;
   final RxBool isCommentsLoading = false.obs;
   final RxBool isTopicsLoading = false.obs;
+  final RxBool isBadgesLoading = false.obs;
   final RxBool isAvatarUploading = false.obs;
   final RxBool isBioUpdating = false.obs;
+  final RxBool isNicknameUpdating = false.obs;
   final RxBool detailsExpanded = false.obs;
   bool expAnimationPlayed = false;
   bool _infoInitialized = false;
   bool _commentsInitialized = false;
   bool _topicsInitialized = false;
+  bool _badgesInitialized = false;
   Future<void>? _profileLoadingTask;
+  final CancelToken _cancelToken = CancelToken();
 
   UserInfo? get info => profile.value;
   set info(UserInfo? value) => profile.value = value;
@@ -92,9 +103,25 @@ class UserPageController extends GetxController {
   }
 
   Future<void> _loadUserDataInternal() async {
+    if (userId <= 0) {
+      LogUtil.warn("[UserPage] skip invalid user id: $userId");
+      isProfileLoading.value = false;
+      return;
+    }
     isProfileLoading.value = true;
     try {
-      final r = await Api.getUserInfoByNameOrId(userId.toString());
+      final cached = await repo.getCachedUserInfoByNameOrId(userId.toString());
+      if (cached != null && info == null) {
+        info = cached;
+        _infoInitialized = true;
+        isProfileLoading.value = false;
+      }
+      final result = await repo.getUserInfoByNameOrId(
+        userId.toString(),
+        cancelToken: _cancelToken,
+      );
+      if (result.error?.type == RepoErrorType.cancelled) return;
+      final r = result.data;
       if (r == null) {
         LogUtil.error(
           "[UserPage] Get user information with empty response, userId $userId",
@@ -138,11 +165,13 @@ class UserPageController extends GetxController {
     }
 
     try {
-      final data = await Api.getPostsByAuthor(
+      final result = await postRepo.getPostsByAuthor(
         username: info?.username ?? "",
         offset: _commentsOffset,
         limit: pageSize,
+        cancelToken: _cancelToken,
       );
+      final data = result.data;
 
       if (data == null) {
         LogUtil.warn("[UserPage] empty response");
@@ -156,13 +185,7 @@ class UserPageController extends GetxController {
         return true;
       }
 
-      for (var i in list) {
-        i.user = info;
-        final t = htmlToPlainText(i.contentHtml);
-        i.contentHtml =
-            "<p>${t.substring(0, t.length > 70 ? 70 : t.length)}...</p>";
-      }
-      comments.addAll(list);
+      _appendCommentPosts(list);
       commentDiscussions.addAll(data.discussions);
       _commentsOffset += list.length;
 
@@ -197,6 +220,36 @@ class UserPageController extends GetxController {
 
     _commentsInitialized = true;
     isCommentsLoading.value = false;
+  }
+
+  Future<void> _restoreCachedComments() async {
+    await loadUserData();
+    final username = info?.username ?? '';
+    if (username.isEmpty) return;
+    final data = await postRepo.getCachedPostsByAuthor(
+      username: username,
+      offset: 0,
+      limit: pageSize,
+    );
+    final list = data.posts.values;
+    if (list.isEmpty || isClosed) return;
+    comments.clear();
+    commentDiscussions.clear();
+    _appendCommentPosts(list);
+    commentDiscussions.addAll(data.discussions);
+    _commentsOffset = list.length;
+    _commentsHasMore = list.length >= pageSize;
+    isCommentsLoading.value = false;
+  }
+
+  void _appendCommentPosts(Iterable<PostInfo> list) {
+    for (final item in list) {
+      item.user = info;
+      final text = htmlToPlainText(item.contentHtml);
+      item.contentHtml =
+          "<p>${text.substring(0, text.length > 70 ? 70 : text.length)}...</p>";
+    }
+    comments.addAll(list);
   }
 
   Future<void> onCommentsLoad() async {
@@ -239,18 +292,19 @@ class UserPageController extends GetxController {
     }
 
     try {
-      final data = await Api.getAuthorThemes(
+      final result = await discussionRepo.getAuthorThemes(
         username: info?.username ?? "",
         offset: _topicsOffset,
         limit: pageSize,
+        cancelToken: _cancelToken,
       );
 
-      if (data == null) {
+      if (result.isFailure) {
         LogUtil.warn("[UserPage] empty author themes response");
         return false;
       }
 
-      final list = data.list;
+      final list = result.data ?? const <DiscussionInfo>[];
       if (list.isEmpty) {
         _topicsHasMore = false;
         return true;
@@ -259,9 +313,7 @@ class UserPageController extends GetxController {
       topics.addAll(list);
       _topicsOffset += list.length;
 
-      if (list.length < pageSize) {
-        _topicsHasMore = false;
-      }
+      _topicsHasMore = result.hasMore;
 
       return true;
     } catch (e, s) {
@@ -288,6 +340,22 @@ class UserPageController extends GetxController {
     }
 
     _topicsInitialized = true;
+    isTopicsLoading.value = false;
+  }
+
+  Future<void> _restoreCachedTopics() async {
+    await loadUserData();
+    final username = info?.username ?? '';
+    if (username.isEmpty) return;
+    final cached = await discussionRepo.getCachedAuthorThemes(
+      username: username,
+      offset: 0,
+      limit: pageSize,
+    );
+    if (cached.isEmpty || isClosed) return;
+    topics.assignAll(cached);
+    _topicsOffset = cached.length;
+    _topicsHasMore = cached.length >= pageSize;
     isTopicsLoading.value = false;
   }
 
@@ -318,6 +386,26 @@ class UserPageController extends GetxController {
     isTopicsLoading.value = false;
   }
 
+  Future<void> loadUserBadges() async {
+    if (_badgesInitialized || isBadgesLoading.value || userId <= 0) {
+      return;
+    }
+    isBadgesLoading.value = true;
+    try {
+      final result = await repo.getUserBadges(
+        userId,
+        cancelToken: _cancelToken,
+      );
+      if (result.error?.type == RepoErrorType.cancelled) return;
+      badges.assignAll(result.data ?? const <UserBadge>[]);
+      _badgesInitialized = true;
+    } catch (e, s) {
+      LogUtil.errorE("[UserPage] load user badges error", e, s);
+    } finally {
+      isBadgesLoading.value = false;
+    }
+  }
+
   Future<void> selectSection(UserPageSection section) async {
     if (currentSection.value == section) {
       return;
@@ -329,22 +417,26 @@ class UserPageController extends GetxController {
   Future<void> ensureSectionLoaded(UserPageSection section) async {
     switch (section) {
       case UserPageSection.info:
-      case UserPageSection.badges:
       case UserPageSection.assets:
         if (!_infoInitialized && _profileLoadingTask == null) {
           await loadUserData();
         }
         return;
+      case UserPageSection.badges:
+        await loadUserBadges();
+        return;
       case UserPageSection.comments:
         if (_commentsInitialized || isCommentsLoading.value) {
           return;
         }
+        await _restoreCachedComments();
         await onCommentsRefresh();
         return;
       case UserPageSection.topics:
         if (_topicsInitialized || isTopicsLoading.value) {
           return;
         }
+        await _restoreCachedTopics();
         await onTopicsRefresh();
         return;
     }
@@ -465,7 +557,10 @@ class UserPageController extends GetxController {
     isLoading.value = true;
 
     try {
-      final r = await Api.getDiscussionById(discussion.toString());
+      final result = await discussionRepo.getDiscussionById(
+        discussion.toString(),
+      );
+      final r = result.data;
       if (r == null) {
         SnackbarUtils.showMessage(
           msg: AppLocalizations.of(Get.context!)!.commonNoticeFetchPostFailed,
@@ -500,12 +595,12 @@ class UserPageController extends GetxController {
     isAvatarUploading.value = true;
 
     try {
-      final ok = await Api.uploadAvatar(
+      final result = await repo.uploadAvatar(
         userId: repo.userId,
         fileData: fileData,
         fileName: fileName,
       );
-      if (!ok) {
+      if (result.isFailure) {
         return false;
       }
 
@@ -535,8 +630,8 @@ class UserPageController extends GetxController {
 
     isBioUpdating.value = true;
     try {
-      final ok = await Api.updateBio(repo.userId, bio.trim());
-      if (!ok) {
+      final result = await repo.updateBio(repo.userId, bio.trim());
+      if (result.isFailure) {
         return false;
       }
 
@@ -557,8 +652,48 @@ class UserPageController extends GetxController {
     }
   }
 
+  Future<bool> updateNicknameText(String nickname) async {
+    if (!isMe()) {
+      return false;
+    }
+    final username = info?.username.trim() ?? repo.user?.username.trim() ?? '';
+    if (username.isEmpty) {
+      return false;
+    }
+
+    isNicknameUpdating.value = true;
+    try {
+      final result = await repo.updateNickname(
+        userId: repo.userId,
+        username: username,
+        nickname: nickname.trim(),
+      );
+      if (result.isFailure) {
+        return false;
+      }
+
+      final refreshed = await repo.refreshCurrentUser();
+      if (refreshed && repo.user != null) {
+        info = repo.user;
+        _infoInitialized = true;
+      } else if (info != null) {
+        info!.displayName = nickname.trim();
+        info = info;
+      }
+      return true;
+    } catch (e, s) {
+      LogUtil.errorE("[UserPage] update nickname failed", e, s);
+      return false;
+    } finally {
+      isNicknameUpdating.value = false;
+    }
+  }
+
   @override
   void onClose() {
+    if (!_cancelToken.isCancelled) {
+      _cancelToken.cancel('User page closed.');
+    }
     commentsScrollController.dispose();
     commentsRefreshController.dispose();
     topicsScrollController.dispose();

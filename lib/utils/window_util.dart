@@ -10,8 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 
 class WindowResizeObserver with WidgetsBindingObserver {
-  static final WindowResizeObserver instance =
-      WindowResizeObserver._internal();
+  static final WindowResizeObserver instance = WindowResizeObserver._internal();
 
   WindowResizeObserver._internal();
 

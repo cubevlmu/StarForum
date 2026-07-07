@@ -6,15 +6,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/pages/home/controller.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/user_group/controller.dart';
 import 'package:star_forum/pages/user_group/widgets/user_directory_loading_skeleton.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/app/forum_layout.dart';
+import 'package:star_forum/widgets/forum/forum_user_avatar.dart';
 import 'package:star_forum/utils/string_util.dart';
-import 'package:star_forum/widgets/avatar.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
 
@@ -34,16 +36,12 @@ class _UserGroupPageState extends State<UserGroupPage> {
   void initState() {
     super.initState();
     homeController = Get.find<HomeController>();
-    if (homeController.isLogin.value) {
-      _ensureController();
-    }
+    if (homeController.isLogin.value) _ensureController();
   }
 
   UserGroupController _ensureController() {
     final existing = _controller;
-    if (existing != null) {
-      return existing;
-    }
+    if (existing != null) return existing;
     final created = Get.isRegistered<UserGroupController>(tag: _tag)
         ? Get.find<UserGroupController>(tag: _tag)
         : Get.put(UserGroupController(), tag: _tag);
@@ -63,11 +61,11 @@ class _UserGroupPageState extends State<UserGroupPage> {
       }
 
       final controller = _ensureController();
-      final users = controller.filteredUsers;
       final showLoading =
           (controller.isInitialLoading.value ||
               controller.isCriteriaLoading.value) &&
           controller.users.isEmpty;
+
       return SimpleEasyRefresher(
         easyRefreshController: controller.refreshController,
         onRefresh: controller.onRefresh,
@@ -83,16 +81,13 @@ class _UserGroupPageState extends State<UserGroupPage> {
             controller: controller.scrollController,
             physics: effectivePhysics,
             slivers: [
-              SliverToBoxAdapter(
-                child: _UserDirectoryToolbar(controller: controller),
-              ),
-              const SliverToBoxAdapter(child: Divider(height: 1)),
+              SliverToBoxAdapter(child: _UserToolbar(controller: controller)),
               if (showLoading)
                 const SliverFillRemaining(
                   hasScrollBody: false,
                   child: UserDirectoryLoadingSkeleton(),
                 )
-              else if (users.isEmpty)
+              else if (controller.filteredUsers.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: NoticeWidget(
@@ -103,21 +98,28 @@ class _UserGroupPageState extends State<UserGroupPage> {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.fromLTRB(
+                    ForumLayout.edge,
+                    ForumLayout.cardGap,
+                    ForumLayout.edge,
+                    FUITokens.gap24,
+                  ),
                   sliver: SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          mainAxisExtent: 96,
+                          mainAxisSpacing: ForumLayout.sectionGap,
+                          crossAxisSpacing: ForumLayout.sectionGap,
+                          mainAxisExtent: 88,
                         ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      return _UserDirectoryCard(user: users[index]);
-                    }, childCount: users.length),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) =>
+                          _UserCard(user: controller.filteredUsers[index]),
+                      childCount: controller.filteredUsers.length,
+                    ),
                   ),
                 ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           );
         },
@@ -126,290 +128,312 @@ class _UserGroupPageState extends State<UserGroupPage> {
   }
 }
 
-class _UserDirectoryToolbar extends StatefulWidget {
-  const _UserDirectoryToolbar({required this.controller});
+class _UserToolbar extends StatefulWidget {
+  const _UserToolbar({required this.controller});
 
   final UserGroupController controller;
 
   @override
-  State<_UserDirectoryToolbar> createState() => _UserDirectoryToolbarState();
+  State<_UserToolbar> createState() => _UserToolbarState();
 }
 
-class _UserDirectoryToolbarState extends State<_UserDirectoryToolbar> {
-  static const _animDuration = Duration(milliseconds: 180);
-  late final TextEditingController _searchController;
-  bool _showSearch = false;
+class _UserToolbarState extends State<_UserToolbar> {
+  bool _searching = false;
+  late final TextEditingController _searchCtrl;
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
+    _searchCtrl = TextEditingController();
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
+    final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
 
-    Widget toolbarBody() {
-      if (_showSearch) {
-        return TextField(
-          key: const ValueKey('search'),
-          controller: _searchController,
-          onChanged: controller.updateSearch,
-          autofocus: true,
-          decoration: InputDecoration(
-            isDense: true,
-            hintText: l10n.homeUserDirectorySearchHint,
-            border: const OutlineInputBorder(),
-          ),
-        );
-      }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        ForumLayout.edge,
+        FUITokens.gap10,
+        ForumLayout.edge,
+        FUITokens.gap4,
+      ),
+      child: FUISurface(
+        padding: const EdgeInsets.fromLTRB(
+          FUITokens.gap14,
+          FUITokens.gap8,
+          FUITokens.gap8,
+          FUITokens.gap8,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: _searching
+                    ? SizedBox(
+                        key: const ValueKey('search'),
+                        height: FUITokens.inputHeight,
+                        child: TextField(
+                          controller: _searchCtrl,
+                          onChanged: controller.updateSearch,
+                          autofocus: true,
+                          expands: true,
+                          minLines: null,
+                          maxLines: null,
+                          textAlignVertical: TextAlignVertical.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colors.textPrimary,
+                          ),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            border: InputBorder.none,
+                            hintText: l10n.homeUserDirectorySearchHint,
+                            hintStyle: TextStyle(
+                              fontSize: 13,
+                              color: colors.textTertiary,
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      )
+                    : _FilterRow(controller: controller, l10n: l10n),
+              ),
+            ),
+            const SizedBox(width: FUITokens.gap8),
+            SizedBox(
+              width: FUITokens.inputHeight,
+              height: FUITokens.inputHeight,
+              child: IconButton(
+                icon: Icon(_searching ? FUIIcons.close : FUIIcons.search),
+                color: colors.textSecondary,
+                tooltip: l10n.homeUserDirectorySearchHint,
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(
+                    FUITokens.inputHeight,
+                    FUITokens.inputHeight,
+                  ),
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(FUITokens.radiusSm),
+                  ),
+                ),
+                onPressed: () {
+                  if (_searching) {
+                    _searchCtrl.clear();
+                    controller.updateSearch('');
+                  }
+                  setState(() => _searching = !_searching);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
+class _FilterRow extends StatelessWidget {
+  const _FilterRow({required this.controller, required this.l10n});
+
+  final UserGroupController controller;
+  final AppLocalizations l10n;
+
+  static const _allGroupsValue = '__all__';
+
+  String _sortLabel(UserDirectorySort s) => switch (s) {
+    UserDirectorySort.username => l10n.homeUserDirectorySortUsernameAsc,
+    UserDirectorySort.usernameD => l10n.homeUserDirectorySortUsernameDesc,
+    UserDirectorySort.joinedAtD => l10n.homeUserDirectorySortNewest,
+    UserDirectorySort.joinedAt => l10n.homeUserDirectorySortOldest,
+    UserDirectorySort.discussionCountD => l10n.homeUserDirectorySortMostTopics,
+    UserDirectorySort.discussionCount => l10n.homeUserDirectorySortLeastTopics,
+    UserDirectorySort.expD => l10n.homeUserDirectorySortMostExp,
+    UserDirectorySort.exp => l10n.homeUserDirectorySortLeastExp,
+    UserDirectorySort.unknown => '',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final sort = controller.sort.value;
+      final group = controller.selectedGroup.value;
+      final groups = [_allGroupsValue, ...controller.availableGroups];
+      final groupValue = group == null || group.isEmpty
+          ? _allGroupsValue
+          : group;
       return Row(
-        key: const ValueKey('filters'),
         children: [
           Expanded(
-            child: _SortDropdown(
-              value: controller.sort.value,
-              l10n: l10n,
+            child: _MenuField<UserDirectorySort>(
+              value: sort,
+              items: UserDirectorySort.values
+                  .where((item) => item != UserDirectorySort.unknown)
+                  .toList(),
+              labelOf: _sortLabel,
               onChanged: controller.updateSort,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: FUITokens.gap8),
           Expanded(
-            child: _GroupDropdown(
-              value: controller.selectedGroup.value,
-              groups: controller.availableGroups,
-              l10n: l10n,
-              onChanged: controller.updateGroup,
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: _animDuration,
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeOut,
-              layoutBuilder: (currentChild, previousChildren) {
-                return Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    ...previousChildren,
-                    currentChild,
-                  ].whereType<Widget>().toList(),
-                );
+            child: _MenuField<String>(
+              value: groupValue,
+              items: groups,
+              labelOf: (value) => value == _allGroupsValue
+                  ? l10n.homeUserDirectoryFilterAll
+                  : value,
+              onChanged: (value) {
+                controller.updateGroup(value == _allGroupsValue ? null : value);
               },
-              child: toolbarBody(),
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: l10n.homeUserDirectorySearchHint,
-            onPressed: () {
-              if (_showSearch) {
-                _searchController.clear();
-                controller.updateSearch('');
-              }
-              setState(() => _showSearch = !_showSearch);
-            },
-            icon: Icon(
-              _showSearch ? Icons.close_rounded : Icons.search_rounded,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SortDropdown extends StatelessWidget {
-  const _SortDropdown({
-    required this.value,
-    required this.l10n,
-    required this.onChanged,
-  });
-
-  final UserSort value;
-  final AppLocalizations l10n;
-  final ValueChanged<UserSort> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    DropdownMenuItem<UserSort> item(UserSort value, String text) {
-      return DropdownMenuItem(
-        value: value,
-        child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
       );
-    }
-
-    return DropdownButtonFormField<UserSort>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: InputDecoration(
-        isDense: true,
-        labelText: l10n.homeUserDirectorySort,
-        border: const OutlineInputBorder(),
-      ),
-      items: [
-        item(UserSort.username, l10n.homeUserDirectorySortUsernameAsc),
-        item(UserSort.usernameD, l10n.homeUserDirectorySortUsernameDesc),
-        item(UserSort.joinedAtD, l10n.homeUserDirectorySortNewest),
-        item(UserSort.joinedAt, l10n.homeUserDirectorySortOldest),
-        item(UserSort.discussionCountD, l10n.homeUserDirectorySortMostTopics),
-        item(UserSort.discussionCount, l10n.homeUserDirectorySortLeastTopics),
-        item(UserSort.expD, l10n.homeUserDirectorySortMostExp),
-        item(UserSort.exp, l10n.homeUserDirectorySortLeastExp),
-      ],
-      onChanged: (next) {
-        if (next != null) onChanged(next);
-      },
-    );
+    });
   }
 }
 
-class _GroupDropdown extends StatelessWidget {
-  const _GroupDropdown({
+class _MenuField<T> extends StatelessWidget {
+  const _MenuField({
     required this.value,
-    required this.groups,
-    required this.l10n,
+    required this.items,
+    required this.labelOf,
     required this.onChanged,
   });
 
-  final String? value;
-  final List<String> groups;
-  final AppLocalizations l10n;
-  final ValueChanged<String?> onChanged;
+  final T value;
+  final List<T> items;
+  final String Function(T value) labelOf;
+  final ValueChanged<T> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final effectiveValue = groups.contains(value) ? value : null;
-    return DropdownButtonFormField<String?>(
-      initialValue: effectiveValue,
-      isExpanded: true,
-      decoration: InputDecoration(
-        isDense: true,
-        labelText: l10n.homeUserDirectoryFilterGroup,
-        border: const OutlineInputBorder(),
+    final colors = context.colors;
+    return PopupMenuButton<T>(
+      initialValue: value,
+      onSelected: onChanged,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(FUITokens.radiusLg),
+        side: BorderSide(color: colors.border),
       ),
-      items: [
-        DropdownMenuItem<String?>(
-          value: null,
-          child: Text(
-            l10n.homeUserDirectoryFilterAll,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+      color: colors.surface,
+      itemBuilder: (_) => [
+        for (final item in items)
+          PopupMenuItem<T>(
+            value: item,
+            child: Text(
+              labelOf(item),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                color: item == value ? colors.primary : colors.textPrimary,
+                fontWeight: item == value ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
           ),
-        ),
-        ...groups.map(
-          (group) => DropdownMenuItem<String?>(
-            value: group,
-            child: Text(group, maxLines: 1, overflow: TextOverflow.ellipsis),
-          ),
-        ),
       ],
-      onChanged: onChanged,
+      child: Container(
+        height: FUITokens.inputHeight,
+        padding: const EdgeInsets.symmetric(horizontal: FUITokens.gap4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                labelOf(value),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: colors.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: FUITokens.gap4),
+            Icon(Icons.expand_more_rounded, size: 16, color: colors.primary),
+          ],
+        ),
+      ),
     );
   }
 }
 
-class _UserDirectoryCard extends StatelessWidget {
-  const _UserDirectoryCard({required this.user});
+class _UserCard extends StatelessWidget {
+  const _UserCard({required this.user});
 
   final UserInfo user;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => openUserAdaptive(context, user.id),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return FUISurface(
+      onTap: () => FuiNavigation.openDetail(
+        context,
+        builder: (_) => UserPage(userId: user.id, embedded: true),
+      ),
+      padding: const EdgeInsets.all(FUITokens.gap12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  AvatarWidget(
-                    avatarUrl: user.avatarUrl,
-                    radius: 18,
-                    width: 36,
-                    height: 36,
-                    placeholder: StringUtil.getAvatarFirstChar(
-                      user.displayName,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(child: _UserIdentity(user: user)),
-                ],
+              ForumUserAvatar(
+                name: user.displayName,
+                avatarUrl: user.avatarUrl,
+                size: 36,
               ),
-              Text(
-                '${AppLocalizations.of(context)!.userRegisterAtPrefix} ${StringUtil.timeStampToAgoDate(user.joinTime.millisecondsSinceEpoch ~/ 1000)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+              const SizedBox(width: FUITokens.gap10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      user.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      '@${user.username}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textTertiary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
+          Text(
+            '${l10n.userRegisterAtPrefix} ${StringUtil.timeStampToAgoDate(user.joinTime.millisecondsSinceEpoch ~/ 1000)}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: colors.textTertiary, fontSize: 11),
+          ),
+        ],
       ),
-    );
-  }
-}
-
-class _UserIdentity extends StatelessWidget {
-  const _UserIdentity({required this.user});
-
-  final UserInfo user;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final titleStyle = Theme.of(
-      context,
-    ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700);
-    final subtitleStyle = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          user.displayName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: titleStyle,
-        ),
-        const SizedBox(height: 2),
-        Text(
-          '@${user.username}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: subtitleStyle,
-        ),
-      ],
     );
   }
 }

@@ -6,8 +6,6 @@
 
 import 'package:flutter/widgets.dart';
 
-import 'base.dart';
-
 @immutable
 class ForumInfo {
   final String url;
@@ -38,23 +36,25 @@ class ForumInfo {
     required this.canUpload,
   });
 
-  factory ForumInfo.fromMap(Map map) {
-    return ForumInfo.fromBase(BaseBean.fromMap(map));
-  }
+  Map<String, Object?> toCacheMap() => {
+    'url': url,
+    'title': title,
+    'description': description,
+    'welcomeTitle': welcomeTitle,
+    'welcomeMessage': welcomeMessage,
+    'logoUrl': logoUrl,
+    'canUpload': canUpload,
+  };
 
-  factory ForumInfo.fromBase(BaseBean base) {
-    if (base.data.type == "forums") {
-      final info = base.data.attrs;
-      return ForumInfo(
-        title: info.string("title"),
-        url: info.string("baseUrl"),
-        description: info.string("description"),
-        welcomeTitle: info.string("welcomeTitle"),
-        welcomeMessage: info.string("welcomeMessage"),
-        logoUrl: info.string("logoUrl"),
-        canUpload: info.boolean("fof-upload.canUpload"),
-      );
-    }
-    return empty;
+  factory ForumInfo.fromCacheMap(Map<Object?, Object?> map) {
+    return ForumInfo(
+      url: map['url']?.toString() ?? '',
+      title: map['title']?.toString() ?? '',
+      description: map['description']?.toString() ?? '',
+      welcomeTitle: map['welcomeTitle']?.toString() ?? '',
+      welcomeMessage: map['welcomeMessage']?.toString() ?? '',
+      logoUrl: map['logoUrl']?.toString() ?? '',
+      canUpload: map['canUpload'] == true,
+    );
   }
 }

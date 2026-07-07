@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/uploads.dart';
+import 'package:star_forum/data/repository/upload_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/cache_utils.dart';
@@ -13,6 +13,7 @@ import 'package:star_forum/utils/log_util.dart';
 
 class AssetsController extends GetxController {
   final UserRepo userRepo = getIt<UserRepo>();
+  final UploadRepository uploadRepo = getIt<UploadRepository>();
   final RxList<UploadFileInfo> files = <UploadFileInfo>[].obs;
   final Rxn<UploadFileInfo> selectedFile = Rxn<UploadFileInfo>();
   final RxBool isInitialLoading = true.obs;
@@ -53,23 +54,28 @@ class AssetsController extends GetxController {
       return null;
     }
 
-    final uploadFiles = <ApiUploadFile>[];
+    final uploadFiles = <UploadInputFile>[];
     for (final file in result.files) {
       uploadFiles.add(
-        ApiUploadFile(fileName: file.name, path: file.path, bytes: file.bytes),
+        UploadInputFile(
+          fileName: file.name,
+          path: file.path,
+          bytes: file.bytes,
+        ),
       );
     }
 
     isUploading.value = true;
     try {
-      final (uploaded, ok) = await Api.uploadFiles(uploadFiles);
-      if (!ok || uploaded == null) {
+      final result = await uploadRepo.uploadFiles(uploadFiles);
+      final uploaded = result.data;
+      if (result.isFailure || uploaded == null) {
         return false;
       }
 
-      if (uploaded.list.isNotEmpty) {
-        files.insertAll(0, uploaded.list);
-        selectedFile.value = uploaded.list.first;
+      if (uploaded.isNotEmpty) {
+        files.insertAll(0, uploaded);
+        selectedFile.value = uploaded.first;
       } else {
         await onRefresh();
       }
@@ -90,8 +96,8 @@ class AssetsController extends GetxController {
 
     deletingIds.add(file.id);
     try {
-      final (ok, tokenOk) = await Api.deleteUploadFile(file.uuid);
-      if (!tokenOk || !ok) {
+      final result = await uploadRepo.deleteUploadFile(file.uuid);
+      if (result.isFailure) {
         return false;
       }
 
@@ -128,20 +134,20 @@ class AssetsController extends GetxController {
         return;
       }
 
-      final (result, ok) = await Api.getUploads(
+      final result = await uploadRepo.getUploads(
         userId: userRepo.userId,
         offset: 0,
         limit: _pageSize,
       );
-      if (!ok) {
+      if (result.isFailure) {
         _finishRefreshSafe(IndicatorResult.fail);
         return;
       }
 
-      final list = result?.list ?? const <UploadFileInfo>[];
+      final list = result.data ?? const <UploadFileInfo>[];
       files.assignAll(list);
-      _nextUrl = result?.links.next;
-      _hasMore = _nextUrl != null && _nextUrl!.isNotEmpty;
+      _nextUrl = result.nextUrl;
+      _hasMore = result.hasMore;
 
       _finishRefreshSafe(IndicatorResult.success);
       _finishLoadSafe(
@@ -168,21 +174,21 @@ class AssetsController extends GetxController {
 
     _loading = true;
     try {
-      final (result, ok) = await Api.getUploads(
+      final result = await uploadRepo.getUploads(
         userId: userRepo.userId,
         url: _nextUrl,
       );
-      if (!ok) {
+      if (result.isFailure) {
         _finishLoadSafe(IndicatorResult.fail);
         return;
       }
 
-      final next = result?.list ?? const <UploadFileInfo>[];
+      final next = result.data ?? const <UploadFileInfo>[];
       if (next.isNotEmpty) {
         files.addAll(next);
       }
-      _nextUrl = result?.links.next;
-      _hasMore = _nextUrl != null && _nextUrl!.isNotEmpty;
+      _nextUrl = result.nextUrl;
+      _hasMore = result.hasMore;
 
       _finishLoadSafe(
         _hasMore ? IndicatorResult.success : IndicatorResult.noMore,

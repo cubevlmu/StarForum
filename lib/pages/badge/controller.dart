@@ -5,11 +5,13 @@
  */
 
 import 'package:easy_refresh/easy_refresh.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/badge.dart';
+import 'package:star_forum/data/repository/badge_repo.dart';
+import 'package:star_forum/di/injector.dart';
 import 'package:get/get.dart';
 
 class BadgeController extends GetxController {
+  final BadgeRepository badgeRepo = getIt<BadgeRepository>();
   final RxList<BadgeCategory> categories = <BadgeCategory>[].obs;
   final RxBool isLoading = true.obs;
   bool _hasLoaded = false;
@@ -40,8 +42,8 @@ class BadgeController extends GetxController {
     _isRefreshing = true;
     isLoading.value = true;
     try {
-      final result = await Api.getBadgeCategories();
-      categories.assignAll(result?.list ?? const <BadgeCategory>[]);
+      final result = await badgeRepo.getBadgeCategories();
+      categories.assignAll(result.data?.list ?? const <BadgeCategory>[]);
       _hasLoaded = true;
       if (notifyRefresher) {
         refreshController.finishRefresh(IndicatorResult.success);

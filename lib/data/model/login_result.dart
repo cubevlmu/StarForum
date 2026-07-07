@@ -5,7 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
-import 'base.dart';
+import 'package:star_forum/data/json/json_reader.dart';
 
 @immutable
 class LoginResult {

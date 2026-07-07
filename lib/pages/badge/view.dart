@@ -1,14 +1,16 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
  * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
 import 'package:flutter/material.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/data/model/badge.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/badge/controller.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:star_forum/widgets/two_column_loading_skeleton.dart';
@@ -47,6 +49,7 @@ class _BadgePageState extends State<BadgePage>
     return Obx(() {
       final showLoading = controller.isLoading.value;
       final categories = controller.categories;
+
       if (!controller.hasLoaded || (showLoading && categories.isEmpty)) {
         return const _BadgeLoadingSkeleton();
       }
@@ -71,21 +74,28 @@ class _BadgePageState extends State<BadgePage>
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.fromLTRB(
+                    FUITokens.pagePadding,
+                    FUITokens.gap8,
+                    FUITokens.pagePadding,
+                    FUITokens.gap8,
+                  ),
                   sliver: SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          mainAxisExtent: 132,
+                          mainAxisSpacing: FUITokens.gap10,
+                          crossAxisSpacing: FUITokens.gap10,
+                          mainAxisExtent: 120,
                         ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      return _BadgeCategoryCard(category: categories[index]);
-                    }, childCount: categories.length),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) =>
+                          _BadgeCategoryCard(category: categories[index]),
+                      childCount: categories.length,
+                    ),
                   ),
                 ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           );
         },
@@ -105,10 +115,10 @@ class _BadgeLoadingSkeleton extends StatelessWidget {
         SliverFillRemaining(
           hasScrollBody: false,
           child: TwoColumnLoadingSkeleton(
-            cardHeight: 132,
+            cardHeight: 120,
             itemBuilder: (context, palette) => _BadgeSkeletonCard(
               lineDecoration: palette.line(radius: 999),
-              blockDecoration: palette.block(radius: 10),
+              blockDecoration: palette.block(radius: FUITokens.radiusSm),
             ),
             reservedHeight: 120,
             maxRows: 5,
@@ -130,37 +140,22 @@ class _BadgeSkeletonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark
-        ? Color.alphaBlend(
-            colorScheme.onSurface.withValues(alpha: 0.02),
-            colorScheme.surfaceContainerLowest,
-          )
-        : Color.alphaBlend(
-            Colors.white.withValues(alpha: 0.55),
-            colorScheme.surfaceContainerLowest,
-          );
-
+    final colors = context.colors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(
-            alpha: isDark ? 0.2 : 0.32,
-          ),
-        ),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(FUITokens.radiusLg),
+        border: Border.all(color: colors.border),
       ),
       child: SizedBox(
-        height: 132,
+        height: 120,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+          padding: const EdgeInsets.all(FUITokens.gap12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(width: 92, height: 28, decoration: lineDecoration),
+              Container(width: 92, height: 24, decoration: lineDecoration),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -170,7 +165,7 @@ class _BadgeSkeletonCard extends StatelessWidget {
                     height: 12,
                     decoration: blockDecoration,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: FUITokens.gap6),
                   FractionallySizedBox(
                     widthFactor: 0.72,
                     alignment: Alignment.centerLeft,
@@ -198,93 +193,89 @@ class _BadgeCategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = context.colors;
     final badge = category.badges.isNotEmpty ? category.badges.first : null;
     final l10n = AppLocalizations.of(context)!;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return FUISurface(
+      padding: const EdgeInsets.all(FUITokens.gap12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // badge pill
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: FUITokens.gap10,
+              vertical: 5,
+            ),
+            decoration: BoxDecoration(
+              color: colors.primarySoft,
+              borderRadius: BorderRadius.circular(FUITokens.radiusFull),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _badgeIconFor(badge?.icon),
-                        size: 14,
-                        color: colorScheme.onSecondaryContainer,
-                      ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          badge?.name.isNotEmpty == true
-                              ? badge!.name
-                              : category.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: colorScheme.onSecondaryContainer,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                      ),
-                    ],
+                Icon(
+                  _badgeIconFor(badge?.icon),
+                  size: 13,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: FUITokens.gap6),
+                Flexible(
+                  child: Text(
+                    badge?.name.isNotEmpty == true
+                        ? badge!.name
+                        : category.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
             ),
-            Text(
-              (badge?.description.isNotEmpty == true
-                      ? badge!.description
-                      : category.description)
-                  .trim(),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                height: 1.3,
-              ),
+          ),
+          // description
+          Text(
+            (badge?.description.isNotEmpty == true
+                    ? badge!.description
+                    : category.description)
+                .trim(),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 12,
+              height: 1.35,
             ),
-            Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: '${badge?.earnedAmount ?? 0}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+          ),
+          // earned count
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '${badge?.earnedAmount ?? 0}',
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
-                  TextSpan(
-                    text: ' ${l10n.badgePageEarnedSuffix}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+                ),
+                TextSpan(
+                  text: ' ${l10n.badgePageEarnedSuffix}',
+                  style: TextStyle(color: colors.textTertiary, fontSize: 12),
+                ),
+              ],
             ),
-          ],
-        ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -293,16 +284,16 @@ class _BadgeCategoryCard extends StatelessWidget {
 IconData _badgeIconFor(String? icon) {
   switch (icon) {
     case 'fas fa-star':
-      return Icons.star_rounded;
+      return FluentIcons.star_24_regular;
     case 'fas fa-medal':
-      return Icons.workspace_premium_rounded;
+      return FluentIcons.premium_24_regular;
     case 'fas fa-crown':
-      return Icons.emoji_events_rounded;
+      return FluentIcons.crown_24_regular;
     case 'fas fa-award':
-      return Icons.military_tech_rounded;
+      return FluentIcons.trophy_24_regular;
     case 'fas fa-shield-alt':
-      return Icons.shield_rounded;
+      return FluentIcons.shield_24_regular;
     default:
-      return Icons.star_rounded;
+      return FluentIcons.ribbon_star_24_regular;
   }
 }

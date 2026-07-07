@@ -46,10 +46,7 @@ class AvatarWidget extends StatelessWidget {
                       color: Theme.of(context).colorScheme.primaryContainer,
                       alignment: Alignment.center,
                       child: placeholder.isEmpty
-                          ? Icon(
-                              Icons.person_outline_rounded,
-                              size: radius,
-                            )
+                          ? Icon(Icons.person_outline_rounded, size: radius)
                           : Text(
                               placeholder[0],
                               style: TextStyle(

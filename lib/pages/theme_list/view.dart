@@ -1,20 +1,15 @@
-/*
- * @Author: cubevlmu khfahqp@gmail.com
- * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
- */
-
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:get/get.dart';
+import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/theme_list/controller.dart';
-import 'package:star_forum/utils/log_util.dart';
-import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/app/forum_icons.dart';
+import 'package:star_forum/app/forum_layout.dart';
 import 'package:star_forum/widgets/post_card.dart';
+import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
-import 'package:get/get.dart';
 
 class TagListPage extends StatefulWidget {
   const TagListPage({super.key});
@@ -33,181 +28,321 @@ class _TagListPageState extends State<TagListPage>
   @override
   void initState() {
     super.initState();
-
-    if (Get.isRegistered<TagListController>()) {
-      controller = Get.find<TagListController>();
-      LogUtil.debug('[TagPage] Controller reused');
-    } else {
-      controller = Get.put(TagListController());
-      LogUtil.debug('[TagPage] Controller created');
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      controller.ensureLoaded();
-    });
+    controller = Get.isRegistered<TagListController>()
+        ? Get.find<TagListController>()
+        : Get.put(TagListController());
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
-    return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.mainTagsPage)),
-      body: _TagListView(controller: controller),
+    final l10n = AppLocalizations.of(context)!;
+    return SafeArea(
+      bottom: false,
+      child: ColoredBox(
+        color: context.colors.background,
+        child: Obx(() {
+          if (controller.isLoading.value && controller.tags.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (controller.tags.isEmpty) {
+            return FUIEmptyState(
+              title: l10n.mainTagsPage,
+              message: l10n.commonPullToRefreshTips,
+              icon: ForumIcons.tags,
+              actionLabel: l10n.refreshPullToRefresh,
+              onAction: controller.reloadTags,
+            );
+          }
+          return RefreshIndicator(
+            onRefresh: controller.reloadTags,
+            child: CustomScrollView(
+              key: const PageStorageKey('tag-directory'),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: ForumLayout.pageHeadPadding,
+                    child: FuiPageHead(
+                      showNavigation: false,
+                      title: l10n.mainTagsPage,
+                      subtitle: '浏览全部标签，选择感兴趣的分类查看介绍和最新讨论。',
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    ForumLayout.edge,
+                    ForumLayout.cardGap,
+                    ForumLayout.edge,
+                    FUITokens.gap24,
+                  ),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 260,
+                          mainAxisExtent: 142,
+                          mainAxisSpacing: ForumLayout.sectionGap,
+                          crossAxisSpacing: ForumLayout.sectionGap,
+                        ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _TagDirectoryCard(
+                        tag: controller.tags[index],
+                        color: _tagColor(
+                          controller.tags[index],
+                          context,
+                          index,
+                        ),
+                        onTap: () => FuiNavigation.openDetail(
+                          context,
+                          builder: (_) => TagDetailPage(
+                            tag: controller.tags[index],
+                            embedded: true,
+                          ),
+                        ),
+                      ),
+                      childCount: controller.tags.length,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }
 
-class _TagListView extends StatelessWidget {
-  final TagListController controller;
+class _TagDirectoryCard extends StatelessWidget {
+  const _TagDirectoryCard({
+    required this.tag,
+    required this.color,
+    required this.onTap,
+  });
 
-  const _TagListView({required this.controller});
+  final TagInfo tag;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(FUITokens.radiusXl),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(FUITokens.radiusXl),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(FUITokens.radiusXl),
+            border: Border.all(color: color.withValues(alpha: 0.28)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(FUITokens.radiusSm),
+                    ),
+                    child: Icon(Icons.tag_rounded, color: color, size: 20),
+                  ),
+                  const Spacer(),
+                  Icon(FUIIcons.chevronRight, color: color, size: 20),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                tag.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.colors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                tag.description.trim().isEmpty
+                    ? '${tag.discussionCount} 个讨论'
+                    : tag.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.colors.textSecondary,
+                  fontSize: 11,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TagDetailPage extends StatefulWidget {
+  const TagDetailPage({
+    super.key,
+    required this.tag,
+    this.embedded = false,
+    this.onBack,
+  });
+
+  final TagInfo tag;
+  final bool embedded;
+  final VoidCallback? onBack;
+
+  @override
+  State<TagDetailPage> createState() => _TagDetailPageState();
+}
+
+class _TagDetailPageState extends State<TagDetailPage> {
+  late final String _controllerTag;
+  late final TagDetailController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllerTag = 'TagDetail:${widget.tag.id}:${identityHashCode(this)}';
+    controller = Get.put(TagDetailController(widget.tag), tag: _controllerTag);
+  }
+
+  @override
+  void dispose() {
+    if (Get.isRegistered<TagDetailController>(tag: _controllerTag)) {
+      Get.delete<TagDetailController>(tag: _controllerTag);
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Obx(() {
-      final showSkeleton =
-          controller.onLoading.value && controller.searchItems.isEmpty;
-      return SimpleEasyRefresher(
-        easyRefreshController: controller.refreshController,
-        onRefresh: controller.onRefresh,
-        onLoad: controller.onLoad,
-        autoRefreshOnStart: false,
-        refreshEnabled: !showSkeleton,
-        loadEnabled: !showSkeleton,
-        childBuilder: (context, physics) {
-          final effectivePhysics = showSkeleton
-              ? const NeverScrollableScrollPhysics()
-              : physics;
-          return CustomScrollView(
-            controller: controller.scrollController,
-            physics: effectivePhysics,
-            slivers: [
-              SliverToBoxAdapter(child: _TagListTopBar(controller: controller)),
-              if (showSkeleton)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: PostListLoadingSkeleton(),
-                )
-              else
-                const SliverToBoxAdapter(child: SizedBox.shrink()),
-
-              Obx(() {
-                if (controller.searchItems.isNotEmpty ||
-                    controller.isSearching.value ||
-                    controller.onLoading.value) {
-                  return const SliverToBoxAdapter(child: SizedBox.shrink());
-                }
-
-                return SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: NoticeWidget(
-                    emoji: '🧐',
-                    title: l10n.commonEmptyPostsTitle,
-                    tips: l10n.commonPullToRefreshTips,
+    final color = _tagColor(widget.tag, context, widget.tag.id);
+    final body = SimpleEasyRefresher(
+      easyRefreshController: controller.refreshController,
+      onRefresh: controller.onRefresh,
+      onLoad: controller.onLoad,
+      autoRefreshOnStart: false,
+      childBuilder: (context, physics) => Obx(() {
+        final loading =
+            controller.isInitialLoading.value && controller.items.isEmpty;
+        return CustomScrollView(
+          controller: controller.scrollController,
+          physics: loading ? const NeverScrollableScrollPhysics() : physics,
+          slivers: [
+            SliverToBoxAdapter(
+              child: _TagDetailHeader(
+                tag: widget.tag,
+                color: color,
+                onBack: widget.onBack ?? () => Navigator.maybePop(context),
+              ),
+            ),
+            if (loading)
+              const SliverToBoxAdapter(child: PostListLoadingSkeleton())
+            else if (controller.items.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: NoticeWidget(
+                  emoji: '🏷️',
+                  title: l10n.commonEmptyPostsTitle,
+                  tips: l10n.commonPullToRefreshTips,
+                ),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => Padding(
+                    padding: ForumLayout.listItemPadding,
+                    child: PostCard(item: controller.items[index].toItem()),
                   ),
-                );
-              }),
-
-              Obx(() {
-                final items = controller.searchItems;
-                if (items.isEmpty) {
-                  return const SliverToBoxAdapter(child: SizedBox.shrink());
-                }
-
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    return _TagListItem(item: items[index].toItem());
-                  }, childCount: items.length),
-                );
-              }),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            ],
-          );
-        },
-      );
-    });
+                  childCount: controller.items.length,
+                ),
+              ),
+            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+          ],
+        );
+      }),
+    );
+    return Scaffold(
+      backgroundColor: context.colors.background,
+      body: widget.embedded ? body : SafeArea(bottom: false, child: body),
+    );
   }
 }
 
-class _TagListItem extends StatelessWidget {
-  final DiscussionItem item;
+class _TagDetailHeader extends StatelessWidget {
+  const _TagDetailHeader({
+    required this.tag,
+    required this.color,
+    required this.onBack,
+  });
 
-  const _TagListItem({required this.item});
+  final TagInfo tag;
+  final Color color;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
+    return Padding(
+      padding: ForumLayout.pageHeadPadding,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: PostCard(item: item),
+          FuiPageHead(
+            title: tag.name,
+            subtitle: '${tag.discussionCount} 个讨论',
+            trailing: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(FUITokens.radiusMd),
+              ),
+              child: Icon(Icons.tag_rounded, color: color),
+            ),
           ),
-          const Divider(height: 1, thickness: 0.5, indent: 12, endIndent: 12),
+          if (tag.description.trim().isNotEmpty) ...[
+            const SizedBox(height: FUITokens.gap8),
+            Text(
+              tag.description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _TagListTopBar extends StatelessWidget {
-  final TagListController controller;
-
-  const _TagListTopBar({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: SizedBox(
-        height: 53,
-        child: ScrollConfiguration(
-          behavior: const MaterialScrollBehavior().copyWith(
-            scrollbars: false,
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.mouse,
-              PointerDeviceKind.stylus,
-              PointerDeviceKind.trackpad,
-            },
-          ),
-          child: Obx(
-            () => ListView.builder(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              itemCount: controller.primayTag.length + controller.tags.length,
-              itemBuilder: (context, index) {
-                final item = index < controller.primayTag.length
-                    ? controller.primayTag[index]
-                    : controller.tags[index - controller.primayTag.length];
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Obx(
-                    () => ChoiceChip(
-                      label: Text(item.name),
-                      selected: controller.selectId.value == item.id,
-                      onSelected: controller.onLoading.value
-                          ? null
-                          : (selected) {
-                              if (selected) {
-                                controller.onTagSelectChange(item.id);
-                              }
-                            },
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
+Color _tagColor(TagInfo tag, BuildContext context, int index) {
+  final raw = tag.color.trim().replaceFirst('#', '');
+  if (raw.length == 6 || raw.length == 8) {
+    final parsed = int.tryParse(raw, radix: 16);
+    if (parsed != null) {
+      return Color(raw.length == 6 ? 0xFF000000 | parsed : parsed);
+    }
   }
+  final palette = <Color>[
+    context.colors.primary,
+    context.colors.success,
+    context.colors.warning,
+    context.colors.danger,
+    Colors.purple,
+    Colors.teal,
+    Colors.indigo,
+    Colors.orange,
+  ];
+  return palette[index.abs() % palette.length];
 }

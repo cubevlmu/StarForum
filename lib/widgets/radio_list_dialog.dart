@@ -27,12 +27,7 @@ class _RadioListDialogState<T> extends State<RadioListDialog<T>> {
     _groupValue = widget.groupValue;
     items = <Widget>[];
     widget.itemNameValueMap.forEach((title, value) {
-      items.add(
-        RadioListTile(
-          value: value,
-          title: Text(title),
-        ),
-      );
+      items.add(RadioListTile(value: value, title: Text(title)));
     });
     super.initState();
   }

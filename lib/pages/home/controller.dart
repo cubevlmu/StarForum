@@ -7,8 +7,8 @@
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/forum_info.dart';
+import 'package:star_forum/data/repository/forum_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/cache_utils.dart';
@@ -31,6 +31,7 @@ class HomeController extends GetxController {
   final RxString avatarUrl = "".obs;
   final RxBool isLogin = false.obs;
   final userRepo = getIt<UserRepo>();
+  final forumRepo = getIt<ForumRepository>();
 
   @override
   void onInit() {
@@ -81,7 +82,13 @@ class HomeController extends GetxController {
   }
 
   void _restoreInfo() async {
-    final (r, l) = await Api.getForumInfo(Api.getBaseUrl);
+    final cached = forumRepo.cachedForumInfo;
+    if (cached != null) {
+      info.value = cached;
+      _updateDesktopWindowTitle(cached.title);
+    }
+    final result = await forumRepo.getForumInfo(forumRepo.baseUrl);
+    final r = result.data;
     if (r == null) {
       SnackbarUtils.showMessage(
         msg: AppLocalizations.of(Get.context!)!.homeForumInfoFetchFailed,
@@ -90,7 +97,7 @@ class HomeController extends GetxController {
     }
     info.value = r;
     _updateDesktopWindowTitle(r.title);
-    LogUtil.info("[HomePage] Forum latency $l");
+    LogUtil.info("[HomePage] Forum latency ${result.latencyMs ?? 0}");
   }
 
   Future<void> _updateDesktopWindowTitle(String forumTitle) async {

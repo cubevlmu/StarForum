@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/data/model/discussions.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/model/users.dart';
@@ -17,8 +19,11 @@ class DiscussionListItemCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final excerpt = htmlToPlainText(discussion.firstPost?.contentHtml ?? "");
     final tags = discussion.tags;
-    final author = discussion.user ?? UserInfo.deletedUser;
-    final replies = discussion.commentCount > 0 ? discussion.commentCount - 1 : 0;
+    final author = discussion.user;
+    final authorName = UserInfo.displayLabel(author, fallbackId: author?.id);
+    final replies = discussion.commentCount > 0
+        ? discussion.commentCount - 1
+        : 0;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
@@ -28,11 +33,11 @@ class DiscussionListItemCard extends StatelessWidget {
           Column(
             children: [
               AvatarWidget(
-                avatarUrl: author.avatarUrl,
+                avatarUrl: author?.avatarUrl ?? '',
                 radius: 18,
                 width: 36,
                 height: 36,
-                placeholder: StringUtil.getAvatarFirstChar(author.displayName),
+                placeholder: StringUtil.getAvatarFirstChar(authorName),
               ),
               const SizedBox(height: 8),
               if (discussion.subscription == 1)
@@ -44,7 +49,7 @@ class DiscussionListItemCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.star_rounded,
+                    ForumIcons.bookmarkFilled,
                     size: 13,
                     color: colorScheme.onSecondaryContainer,
                   ),
@@ -70,10 +75,9 @@ class DiscussionListItemCard extends StatelessWidget {
                   runSpacing: 6,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    for (final tag in tags.take(2))
-                      _TopicTagPill(tag: tag),
+                    for (final tag in tags.take(2)) _TopicTagPill(tag: tag),
                     Text(
-                      '${author.displayName} 发布于 ${StringUtil.dateTimeToAgoDate(discussion.createdAt)}',
+                      '$authorName 发布于 ${StringUtil.dateTimeToAgoDate(discussion.createdAt)}',
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -86,17 +90,17 @@ class DiscussionListItemCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     _TopicMetaText(
-                      icon: Icons.people_alt_outlined,
+                      icon: ForumIcons.people,
                       label: '参与人数',
                       value: '${discussion.participantCount}',
                     ),
                     _TopicMetaText(
-                      icon: Icons.schedule_outlined,
+                      icon: FUIIcons.schedule,
                       label: '发布于',
                       value: _formatDate(discussion.createdAt),
                     ),
                     _TopicMetaText(
-                      icon: Icons.remove_red_eye_outlined,
+                      icon: FUIIcons.visibility,
                       label: null,
                       value: '${discussion.views}',
                     ),

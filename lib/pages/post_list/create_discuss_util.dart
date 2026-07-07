@@ -5,8 +5,6 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
@@ -18,10 +16,10 @@ import 'package:star_forum/widgets/sheet_util.dart';
 import '../../di/injector.dart';
 
 class CreateDiscussUtil {
-  static bool _checkLogin(UserRepo repo) {
+  static bool _checkLogin(BuildContext context, UserRepo repo) {
     if (!repo.isLogin) {
       SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.authLoginRequired,
+        msg: AppLocalizations.of(context)!.authLoginRequired,
       );
       return false;
     }
@@ -29,6 +27,7 @@ class CreateDiscussUtil {
   }
 
   static Future<bool> submitDiscussion({
+    required BuildContext context,
     required List<int> tags,
     required String title,
     required String content,
@@ -37,22 +36,23 @@ class CreateDiscussUtil {
   }) async {
     final repo = getIt<UserRepo>();
     final dRepo = getIt<DiscussionRepository>();
-    if (!_checkLogin(repo)) return false;
+    if (!_checkLogin(context, repo)) return false;
+    final l10n = AppLocalizations.of(context)!;
 
-    final (r, rs) = await Api.createDiscussion(tags, title, content);
+    final result = await dRepo.createDiscussion(tags, title, content);
 
-    if (!rs) {
+    if (result.isTokenExpired) {
       repo.logout();
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.authLoginExpired,
-      );
+      SnackbarUtils.showMessage(msg: l10n.authLoginExpired);
       return false;
     }
 
+    final r = result.data;
     if (r == null) {
       SnackbarUtils.showMessage(
-        title: AppLocalizations.of(Get.context!)!.postCreateFailedTitle,
-        msg: AppLocalizations.of(Get.context!)!.postCreateFailedNetwork,
+        title: l10n.postCreateFailedTitle,
+        msg: l10n.postCreateFailedNetwork,
+        type: AppNoticeType.error,
       );
       return false;
     }
@@ -64,7 +64,8 @@ class CreateDiscussUtil {
         "[PostList] Failed to fetch firstPost for the return from create discussion.",
       );
       SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.postCreateDataError,
+        msg: l10n.postCreateDataError,
+        type: AppNoticeType.warning,
       );
       return true;
     }
@@ -79,7 +80,8 @@ class CreateDiscussUtil {
     );
 
     SnackbarUtils.showMessage(
-      msg: AppLocalizations.of(Get.context!)!.postCreateSuccess,
+      msg: l10n.postCreateSuccess,
+      type: AppNoticeType.success,
     );
     return true;
   }
@@ -90,13 +92,14 @@ class CreateDiscussUtil {
     required ScrollController? scrollController,
   }) async {
     final repo = getIt<UserRepo>();
-    if (!_checkLogin(repo)) return;
+    if (!_checkLogin(context, repo)) return;
 
     SheetUtil.newBottomSheet(
       context: context,
       widget: CreateDiscussWidget(
         onSubmit: (tags, title, content) async {
           return submitDiscussion(
+            context: context,
             tags: tags,
             title: title,
             content: content,

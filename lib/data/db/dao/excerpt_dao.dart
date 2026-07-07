@@ -19,9 +19,38 @@ class ExcerptDao extends DatabaseAccessor<AppDatabase> with _$ExcerptDaoMixin {
     return select(dbDiscussionExcerptCache).watch();
   }
 
+  Stream<List<DbDiscussionExcerptCacheData>> watchByDiscussionIds(
+    List<String> discussionIds,
+  ) {
+    if (discussionIds.isEmpty) {
+      return Stream.value(const <DbDiscussionExcerptCacheData>[]);
+    }
+    return (select(
+      dbDiscussionExcerptCache,
+    )..where((t) => t.discussionId.isIn(discussionIds))).watch();
+  }
+
   Future<DbDiscussionExcerptCacheData?> get(String discussionId) => (select(
     dbDiscussionExcerptCache,
   )..where((t) => t.discussionId.equals(discussionId))).getSingleOrNull();
+
+  Future<Set<String>> findMissingOrInvalid(Iterable<String> ids) async {
+    final idList = ids.toSet().toList(growable: false);
+    if (idList.isEmpty) return const <String>{};
+    final rows = await (select(
+      dbDiscussionExcerptCache,
+    )..where((t) => t.discussionId.isIn(idList))).get();
+    final found = {for (final row in rows) row.discussionId};
+    final invalid = {
+      for (final row in rows)
+        if (_isInvalidExcerpt(row.excerpt)) row.discussionId,
+    };
+    return {
+      for (final id in idList)
+        if (!found.contains(id)) id,
+      ...invalid,
+    };
+  }
 
   Future<void> upsert({
     required String discussionId,
@@ -52,4 +81,9 @@ class ExcerptDao extends DatabaseAccessor<AppDatabase> with _$ExcerptDaoMixin {
     final r = await delete(dbDiscussionExcerptCache).go();
     LogUtil.debug("[Db] Excerpts delete $r rows");
   }
+}
+
+bool _isInvalidExcerpt(String value) {
+  final normalized = value.trim();
+  return normalized.isEmpty || normalized == '...';
 }

@@ -8,6 +8,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:star_forum/data/api/api_log.dart';
+import 'package:star_forum/data/perf/perf_log.dart';
 
 class ApiRequestCachePolicy {
   const ApiRequestCachePolicy({
@@ -34,6 +35,8 @@ class _ApiPhasedMetrics {
   int? prepareMs;
   int? requestMs;
   int? parseMs;
+  int? responseBytes;
+  int? responseItems;
   int totalMs = 0;
 
   String buildDetails({String? cacheState}) {
@@ -49,6 +52,12 @@ class _ApiPhasedMetrics {
     }
     if (parseMs != null) {
       parts.add('parse=${parseMs}ms');
+    }
+    if (responseBytes != null) {
+      parts.add('bytes=$responseBytes');
+    }
+    if (responseItems != null) {
+      parts.add('items=$responseItems');
     }
     parts.add('total=${totalMs}ms');
     return parts.join(' ');
@@ -121,6 +130,52 @@ class ApiGuard {
     return false;
   }
 
+  static int? _responsePayloadBytes(Object? raw) {
+    if (raw is Response) {
+      final contentLength = raw.headers.value(Headers.contentLengthHeader);
+      final parsed = contentLength == null ? null : int.tryParse(contentLength);
+      if (parsed != null && parsed >= 0) {
+        return parsed;
+      }
+      return _bodyPayloadBytes(raw.data);
+    }
+    return _bodyPayloadBytes(raw);
+  }
+
+  static int? _responsePayloadItems(Object? raw) {
+    final data = raw is Response ? raw.data : raw;
+    if (data is! Map) {
+      return null;
+    }
+
+    var count = 0;
+    final dataNode = data['data'];
+    if (dataNode is List) {
+      count += dataNode.length;
+    } else if (dataNode != null) {
+      count += 1;
+    }
+
+    final included = data['included'];
+    if (included is List) {
+      count += included.length;
+    }
+    return count;
+  }
+
+  static int? _bodyPayloadBytes(Object? data) {
+    if (data == null) {
+      return 0;
+    }
+    if (data is String) {
+      return data.length;
+    }
+    if (data is List<int>) {
+      return data.length;
+    }
+    return null;
+  }
+
   static Future<T> _executePhased<T, TPrepared, TRaw>({
     required String name,
     required String method,
@@ -149,6 +204,8 @@ class ApiGuard {
     final raw = await request(prepared);
     requestSw.stop();
     metrics.requestMs = requestSw.elapsedMilliseconds;
+    metrics.responseBytes = _responsePayloadBytes(raw);
+    metrics.responseItems = _responsePayloadItems(raw);
 
     final parseSw = Stopwatch()..start();
     final result = await parse(raw, prepared);
@@ -159,6 +216,13 @@ class ApiGuard {
     metrics.totalMs = totalSw.elapsedMilliseconds;
 
     ApiLog.ok(name, "[$method] ${metrics.buildDetails()}", extra);
+    PerfLog.request(
+      '$method $name',
+      requestMs: metrics.requestMs ?? 0,
+      parseMs: metrics.parseMs,
+      totalMs: metrics.totalMs,
+      details: extra,
+    );
     onFinished?.call(
       metrics.totalMs,
       metrics.prepareMs ?? 0,

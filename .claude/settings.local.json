@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"D:\\\\Projects\\\\ClassTool\\\\class_tool\\\\class_tool\\\\lib\" -type f -name \"*.dart\" | head -50)",
+      "Read(//d/Projects/ClassTool/class_tool/class_tool/lib/**)"
+    ]
+  }
+}

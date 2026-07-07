@@ -4,10 +4,12 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/forum_info.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/forum_repo.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
@@ -32,23 +34,24 @@ class SetupPageController extends GetxController {
   final userRepo = getIt<UserRepo>();
   final tagsRepo = getIt<TagRepo>();
   final dissRepo = getIt<DiscussionRepository>();
+  final forumRepo = getIt<ForumRepository>();
 
   String siteUrl = "";
 
   Future<void> finalSetup() async {
     final box = StorageUtils.history;
 
-    LogUtil.info("[SetupPage] Begin to sync user repo.");
+    LogUtil.info("[SetupPage] Begin parallel setup cleanup.");
     await userRepo.logout();
-    await userRepo.setup();
-    LogUtil.info("[SetupRage] Begin to sync tag repo.");
     tagsRepo.clear();
-    await tagsRepo.syncTags();
-    LogUtil.info("[SetupRage] Begin to clear database.");
-    await dissRepo.clearAll();
-    await box.delete("searchHistory");
+    await Future.wait<void>([
+      userRepo.setup(),
+      tagsRepo.syncTags(),
+      dissRepo.clearAll(),
+      box.delete("searchHistory"),
+    ]);
 
-    LogUtil.info("[SetupPage] Begin to sync post list.");
+    LogUtil.info("[SetupPage] Schedule page refreshes.");
     try {
       final homeC = Get.find<HomeController>();
       homeC.info.value = forumInfo.value; // Update home
@@ -58,21 +61,21 @@ class SetupPageController extends GetxController {
 
     try {
       final postC = Get.find<PostListController>();
-      await postC.onRefresh();
+      unawaited(postC.onRefresh());
     } catch (_) {
       LogUtil.warn("[SetupPage] Post list page controller is not registered.");
     }
 
     try {
       final tagC = Get.find<TagListController>();
-      await tagC.reloadTags();
+      unawaited(tagC.reloadTags());
     } catch (_) {
       LogUtil.warn("[SetupPage] Tag list controller is not registered.");
     }
 
     try {
       final notificationC = Get.find<NotificationPageController>();
-      await notificationC.handleLoginStateChanged(userRepo.isLogin);
+      unawaited(notificationC.handleLoginStateChanged(userRepo.isLogin));
     } catch (_) {
       LogUtil.warn("[SetupPage] Notification controller is not registered.");
     }
@@ -82,7 +85,7 @@ class SetupPageController extends GetxController {
 
   Future<void> finishSetup() async {
     isLoading.value = true;
-    Api.setUrl(siteUrl);
+    forumRepo.setUrl(siteUrl);
     await finalSetup();
     isLoading.value = false;
     SnackbarUtils.showMessage(
@@ -92,12 +95,13 @@ class SetupPageController extends GetxController {
 
   Future<bool> _getForumInfo(String url) async {
     try {
-      final (r, l) = await Api.getForumInfo(url);
+      final result = await forumRepo.getForumInfo(url);
+      final r = result.data;
       if (r == null) {
         return false;
       }
 
-      forumLag.value = l;
+      forumLag.value = result.latencyMs ?? 0;
       forumInfo.value = r;
       return true;
     } catch (e, s) {

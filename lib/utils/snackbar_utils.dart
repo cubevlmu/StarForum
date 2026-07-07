@@ -4,8 +4,7 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:fin_ui/fin_ui.dart';
 
 enum AppNoticeType { info, success, warning, error }
 
@@ -15,17 +14,20 @@ class SnackbarUtils {
     String title = "",
     AppNoticeType type = AppNoticeType.info,
   }) {
-    final context = Get.overlayContext ?? Get.context;
-    if (context == null) return;
-
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.hideCurrentSnackBar();
-    messenger?.showSnackBar(
-      SnackBar(
-        duration: const Duration(milliseconds: 800),
-        content: Text(title.isEmpty ? msg : "$title  $msg"),
-      ),
-    );
+    switch (type) {
+      case AppNoticeType.success:
+        FUIToast.successGlobal(message: msg, title: title);
+        break;
+      case AppNoticeType.warning:
+        FUIToast.warningGlobal(message: msg, title: title);
+        break;
+      case AppNoticeType.error:
+        FUIToast.errorGlobal(message: msg, title: title);
+        break;
+      case AppNoticeType.info:
+        FUIToast.infoGlobal(message: msg, title: title);
+        break;
+    }
   }
 
   static void showSuccess({required String msg, String title = ""}) {

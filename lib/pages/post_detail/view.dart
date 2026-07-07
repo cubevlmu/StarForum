@@ -7,10 +7,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/api/api.dart';
+import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/repository/forum_repo.dart';
+import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
-import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_main.dart';
@@ -20,6 +21,7 @@ import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:fin_ui/fin_ui.dart';
 
 class PostPage extends StatefulWidget {
   const PostPage({super.key, required this.item, this.embedded = false});
@@ -49,12 +51,6 @@ class _PostPageState extends State<PostPage>
         tag: controllerTag,
       );
     }
-    if (controller.replyItems.isEmpty && controller.newReplyItems.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        controller.onReplyLoad();
-      });
-    }
     super.initState();
   }
 
@@ -69,18 +65,17 @@ class _PostPageState extends State<PostPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final body = _DetailPageReplies(
+      controller: controller,
+      item: widget.item,
+      controllerTag: controllerTag,
+      embedded: widget.embedded,
+      onReply: () => controller.showAddReplySheet(context),
+    );
     return Scaffold(
+      backgroundColor: context.colors.background,
       floatingActionButton: _ReplyFab(controller: controller),
-      appBar: _DetailTitleBar(
-        item: widget.item,
-        embedded: widget.embedded,
-        onReply: () => controller.showAddReplySheet(context),
-      ),
-      body: _DetailPageReplies(
-        controller: controller,
-        item: widget.item,
-        controllerTag: controllerTag,
-      ),
+      body: SafeArea(bottom: false, child: body),
     );
   }
 }
@@ -96,7 +91,18 @@ class _ReplyFab extends StatelessWidget {
       heroTag: null,
       onPressed: () => controller.showAddReplySheet(context),
       tooltip: AppLocalizations.of(context)!.postActionComment,
-      child: const Icon(Icons.reply_all_outlined),
+      backgroundColor: context.colors.primary,
+      foregroundColor: context.colors.textInverse,
+      focusColor: context.colors.primaryHover,
+      hoverColor: context.colors.primaryHover,
+      splashColor: context.colors.primaryPressed,
+      elevation: 2,
+      hoverElevation: 3,
+      highlightElevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(FUITokens.radiusLg),
+      ),
+      child: const Icon(ForumIcons.reply),
     );
   }
 }
@@ -108,104 +114,99 @@ class _SortReplyItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Row(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 12, right: 12),
-          child: Text(
-            l10n.postReplyPrefix(
-              StringUtil.ensureNotNegative(
-                replyController.discussion.commentCount - 1,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        FUITokens.pagePadding,
+        FUITokens.gap10,
+        FUITokens.pagePadding,
+        FUITokens.gap4,
+      ),
+      child: FUISurface(
+        padding: const EdgeInsets.symmetric(
+          horizontal: FUITokens.gap14,
+          vertical: FUITokens.gap8,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.postReplyPrefix(
+                  StringUtil.ensureNotNegative(
+                    replyController.discussion.commentCount - 1,
+                  ),
+                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
-          ),
-        ),
-        const Spacer(),
-        MaterialButton(
-          child: Row(
-            children: [
-              Icon(
-                Icons.sort_rounded,
-                size: 16,
-                color: Get.textTheme.bodyMedium!.color,
-              ),
-              Obx(
-                () => Text(
-                  replyController.sortTypeText.value,
-                  style: TextStyle(color: Get.textTheme.bodyMedium!.color),
+            Obx(
+              () => Text(
+                replyController.sortTypeText.value,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: context.colors.textSecondary,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
-          ),
-          onPressed: () {
-            replyController.toggleSort();
-          },
+            ),
+            const SizedBox(width: FUITokens.gap6),
+            FUIIconButton(
+              icon: Icons.sort_rounded,
+              variant: FUIIconButtonVariant.outline,
+              onPressed: replyController.toggleSort,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
 
-class _DetailTitleBar extends StatelessWidget implements PreferredSizeWidget {
+class _PostDetailHeader extends StatelessWidget {
   final DiscussionItem item;
-  final bool embedded;
   final VoidCallback onReply;
 
-  const _DetailTitleBar({
-    required this.item,
-    required this.onReply,
-    this.embedded = false,
-  });
+  const _PostDetailHeader({required this.item, required this.onReply});
 
   @override
   Widget build(BuildContext context) {
-    final mainController = embedded && Get.isRegistered<MainController>()
-        ? Get.find<MainController>()
-        : null;
-
-    return AppBar(
-      automaticallyImplyLeading: !embedded,
-      leading: embedded
-          ? IconButton(
-              onPressed: () {
-                if (mainController == null) return;
-                if (mainController.canPopDetail) {
-                  mainController.popDetail();
-                  return;
-                }
-                mainController.closeDetail();
-              },
-              icon: Icon(
-                mainController?.canPopDetail == true
-                    ? Icons.arrow_back_rounded
-                    : Icons.close_rounded,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        FUITokens.pagePadding,
+        FUITokens.gap12,
+        FUITokens.pagePadding,
+        FUITokens.gap8,
+      ),
+      child: FuiPageHead(
+        title: AppLocalizations.of(context)!.postTitlePrefix(item.title),
+        subtitle: '${StringUtil.ensureNotNegative(item.commentCount - 1)} 回复',
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FUIIconButton(
+              onPressed: onReply,
+              tooltip: AppLocalizations.of(context)!.postActionComment,
+              icon: ForumIcons.reply,
+              variant: FUIIconButtonVariant.ghost,
+            ),
+            if (Platform.isAndroid || Platform.isIOS) ...[
+              const SizedBox(width: FUITokens.gap8),
+              FUIIconButton(
+                onPressed: _onShareClick,
+                tooltip: MaterialLocalizations.of(context).shareButtonLabel,
+                icon: ForumIcons.share,
+                variant: FUIIconButtonVariant.ghost,
               ),
-            )
-          : null,
-      title: Text(AppLocalizations.of(context)!.postTitlePrefix(item.title)),
-      shadowColor: Theme.of(context).shadowColor,
-      actions: [
-        if (embedded)
-          IconButton(
-            onPressed: onReply,
-            tooltip: AppLocalizations.of(context)!.postActionComment,
-            icon: const Icon(Icons.reply_all_outlined),
-          ),
-        if (Platform.isAndroid || Platform.isAndroid)
-          IconButton(
-            onPressed: _onShareClick,
-            icon: const Icon(Icons.share_outlined),
-          ),
-        const SizedBox(width: 10),
-      ],
+            ],
+          ],
+        ),
+      ),
     );
   }
 
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
   void _onShareClick() async {
-    await Share.shareUri(Uri.parse("${Api.getBaseUrl}/d/${item.id}"));
+    final forumRepo = getIt<ForumRepository>();
+    await Share.shareUri(Uri.parse(forumRepo.discussionUrl(item.id)));
   }
 }
 
@@ -213,11 +214,15 @@ class _DetailPageReplies extends StatelessWidget {
   final PostPageController controller;
   final DiscussionItem item;
   final String controllerTag;
+  final bool embedded;
+  final VoidCallback onReply;
 
   const _DetailPageReplies({
     required this.controller,
     required this.item,
     required this.controllerTag,
+    required this.embedded,
+    required this.onReply,
   });
 
   @override
@@ -245,10 +250,10 @@ class _DetailPageReplies extends StatelessWidget {
             physics: effectivePhysics,
             slivers: [
               SliverToBoxAdapter(
-                child: PostMainWidget(
-                  content: item,
-                  controllerTag: controllerTag,
-                ),
+                child: _PostDetailHeader(item: item, onReply: onReply),
+              ),
+              SliverToBoxAdapter(
+                child: PostMainWidget(content: item, controller: controller),
               ),
 
               SliverToBoxAdapter(

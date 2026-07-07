@@ -1,261 +1,229 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
  * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
-
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
+import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/reply_util.dart';
 import 'package:star_forum/utils/string_util.dart';
-import 'package:star_forum/widgets/avatar.dart';
 import 'package:star_forum/widgets/content_view.dart';
 import 'package:star_forum/widgets/shimmer_skeleton.dart';
 import 'package:get/get.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/app/forum_icons.dart';
+import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/widgets/forum/forum_meta_row.dart';
+import 'package:star_forum/widgets/forum/forum_user_avatar.dart';
 
 class PostMainWidget extends StatelessWidget {
   final DiscussionItem content;
-  final String controllerTag;
+  final PostPageController controller;
 
   const PostMainWidget({
     super.key,
     required this.content,
-    required this.controllerTag,
+    required this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<PostPageController>(tag: controllerTag);
+    final colors = context.colors;
 
     return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: .min,
-        children: [
-          _UserBox(item: content, controllerTag: controllerTag),
-          _MainContent(item: content, controllerTag: controllerTag),
-          const SizedBox(height: 5),
-          Obx(() {
-            final info = controller.firstPost.value;
-            final like = info?.likes ?? -1;
-            final canInteract = controller.canUseInteractiveActions;
-            if (like == -1) {
-              return const SizedBox.shrink();
-            }
-            return Row(
-              children: [
-                _ThumUpButton(
-                  enabled: canInteract,
-                  likeNum: -1,
-                  selected: false,
-                  onPressed: () async {
-                    if (info == null) return;
-                    final r = await ReplyUtil.addLikeToPost(info);
-                    if (r != null) {
-                      info.likes = r.likes;
-                      controller.firstPost.refresh();
-                    }
-                  },
-                ),
-                const SizedBox(width: 8),
-                _FollowButton(controller: controller),
-              ],
-            );
-          }),
-          Divider(
-            color: Theme.of(context).colorScheme.secondaryContainer,
-            thickness: 1,
-            height: 20,
-          ),
-        ],
+      padding: const EdgeInsets.fromLTRB(
+        FUITokens.pagePadding,
+        FUITokens.gap6,
+        FUITokens.pagePadding,
+        FUITokens.gap2,
+      ),
+      child: FUISurface(
+        borderRadius: FUITokens.radiusXl,
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    content.title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: FUITokens.gap10),
+                  // Author info
+                  _UserBox(item: content, controller: controller),
+                  const SizedBox(height: FUITokens.gap10),
+                  // Content
+                  _MainContent(item: content, controller: controller),
+                ],
+              ),
+            ),
+            // Divider + action bar
+            Obx(() {
+              final info = controller.firstPost.value;
+              final like = info?.likes ?? -1;
+              final canInteract = controller.canUseInteractiveActions;
+              if (like == -1) return const SizedBox.shrink();
+              return Column(
+                children: [
+                  Container(height: 1, color: colors.border),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: FUITokens.gap8,
+                      vertical: FUITokens.gap6,
+                    ),
+                    child: Row(
+                      children: [
+                        _LikeButton(
+                          enabled: canInteract,
+                          likeCount: info?.likes ?? 0,
+                          isLiked: info?.isLiked ?? false,
+                          onPressed: info == null
+                              ? null
+                              : () async {
+                                  final r = await ReplyUtil.addLikeToPost(info);
+                                  if (r != null) {
+                                    info.likes = r.likes;
+                                    info.isLiked = r.isLiked;
+                                    controller.firstPost.refresh();
+                                  }
+                                },
+                        ),
+                        const SizedBox(width: FUITokens.gap8),
+                        _FollowButton(controller: controller),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _FollowButton extends StatelessWidget {
-  const _FollowButton({required this.controller});
-
+class _UserBox extends StatelessWidget {
+  const _UserBox({required this.item, required this.controller});
+  final DiscussionItem item;
   final PostPageController controller;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final colors = context.colors;
+
     return Obx(() {
-      final selected = controller.subscription.value == 1;
-      final updating = controller.isFollowUpdating.value;
-      final enabled = controller.canUseInteractiveActions;
-      return ElevatedButton(
-        onPressed: (!enabled || updating)
-            ? null
-            : controller.toggleDiscussionFollow,
-        style: const ButtonStyle(
-          visualDensity: VisualDensity.standard,
-          padding: WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          ),
-          elevation: WidgetStatePropertyAll(0),
-          minimumSize: WidgetStatePropertyAll(Size(40, 36)),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (updating)
-              const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+      final firstPost = controller.firstPost.value;
+      final user = firstPost?.user;
+      final userId = firstPost?.userId ?? item.userId;
+      final authorName = UserInfo.displayLabel(
+        user,
+        fallbackId: userId,
+        fallback: item.authorName.trim(),
+      );
+      final avatarUrl = (user?.avatarUrl.trim().isNotEmpty == true)
+          ? user!.avatarUrl
+          : item.authorAvatar;
+      final canOpenUser = userId > 0;
+
+      return GestureDetector(
+        onTap: canOpenUser
+            ? () => FuiNavigation.openDetail(
+                context,
+                builder: (_) => UserPage(userId: userId, embedded: true),
               )
-            else
-              Icon(
-                selected ? Icons.star_rounded : Icons.star_outline_rounded,
-                size: 16,
+            : null,
+        child: MouseRegion(
+          cursor: canOpenUser
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
+          child: Row(
+            children: [
+              ForumUserAvatar(name: authorName, avatarUrl: avatarUrl, size: 40),
+              const SizedBox(width: FUITokens.gap10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      authorName,
+                      style: TextStyle(
+                        color: canOpenUser
+                            ? colors.primary
+                            : colors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    ForumMetaRow(
+                      items: [
+                        ForumMetaItem(
+                          icon: FUIIcons.schedule,
+                          label: StringUtil.dateTimeToAgoDate(
+                            item.lastPostedAt,
+                          ),
+                        ),
+                        ForumMetaItem(
+                          icon: Icons.visibility_outlined,
+                          label: StringUtil.numFormat(
+                            controller.viewCount.value == 0
+                                ? item.viewCount
+                                : controller.viewCount.value,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            const SizedBox(width: 6),
-            Text(
-              selected
-                  ? AppLocalizations.of(context)!.postActionUnfollow
-                  : AppLocalizations.of(context)!.postActionFollow,
-              style: textTheme.labelMedium,
-            ),
-          ],
+            ],
+          ),
         ),
       );
     });
   }
 }
 
-class _UserBox extends StatelessWidget {
-  const _UserBox({required this.item, required this.controllerTag});
-  final DiscussionItem item;
-  final String controllerTag;
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<PostPageController>(tag: controllerTag);
-    return GestureDetector(
-      onTap: () => openUserAdaptive(context, item.userId),
-      child: Row(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: AvatarWidget(
-              avatarUrl: item.authorAvatar,
-              radius: 20,
-              cacheWidthHeight: 200,
-              placeholder: item.authorName.isEmpty ? "" : item.authorName[0],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.authorName,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Row(
-                children: [
-                  Icon(
-                    Icons.visibility_outlined,
-                    size: 12,
-                    color: Theme.of(context).hintColor,
-                  ),
-                  const SizedBox(width: 4),
-                  Obx(
-                    () => Text(
-                      StringUtil.numFormat(controller.viewCount.value),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).hintColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.calendar_month_outlined,
-                    size: 12,
-                    color: Theme.of(context).hintColor,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    StringUtil.dateTimeToAgoDate(item.lastPostedAt),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).hintColor,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _MainContent extends StatelessWidget {
-  const _MainContent({required this.item, required this.controllerTag});
+  const _MainContent({required this.item, required this.controller});
   final DiscussionItem item;
-  final String controllerTag;
+  final PostPageController controller;
 
   @override
   Widget build(BuildContext context) {
-    late final PostPageController model;
-    try {
-      model = Get.find<PostPageController>(tag: controllerTag);
-    } catch (e) {
-      log("[PostMain] Controller died $controllerTag");
-      if (Get.isRegistered<PostPageController>(tag: controllerTag)) {
-        model = Get.find<PostPageController>(tag: controllerTag);
-      } else {
-        model = Get.put(
-          PostPageController(discussion: item),
-          tag: controllerTag,
-        );
-      }
-    }
     final l10n = AppLocalizations.of(context)!;
     return SelectionArea(
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: RepaintBoundary(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Obx(() {
-                  final content = model.content.value;
-                  final isLoading = content == l10n.postContentLoadingHtml;
-
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    child: isLoading
-                        ? const _MainContentLoadingSkeleton()
-                        : ContentView(
-                            key: ValueKey(content.hashCode),
-                            content: content,
-                          ),
-                  );
-                }),
-              ),
-            ],
-          ),
-        ),
+      child: RepaintBoundary(
+        child: Obx(() {
+          final content = controller.content.value;
+          final isLoading = content == l10n.postContentLoadingHtml;
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            child: isLoading
+                ? const _MainContentLoadingSkeleton()
+                : ContentView(
+                    key: ValueKey(content.hashCode),
+                    content: content,
+                  ),
+          );
+        }),
       ),
     );
   }
@@ -325,85 +293,77 @@ class _MainContentLoadingSkeleton extends StatelessWidget {
   }
 }
 
-class _ThumUpButton extends StatefulWidget {
-  const _ThumUpButton({
+class _LikeButton extends StatefulWidget {
+  const _LikeButton({
     required this.enabled,
-    required this.onPressed,
-    required this.likeNum,
-    this.selected = false,
+    required this.likeCount,
+    required this.isLiked,
+    this.onPressed,
   });
   final bool enabled;
+  final int likeCount;
+  final bool isLiked;
   final Future<void> Function()? onPressed;
-  final bool selected;
-  final int likeNum;
 
   @override
-  State<_ThumUpButton> createState() => _ThumUpButtonState();
+  State<_LikeButton> createState() => _LikeButtonState();
 }
 
-class _ThumUpButtonState extends State<_ThumUpButton> {
+class _LikeButtonState extends State<_LikeButton> {
   bool _loading = false;
 
   Future<void> _handlePressed() async {
-    if (!widget.enabled) {
-      return;
-    }
-    if (widget.onPressed == null) {
-      return;
-    }
-    if (_loading) {
-      return;
-    }
-    if (mounted) {
-      setState(() => _loading = true);
-    }
+    if (!widget.enabled || widget.onPressed == null || _loading) return;
+    setState(() => _loading = true);
     try {
-      await widget.onPressed?.call();
+      await widget.onPressed!();
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final enabled = widget.enabled;
-    return ElevatedButton(
-      onPressed: enabled ? _handlePressed : null,
-      style: ButtonStyle(
-        visualDensity: VisualDensity.standard,
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        ),
-        foregroundColor: enabled && widget.selected == true
-            ? WidgetStatePropertyAll(Theme.of(context).colorScheme.onPrimary)
-            : null,
-        backgroundColor: enabled && widget.selected == true
-            ? WidgetStatePropertyAll(Theme.of(context).colorScheme.primary)
-            : null,
-        elevation: const WidgetStatePropertyAll(0),
-        minimumSize: const WidgetStatePropertyAll(Size(40, 36)),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      child: Row(
-        mainAxisSize: .min,
-        children: [
-          _loading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.thumb_up_rounded, size: 16),
-          const SizedBox(width: 6),
-          Text(
-            AppLocalizations.of(context)!.commonLike,
-            style: textTheme.labelMedium,
-          ),
-        ],
-      ),
+    final liked = widget.isLiked;
+    final count = widget.likeCount;
+    final label = count > 0
+        ? '${AppLocalizations.of(context)!.commonLike}  $count'
+        : AppLocalizations.of(context)!.commonLike;
+    return FUIButton(
+      label: label,
+      icon: liked ? ForumIcons.likeFilled : ForumIcons.like,
+      variant: liked ? FUIButtonVariant.primary : FUIButtonVariant.secondary,
+      small: true,
+      loading: _loading,
+      onPressed: widget.enabled ? _handlePressed : null,
     );
+  }
+}
+
+class _FollowButton extends StatelessWidget {
+  const _FollowButton({required this.controller});
+  final PostPageController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final selected = controller.subscription.value == 1;
+      final updating = controller.isFollowUpdating.value;
+      final enabled = controller.canUseInteractiveActions;
+      return FUIButton(
+        label: selected
+            ? AppLocalizations.of(context)!.postActionUnfollow
+            : AppLocalizations.of(context)!.postActionFollow,
+        icon: selected ? ForumIcons.bookmarkFilled : ForumIcons.bookmark,
+        variant: selected
+            ? FUIButtonVariant.primary
+            : FUIButtonVariant.secondary,
+        small: true,
+        loading: updating,
+        onPressed: (!enabled || updating)
+            ? null
+            : controller.toggleDiscussionFollow,
+      );
+    });
   }
 }

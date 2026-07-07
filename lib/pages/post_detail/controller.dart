@@ -4,12 +4,16 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/post_repo.dart';
+import 'package:star_forum/data/repository/repo_result.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
@@ -21,7 +25,7 @@ import 'package:get/get.dart';
 enum ReplySort { like, time }
 
 class PostPageController extends GetxController {
-  PostPageController({required this.discussion, required});
+  PostPageController({required this.discussion});
 
   final DiscussionItem discussion;
   final RxInt viewCount = 0.obs;
@@ -44,24 +48,35 @@ class PostPageController extends GetxController {
     controlFinishLoad: true,
     controlFinishRefresh: true,
   );
-  final repo = getIt<DiscussionRepository>();
+  final discussionRepo = getIt<DiscussionRepository>();
+  final postRepo = getIt<PostRepository>();
   final userRepo = getIt<UserRepo>();
   final ScrollController scrollController = ScrollController();
   final Rxn<PostInfo> firstPost = Rxn<PostInfo>();
+  final CancelToken _cancelToken = CancelToken();
 
   bool get canUseInteractiveActions => userRepo.isLogin;
 
   @override
-  void onInit() async {
+  void onInit() {
+    super.onInit();
     viewCount.value = discussion.viewCount;
     subscription.value = discussion.subscription;
-    try {
-      final discussionInfo = await Api.getDiscussionById(discussion.id);
-      if (discussionInfo != null) {
-        viewCount.value = discussionInfo.views;
-      }
+    unawaited(_loadInitialPosts());
+    unawaited(_loadMetadata());
+  }
 
-      final r = await Api.getFirstPost(discussion.id);
+  Future<void> _loadInitialPosts() async {
+    try {
+      isReplyLoading.value = true;
+      final result = await postRepo.getInitialPostPage(
+        discussionId: discussion.id,
+        replyLimit: _pageSize,
+        cancelToken: _cancelToken,
+      );
+      if (result.error?.type == RepoErrorType.cancelled) return;
+      final bundle = result.data;
+      final r = bundle?.firstPost;
       if (r == null) {
         LogUtil.error(
           "[PostDetail] Failed to fetch post content (content is null).",
@@ -73,14 +88,32 @@ class PostPageController extends GetxController {
       }
       firstPost.value = r;
       content.value = r.contentHtml;
+      replyItems.assignAll(bundle!.replies);
+      replyCount.value = replyItems.length;
+      _offset = bundle.replies.length + 1;
+      _nextUrl = bundle.nextUrl;
+      _hasMore = bundle.hasMore;
     } catch (e, s) {
       LogUtil.errorE(
         "[PostDetail] Failed to fetch post content with error.",
         e,
         s,
       );
+    } finally {
+      isReplyLoading.value = false;
     }
-    super.onInit();
+  }
+
+  Future<void> _loadMetadata() async {
+    final result = await discussionRepo.getDiscussionById(
+      discussion.id,
+      cancelToken: _cancelToken,
+    );
+    if (result.error?.type == RepoErrorType.cancelled) return;
+    final info = result.data;
+    if (info == null || isClosed) return;
+    viewCount.value = info.views;
+    subscription.value = info.subscription;
   }
 
   Future<bool> toggleDiscussionFollow() async {
@@ -91,17 +124,16 @@ class PostPageController extends GetxController {
     final targetFollow = subscription.value != 1;
     isFollowUpdating.value = true;
     try {
-      final ok = await Api.setDiscussionFollow(discussion.id, targetFollow);
-      if (!ok) {
+      final result = await discussionRepo.setDiscussionFollow(
+        discussionId: discussion.id,
+        follow: targetFollow,
+      );
+      if (result.isFailure) {
         return false;
       }
 
       final nextValue = targetFollow ? 1 : 0;
       subscription.value = nextValue;
-      await repo.updateSubscriptionIfExists(
-        discussionId: discussion.id,
-        subscription: nextValue,
-      );
       return true;
     } finally {
       isFollowUpdating.value = false;
@@ -110,6 +142,7 @@ class PostPageController extends GetxController {
 
   static const int _pageSize = 10;
   int _offset = 1;
+  String? _nextUrl;
   bool _hasMore = true;
   bool _loading = false;
 
@@ -129,17 +162,12 @@ class PostPageController extends GetxController {
   Future<void> onReplyRefresh() async {
     if (_loading) return;
 
-    isReplyLoading.value = true;
-    _offset = 1;
-    _hasMore = true;
     replyItems.clear();
     newReplyItems.clear();
+    await _loadInitialPosts();
+    final ok = firstPost.value != null;
 
-    final ok = await _loadReplies(reset: true);
-
-    _finishRefreshSafely(
-      ok ? IndicatorResult.success : IndicatorResult.fail,
-    );
+    _finishRefreshSafely(ok ? IndicatorResult.success : IndicatorResult.fail);
 
     _finishLoadSafely(
       _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
@@ -178,23 +206,24 @@ class PostPageController extends GetxController {
     try {
       _loading = true;
 
-      final Posts? r = await Api.getPosts(
+      final result = await postRepo.getPostPage(
         discussionId: discussion.id,
         offset: _offset,
         limit: _pageSize,
-        sort: _replySort == ReplySort.like ? PostSort.number : PostSort.time,
+        sort: switch (_replySort) {
+          ReplySort.like => PostPageSort.number,
+          ReplySort.time => PostPageSort.time,
+        },
+        nextUrl: reset ? null : _nextUrl,
+        cancelToken: _cancelToken,
       );
-
-      if (r == null) {
+      if (result.error?.type == RepoErrorType.cancelled) return false;
+      final list = result.data;
+      if (list == null) {
         LogUtil.error(
           "[PostDetailPage] Response data is empty, maybe no more posts in this discussion",
         );
         return false;
-      }
-
-      final List<PostInfo> list = r.posts.values.toList();
-      for (var item in list) {
-        item.user = r.users[item.userId];
       }
 
       if (reset) {
@@ -213,10 +242,8 @@ class PostPageController extends GetxController {
       replyCount.value = replyItems.length;
 
       _offset += list.length;
-
-      if (list.length < _pageSize) {
-        _hasMore = false;
-      }
+      _nextUrl = result.nextUrl;
+      _hasMore = result.hasMore;
 
       return true;
     } catch (e, s) {
@@ -261,6 +288,9 @@ class PostPageController extends GetxController {
 
   @override
   void onClose() {
+    if (!_cancelToken.isCancelled) {
+      _cancelToken.cancel('Post detail closed.');
+    }
     refreshController.dispose();
     scrollController.dispose();
     super.onClose();

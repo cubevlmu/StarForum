@@ -5,7 +5,6 @@
  */
 import 'package:star_forum/utils/string_util.dart';
 
-import 'base.dart';
 import 'group_info.dart';
 
 class UserInfo {
@@ -13,6 +12,7 @@ class UserInfo {
   final String username;
   String displayName;
   String avatarUrl;
+  String avatarSrcset;
   final DateTime joinTime;
   DateTime lastSeenAt;
   int discussionCount;
@@ -33,45 +33,38 @@ class UserInfo {
     this.lastSeenAt,
     this.email,
     this.groups,
-    this.bio,
-  );
+    this.bio, {
+    this.avatarSrcset = '',
+  });
 
   void update(UserInfo? info) {
     if (info == null) return;
-    if (displayName != info.displayName) displayName = info.displayName;
-    if (avatarUrl != info.avatarUrl) avatarUrl = info.avatarUrl;
-    if (discussionCount != info.discussionCount) {
+    final nextDisplayName = info.displayName.trim();
+    final nextAvatarUrl = info.avatarUrl.trim();
+    final nextAvatarSrcset = info.avatarSrcset.trim();
+    if (nextDisplayName.isNotEmpty && displayName != info.displayName) {
+      displayName = info.displayName;
+    }
+    if (nextAvatarUrl.isNotEmpty && avatarUrl != info.avatarUrl) {
+      avatarUrl = info.avatarUrl;
+    }
+    if (nextAvatarSrcset.isNotEmpty && avatarSrcset != info.avatarSrcset) {
+      avatarSrcset = info.avatarSrcset;
+    }
+    if ((info.discussionCount > 0 || discussionCount <= 0) &&
+        discussionCount != info.discussionCount) {
       discussionCount = info.discussionCount;
     }
-    if (commentCount != info.commentCount) commentCount = info.commentCount;
-    if (lastSeenAt != info.lastSeenAt) lastSeenAt = info.lastSeenAt;
-    if (email != info.email) email = info.email;
-    if (bio != info.bio) bio = info.bio;
-  }
-
-  factory UserInfo.fromMap(Map data) {
-    return UserInfo.fromBaseData(BaseBean.fromMap(data).data);
-  }
-
-  factory UserInfo.fromBaseData(BaseData data) {
-    final m = data.attrs;
-    final ifo = _parseExpInfo(data);
-
-    final u = UserInfo(
-      data.id,
-      m.string("username"),
-      m.string("displayName"),
-      m.string("avatarUrl"),
-      m.dateTime("joinTime", fallbackTime),
-      m.integer("discussionCount"),
-      m.integer("commentCount"),
-      m.dateTime("lastSeenAt", fallbackTime),
-      m.string("email"),
-      m["groups"] is Groups ? m["groups"] as Groups : null,
-      m.string("bio"),
-    );
-    u.expInfo = ifo;
-    return u;
+    if ((info.commentCount > 0 || commentCount <= 0) &&
+        commentCount != info.commentCount) {
+      commentCount = info.commentCount;
+    }
+    if (info.lastSeenAt.isAfter(DateTime.utc(1981)) &&
+        lastSeenAt != info.lastSeenAt) {
+      lastSeenAt = info.lastSeenAt;
+    }
+    if (info.email.trim().isNotEmpty && email != info.email) email = info.email;
+    if (info.bio.trim().isNotEmpty && bio != info.bio) bio = info.bio;
   }
 
   static UserInfo deletedUser = UserInfo(
@@ -102,18 +95,23 @@ class UserInfo {
     "",
   );
 
-  static ExpInfo? _parseExpInfo(BaseData data) {
-    final m = data.attrs;
-    if (!m.contains("expLevel")) {
-      return null;
-    }
-    return ExpInfo(
-      m.string("expLevel"),
-      m.integer("expTotal"),
-      m.integer("expPercent"),
-      m.string("expNext"),
-      m.integer("expNextNeed"),
-    );
+  static UserInfo placeholder(int id) =>
+      UserInfo(id, "", "", "", fallbackTime, 0, 0, fallbackTime, "", null, "");
+
+  static String displayLabel(
+    UserInfo? user, {
+    int? fallbackId,
+    String fallback = "",
+  }) {
+    final displayName = user?.displayName.trim() ?? "";
+    if (displayName.isNotEmpty) return displayName;
+    final username = user?.username.trim() ?? "";
+    if (username.isNotEmpty) return username;
+    final fallbackLabel = fallback.trim();
+    if (fallbackLabel.isNotEmpty) return fallbackLabel;
+    final id = fallbackId ?? user?.id ?? -1;
+    if (id > 0) return "#$id";
+    return "";
   }
 }
 

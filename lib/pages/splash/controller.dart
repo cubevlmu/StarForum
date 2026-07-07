@@ -6,7 +6,8 @@
 
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:star_forum/data/api/api.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/data/repository/forum_repo.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
@@ -19,6 +20,7 @@ import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/state_manager.dart';
 
 enum SplashStage { loading, failed }
+
 enum SplashProgressStep { initNetwork, syncUser, syncTags, finished }
 
 class SplashScreenController extends GetxController {
@@ -51,34 +53,24 @@ class SplashScreenController extends GetxController {
     try {
       state.value = l10n.splashStateInitNetwork;
       LogUtil.info("[Splash] Begin to setup api service.");
-      final isApiSetup = await Api.setup();
-      if (!isApiSetup) {
+      final setupResult = await getIt<ForumRepository>().setup();
+      if (setupResult.isFailure) {
         throw StateError(l10n.splashErrorSiteNotConfigured);
       }
-
-      final repo = getIt<UserRepo>();
-      progressStep.value = SplashProgressStep.syncUser;
-      state.value = l10n.splashStateSyncUser;
-      await repo.setup();
-
-      final tag = getIt<TagRepo>();
-      LogUtil.info("[Splash] Begin sync tags.");
-      progressStep.value = SplashProgressStep.syncTags;
-      state.value = l10n.splashStateSyncTags;
-      await tag.syncTags();
 
       progressStep.value = SplashProgressStep.finished;
       state.value = l10n.splashStateFinished;
       if (!context.mounted) return;
+      _startDeferredSync();
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainPage()),
+        FuiPageRoute(builder: (_) => const MainPage()),
         (route) => false,
       );
     } on StateError catch (ex) {
       if (ex.message == l10n.splashErrorSiteNotConfigured) {
         LogUtil.info("[Splash] App is not configured.");
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const SetupPage(isSetup: true)),
+          FuiPageRoute(builder: (_) => const SetupPage(isSetup: true)),
           (route) => false,
         );
       }
@@ -92,13 +84,30 @@ class SplashScreenController extends GetxController {
     }
   }
 
+  void _startDeferredSync() {
+    final forumRepo = getIt<ForumRepository>();
+    final userRepo = getIt<UserRepo>();
+    final tagRepo = getIt<TagRepo>();
+    LogUtil.info("[Splash] Start deferred forum, user and tag sync.");
+    unawaited(
+      Future.wait<void>([
+        forumRepo.refreshEnvironment().then((_) {}),
+        userRepo.setup(),
+        tagRepo.syncTags(),
+      ]).catchError((error, stackTrace) {
+        LogUtil.errorE("[Splash] Deferred sync failed", error, stackTrace);
+        return <void>[];
+      }),
+    );
+  }
+
   void openSetupPage() {
     final context = Get.context;
     if (context == null) {
       return;
     }
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const SetupPage(isSetup: true)),
+      FuiPageRoute(builder: (_) => const SetupPage(isSetup: true)),
       (route) => false,
     );
   }

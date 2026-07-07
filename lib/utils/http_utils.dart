@@ -73,7 +73,12 @@ String? _queryWindowsProxy() {
 
   const keyPath =
       r'HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings';
-  final enabled = Process.runSync('reg', ['query', keyPath, '/v', 'ProxyEnable']);
+  final enabled = Process.runSync('reg', [
+    'query',
+    keyPath,
+    '/v',
+    'ProxyEnable',
+  ]);
   if (enabled.exitCode != 0 || !enabled.stdout.toString().contains('0x1')) {
     return null;
   }

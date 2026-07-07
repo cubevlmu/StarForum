@@ -22,11 +22,10 @@ class _UserTopicsSection extends StatelessWidget {
           final effectivePhysics = showSkeleton
               ? const ClampingScrollPhysics()
               : physics;
-
           return CustomScrollView(
             controller: controller.topicsScrollController,
             physics: effectivePhysics,
-            cacheExtent: 320,
+            scrollCacheExtent: const ScrollCacheExtent.pixels(320),
             slivers: [
               if (showSkeleton)
                 const SliverFillRemaining(
@@ -41,7 +40,7 @@ class _UserTopicsSection extends StatelessWidget {
                       bottom: MediaQuery.paddingOf(context).bottom + 24,
                     ),
                     child: NoticeWidget(
-                      emoji: "📝",
+                      emoji: '📝',
                       title: AppLocalizations.of(
                         context,
                       )!.commonEmptyPostsTitle,
@@ -56,27 +55,46 @@ class _UserTopicsSection extends StatelessWidget {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final discussion = items[index];
+                      final excerpt = htmlToPlainText(
+                        discussion.firstPost?.contentHtml ?? '',
+                      ).trim();
+                      final tags = discussion.tags
+                          .take(3)
+                          .map((t) => t.name)
+                          .toList();
                       return RepaintBoundary(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => openDiscussionAdaptive(
-                                context,
-                                discussion.toItem(),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            ForumLayout.edge,
+                            ForumLayout.cardGap,
+                            ForumLayout.edge,
+                            ForumLayout.cardGap,
+                          ),
+                          child: ForumDiscussionTile(
+                            title: discussion.title,
+                            excerpt: excerpt.isEmpty ? null : excerpt,
+                            author: discussion.user?.displayName,
+                            avatarUrl: discussion.user?.avatarUrl,
+                            tags: tags,
+                            meta: [
+                              ForumMetaItem(
+                                icon: Icons.schedule_outlined,
+                                label: StringUtil.dateTimeToAgoDate(
+                                  discussion.lastPostedAt,
+                                ),
                               ),
-                              child: DiscussionListItemCard(
-                                discussion: discussion,
+                            ],
+                            replyCount: discussion.commentCount > 0
+                                ? discussion.commentCount - 1
+                                : 0,
+                            onTap: () => FuiNavigation.openDetail(
+                              context,
+                              builder: (_) => PostPage(
+                                item: discussion.toItem(),
+                                embedded: true,
                               ),
                             ),
-                            const Divider(
-                              height: 1,
-                              thickness: 0.5,
-                              indent: 12,
-                              endIndent: 12,
-                            ),
-                          ],
+                          ),
                         ),
                       );
                     },
@@ -85,7 +103,7 @@ class _UserTopicsSection extends StatelessWidget {
                     addRepaintBoundaries: false,
                   ),
                 ),
-              const SliverToBoxAdapter(child: SizedBox(height: 18)),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           );
         },

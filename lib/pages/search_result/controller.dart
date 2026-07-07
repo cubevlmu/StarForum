@@ -5,9 +5,12 @@
  */
 
 import 'package:easy_refresh/easy_refresh.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/repo_result.dart';
+import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:get/get.dart';
 
@@ -17,6 +20,7 @@ class SearchResultController extends GetxController
 
   final String keyWord;
   RxString emojiText = "🔍".obs;
+  final DiscussionRepository discussionRepo = getIt<DiscussionRepository>();
 
   EasyRefreshController refreshController = EasyRefreshController(
     controlFinishLoad: true,
@@ -32,24 +36,27 @@ class SearchResultController extends GetxController
   bool _hasMore = true;
   RxBool isSearching = false.obs;
   RxBool isInitialLoading = true.obs;
+  final CancelToken _cancelToken = CancelToken();
 
   Future<bool> _loadSearchResult() async {
     if (!_hasMore) return true;
     isSearching.value = true;
 
     try {
-      final data = await Api.searchDiscuss(
+      final result = await discussionRepo.searchDiscuss(
         key: keyWord,
         offset: offset,
         limit: pageSize,
+        cancelToken: _cancelToken,
       );
 
-      if (data == null) {
+      if (result.isFailure) {
+        if (result.error?.type == RepoErrorType.cancelled) return false;
         LogUtil.error("[SearchResult] empty response");
         return false;
       }
 
-      final list = data.list;
+      final list = result.data ?? const <DiscussionInfo>[];
 
       if (list.isEmpty) {
         _hasMore = false;
@@ -59,9 +66,7 @@ class SearchResultController extends GetxController
       searchItems.addAll(list);
       offset += list.length;
 
-      if (list.length < pageSize) {
-        _hasMore = false;
-      }
+      _hasMore = result.hasMore;
 
       return true;
     } catch (e, s) {
@@ -118,6 +123,9 @@ class SearchResultController extends GetxController
 
   @override
   void onClose() {
+    if (!_cancelToken.isCancelled) {
+      _cancelToken.cancel('Search result closed.');
+    }
     refreshController.dispose();
     scrollController.dispose();
     super.onClose();

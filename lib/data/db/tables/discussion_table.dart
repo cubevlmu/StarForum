@@ -23,10 +23,14 @@ class DbDiscussions extends Table {
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get lastPostedAt => dateTime().nullable()();
   DateTimeColumn get lastSeenAt => dateTime()();
-  
+  DateTimeColumn get syncedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
   IntColumn get lastPostNumber => integer()();
+  IntColumn get firstPostId => integer().withDefault(const Constant(-1))();
   IntColumn get posterId => integer()();
   IntColumn get subscription => integer()();
+  TextColumn get fingerprint => text().withDefault(const Constant(""))();
 
   @override
   Set<Column> get primaryKey => {id};

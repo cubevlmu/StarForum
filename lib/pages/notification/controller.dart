@@ -8,9 +8,10 @@ import 'dart:async';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/model/notifications.dart';
+import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/notification_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
@@ -31,6 +32,8 @@ class NotificationPageController extends GetxController {
   final items = <NotificationsInfo>[].obs;
   final Rx<NotificationTab> currentTab = NotificationTab.likes.obs;
   final repo = getIt<UserRepo>();
+  final notificationRepo = getIt<NotificationRepository>();
+  final discussionRepo = getIt<DiscussionRepository>();
   String? nextUrl;
   bool loading = false;
   bool isFirstSync = true;
@@ -124,6 +127,18 @@ class NotificationPageController extends GetxController {
   void onInit() {
     isLogin.value = repo.isLogin;
     super.onInit();
+    _restoreCachedNotifications();
+  }
+
+  Future<void> _restoreCachedNotifications() async {
+    if (!repo.isLogin) {
+      isInitialLoading.value = false;
+      return;
+    }
+    final cached = await notificationRepo.getCachedNotifications();
+    if (cached.isEmpty || isClosed) return;
+    items.assignAll(cached);
+    isInitialLoading.value = false;
   }
 
   @override
@@ -189,9 +204,9 @@ class NotificationPageController extends GetxController {
         return;
       }
 
-      final (r, rs) = await Api.getNotification();
+      final result = await notificationRepo.getNotifications();
 
-      if (!rs) {
+      if (result.isTokenExpired) {
         if (!isFirstSync) {
           LogUtil.error(
             "[NotifyPage] Notification api return 401 for token expired error.",
@@ -214,7 +229,8 @@ class NotificationPageController extends GetxController {
         return;
       }
 
-      if (r == null) {
+      final list = result.data;
+      if (list == null) {
         refreshController.finishRefresh(IndicatorResult.fail);
         refreshController.finishLoad(IndicatorResult.fail);
 
@@ -226,9 +242,9 @@ class NotificationPageController extends GetxController {
       }
 
       items.clear();
-      items.addAll(r.list);
-      nextUrl = r.links.next;
-      _hasMore = nextUrl != null;
+      items.addAll(list);
+      nextUrl = result.nextUrl;
+      _hasMore = result.hasMore;
 
       refreshController.finishRefresh(IndicatorResult.success);
       refreshController.finishLoad(
@@ -279,9 +295,9 @@ class NotificationPageController extends GetxController {
         return;
       }
 
-      final (r, rs) = await Api.getNotification(url: nextUrl);
+      final result = await notificationRepo.getNotifications(url: nextUrl);
 
-      if (!rs) {
+      if (result.isTokenExpired) {
         LogUtil.error(
           "[NotifyPage] Notification api return 401 for token expired error.",
         );
@@ -294,15 +310,16 @@ class NotificationPageController extends GetxController {
         return;
       }
 
-      if (r == null) {
+      final list = result.data;
+      if (list == null) {
         refreshController.finishLoad(IndicatorResult.fail);
         isInitialLoading.value = false;
         return;
       }
 
-      items.addAll(r.list);
-      nextUrl = r.links.next;
-      _hasMore = nextUrl != null;
+      items.addAll(list);
+      nextUrl = result.nextUrl;
+      _hasMore = result.hasMore;
 
       refreshController.finishLoad(
         _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
@@ -322,7 +339,8 @@ class NotificationPageController extends GetxController {
     activeItemId.value = id;
     activeItemAction.value = NotificationItemAction.markRead;
     try {
-      final r = await Api.setNotificationIsRead(id.toString());
+      final result = await notificationRepo.markRead(id.toString());
+      final r = result.data;
       if (r == null) {
         LogUtil.error("[NotifyPage] Failed to check as read for $id");
         SnackbarUtils.showMessage(
@@ -375,8 +393,8 @@ class NotificationPageController extends GetxController {
     activeToolbarAction.value = NotificationToolbarAction.readAll;
 
     try {
-      final r = await Api.readAllNotification();
-      if (!r) {
+      final result = await notificationRepo.readAll();
+      if (result.isFailure) {
         SnackbarUtils.showMessage(
           msg: AppLocalizations.of(Get.context!)!.notificationMarkAllReadFailed,
         );
@@ -407,8 +425,8 @@ class NotificationPageController extends GetxController {
     activeToolbarAction.value = NotificationToolbarAction.clearAll;
 
     try {
-      final r = await Api.clearAllNotification();
-      if (!r) {
+      final result = await notificationRepo.clearAll();
+      if (result.isFailure) {
         SnackbarUtils.showMessage(
           msg: AppLocalizations.of(Get.context!)!.notificationClearAllFailed,
         );
@@ -455,7 +473,10 @@ class NotificationPageController extends GetxController {
     activeItemAction.value = NotificationItemAction.openDiscussion;
 
     try {
-      final r = await Api.getDiscussionById(discussion.toString());
+      final result = await discussionRepo.getDiscussionById(
+        discussion.toString(),
+      );
+      final r = result.data;
       if (r == null) {
         LogUtil.error(
           "[NotifyPage] Failed to get discussion detail by discussion id : $discussion",
@@ -467,9 +488,6 @@ class NotificationPageController extends GetxController {
         );
         return null;
       }
-      r.firstPost = r.posts[r.firstPostId];
-      r.firstPost?.user = r.users.values.first;
-      r.user = r.users.values.first;
       return r.toItem();
     } catch (e, s) {
       LogUtil.errorE(

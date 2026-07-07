@@ -5,19 +5,24 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/login/view.dart';
+import 'package:star_forum/pages/settings/settings_page.dart';
 import 'package:star_forum/pages/home/controller.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
-import 'package:star_forum/pages/main/controller.dart';
-import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/widgets/shared_dialog.dart';
-import 'package:get/get.dart';
 
 class UserDialogWidget extends StatelessWidget {
-  const UserDialogWidget({super.key, required this.controller});
+  const UserDialogWidget({
+    super.key,
+    required this.controller,
+    required this.navigationContext,
+  });
 
   final HomeController controller;
+  final BuildContext navigationContext;
 
   @override
   Widget build(BuildContext context) {
@@ -31,26 +36,26 @@ class UserDialogWidget extends StatelessWidget {
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(2)),
         ),
         if (!controller.isLogin.value)
-          ListTile(
-            leading: const Icon(Icons.logout_outlined),
-            title: Text(AppLocalizations.of(context)!.authLogin),
+          FUITile(
+            icon: FUIIcons.login,
+            title: AppLocalizations.of(context)!.authLogin,
             onTap: () => _onLoginBtn(context),
           ),
         if (controller.isLogin.value)
-          ListTile(
-            leading: const Icon(Icons.account_circle_outlined),
-            title: Text(AppLocalizations.of(context)!.userCenter),
+          FUITile(
+            icon: FUIIcons.person,
+            title: AppLocalizations.of(context)!.userCenter,
             onTap: () => _onSelfPage(context),
           ),
-        ListTile(
-          leading: const Icon(Icons.settings_outlined),
-          title: Text(AppLocalizations.of(context)!.commonActionSettings),
+        FUITile(
+          icon: FUIIcons.settings,
+          title: AppLocalizations.of(context)!.commonActionSettings,
           onTap: () => _onSettingBtn(context),
         ),
         if (controller.isLogin.value)
-          ListTile(
-            leading: const Icon(Icons.logout_outlined),
-            title: Text(AppLocalizations.of(context)!.authLogout),
+          FUITile(
+            icon: FUIIcons.logout,
+            title: AppLocalizations.of(context)!.authLogout,
             onTap: () => _onLogoutBtn(context),
           ),
         const SizedBox(height: 10),
@@ -61,33 +66,40 @@ class UserDialogWidget extends StatelessWidget {
   void _onLoginBtn(BuildContext context) {
     Navigator.pop(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final currentContext = Get.context;
-      if (currentContext == null) return;
-      openLoginAdaptive(currentContext);
+      if (!navigationContext.mounted) return;
+      FuiNavigation.openDetail(
+        navigationContext,
+        builder: (_) => const LoginPage(embedded: true),
+      );
     });
   }
 
   void _onSelfPage(BuildContext context) {
     Navigator.pop(context);
-    try {
-      final cc = Get.find<MainController>();
-      cc.selectedIndex.value = 3;
-    } catch (e, s) {
-      LogUtil.errorE(
-        "[HomePage] Failed to navigate to user space page with error:",
-        e,
-        s,
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!navigationContext.mounted) return;
+      final userId = controller.userRepo.userId;
+      if (userId <= 0) {
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(navigationContext)!.commonNoticeOpenFailed,
+        );
+        return;
+      }
+      FuiNavigation.openDetail(
+        navigationContext,
+        builder: (_) => UserPage(userId: userId, embedded: true),
       );
-      SnackbarUtils.showMessage(msg: AppLocalizations.of(context)!.commonNoticeOpenFailed);
-    }
+    });
   }
 
   void _onSettingBtn(BuildContext context) {
     Navigator.pop(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final currentContext = Get.context;
-      if (currentContext == null) return;
-      openSettingsAdaptive(currentContext);
+      if (!navigationContext.mounted) return;
+      FuiNavigation.openDetail(
+        navigationContext,
+        builder: (_) => const SettingsPage(),
+      );
     });
   }
 

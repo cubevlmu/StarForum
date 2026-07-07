@@ -1,18 +1,20 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
  * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:star_forum/app/forum_layout.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/search/view.dart';
 import 'package:star_forum/pages/search_result/controller.dart';
-import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/widgets/post_card.dart';
+import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
-import 'package:get/get.dart';
 
 class SearchResultPage extends StatefulWidget {
   const SearchResultPage({
@@ -22,10 +24,12 @@ class SearchResultPage extends StatefulWidget {
     this.onBack,
     this.onEditSearch,
   });
+
   final String keyWord;
   final bool embedded;
   final VoidCallback? onBack;
   final VoidCallback? onEditSearch;
+
   @override
   State<SearchResultPage> createState() => _SearchResultPageState();
 }
@@ -35,12 +39,13 @@ class _SearchResultPageState extends State<SearchResultPage>
   late SearchResultController controller;
   late final String _controllerTag;
   late final TextEditingController _keywordController;
+
   @override
   bool get wantKeepAlive => true;
 
   @override
   void initState() {
-    _controllerTag = "SearchResult:${widget.keyWord}:${widget.embedded}";
+    _controllerTag = 'SearchResult:${widget.keyWord}:${widget.embedded}';
     controller = Get.isRegistered<SearchResultController>(tag: _controllerTag)
         ? Get.find<SearchResultController>(tag: _controllerTag)
         : Get.put(
@@ -50,9 +55,7 @@ class _SearchResultPageState extends State<SearchResultPage>
     _keywordController = TextEditingController(text: widget.keyWord);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (controller.searchItems.isEmpty) {
-        controller.onRefresh();
-      }
+      if (controller.searchItems.isEmpty) controller.onRefresh();
     });
     super.initState();
   }
@@ -66,57 +69,19 @@ class _SearchResultPageState extends State<SearchResultPage>
     super.dispose();
   }
 
-  AppBar _appBar(BuildContext context, SearchResultController controller) {
-    return AppBar(
-      automaticallyImplyLeading: !widget.embedded,
-      leading: widget.embedded
-          ? IconButton(
-              onPressed: widget.onBack,
-              icon: const Icon(Icons.arrow_back_outlined),
-            )
-          : null,
-      shape: UnderlineInputBorder(
-        borderSide: BorderSide(color: Theme.of(context).dividerColor),
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _keywordController,
-              readOnly: true,
-              style: const TextStyle(fontSize: 18),
-              decoration: const InputDecoration(border: InputBorder.none),
-              onTap: () {
-                if (widget.embedded) {
-                  widget.onEditSearch?.call();
-                  return;
-                }
-                Navigator.of(context).pushReplacement(
-                  GetPageRoute(
-                    page: () => SearchPage(
-                      // defaultHintSearchWord: widget.keyWord,
-                      defaultInputSearchWord: widget.keyWord,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          SizedBox(
-            width: 70,
-            child: IconButton(
-              onPressed: () {
-                // controller.refreshController.callRefresh();
-              },
-              icon: const Icon(Icons.search_rounded),
-            ),
-          ),
-        ],
+  void _goEdit() {
+    if (widget.embedded) {
+      widget.onEditSearch?.call();
+      return;
+    }
+    Navigator.of(context).pushReplacement(
+      FuiPageRoute(
+        builder: (_) => SearchPage(defaultInputSearchWord: widget.keyWord),
       ),
     );
   }
 
-  Widget _buildView(BuildContext context) {
+  Widget _buildList(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Obx(() {
       final showSkeleton =
@@ -145,21 +110,9 @@ class _SearchResultPageState extends State<SearchResultPage>
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: GestureDetector(
-                    onTap: () {
-                      if (widget.embedded) {
-                        widget.onEditSearch?.call();
-                        return;
-                      }
-                      Navigator.of(context).pushReplacement(
-                        GetPageRoute(
-                          page: () => SearchPage(
-                            defaultInputSearchWord: widget.keyWord,
-                          ),
-                        ),
-                      );
-                    },
+                    onTap: _goEdit,
                     child: NoticeWidget(
-                      emoji: "🔍",
+                      emoji: '🔍',
                       title: l10n.searchResultEmptyTitle,
                       tips: l10n.searchResultEmptyTips,
                     ),
@@ -167,25 +120,17 @@ class _SearchResultPageState extends State<SearchResultPage>
                 )
               else
                 SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final i = controller.searchItems[index];
-                    return Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: PostCard(item: i.toItem()),
-                        ),
-                        if (index != controller.searchItems.length - 1)
-                          const Divider(
-                            height: 1,
-                            thickness: 0.5,
-                            indent: 12,
-                            endIndent: 12,
-                          ),
-                      ],
-                    );
-                  }, childCount: controller.searchItems.length),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => Padding(
+                      padding: ForumLayout.listItemPadding,
+                      child: PostCard(
+                        item: controller.searchItems[index].toItem(),
+                      ),
+                    ),
+                    childCount: controller.searchItems.length,
+                  ),
                 ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           );
         },
@@ -196,17 +141,51 @@ class _SearchResultPageState extends State<SearchResultPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (widget.embedded) {
-      return Column(
-        children: [
-          _appBar(context, controller),
-          Expanded(child: _buildView(context)),
+    final colors = context.colors;
+
+    final header = Padding(
+      padding: const EdgeInsets.fromLTRB(
+        FUITokens.pagePadding,
+        FUITokens.gap12,
+        FUITokens.pagePadding,
+        FUITokens.gap8,
+      ),
+      child: FuiPageHead(
+        title: widget.keyWord,
+        subtitle: AppLocalizations.of(context)!.searchStartHint,
+        onNavigationPressed:
+            widget.onBack ?? () => Navigator.of(context).maybePop(),
+        actions: [
+          FUIIconButton(
+            icon: FUIIcons.search,
+            variant: FUIIconButtonVariant.ghost,
+            onPressed: _goEdit,
+          ),
         ],
+      ),
+    );
+
+    if (widget.embedded) {
+      return SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            header,
+            Expanded(child: _buildList(context)),
+          ],
+        ),
       );
     }
     return Scaffold(
-      appBar: _appBar(context, controller),
-      body: _buildView(context),
+      backgroundColor: colors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            header,
+            Expanded(child: _buildList(context)),
+          ],
+        ),
+      ),
     );
   }
 }

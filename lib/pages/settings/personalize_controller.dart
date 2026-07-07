@@ -7,6 +7,9 @@ class PersonalizeSettingsController extends GetxController {
   final themeMode = SettingsUtil.currentThemeMode.obs;
   final theme = SettingsUtil.currentTheme.obs;
   final textScaleFactor = _loadTextScaleFactor().obs;
+  final buttonGroupIconOnly = SettingsUtil.buttonGroupIconOnly.obs;
+  final buttonGroupAlignment = SettingsUtil.buttonGroupAlignment.obs;
+  final showDiscussionExcerpt = SettingsUtil.showDiscussionExcerpt.obs;
 
   Future<void> changeThemeMode(ThemeMode value) async {
     if (themeMode.value == value) return;
@@ -25,6 +28,26 @@ class PersonalizeSettingsController extends GetxController {
     textScaleFactor.value = value;
     await SettingsUtil.setValue(SettingsStorageKeys.textScaleFactor, value);
     await Get.forceAppUpdate();
+  }
+
+  Future<void> changeButtonGroupIconOnly(bool value) async {
+    if (buttonGroupIconOnly.value == value) return;
+    buttonGroupIconOnly.value = value;
+    await SettingsUtil.changeButtonGroupIconOnly(value);
+  }
+
+  Future<void> changeButtonGroupAlignment(
+    ButtonGroupAlignmentPreference value,
+  ) async {
+    if (buttonGroupAlignment.value == value) return;
+    buttonGroupAlignment.value = value;
+    await SettingsUtil.changeButtonGroupAlignment(value);
+  }
+
+  Future<void> changeShowDiscussionExcerpt(bool value) async {
+    if (showDiscussionExcerpt.value == value) return;
+    showDiscussionExcerpt.value = value;
+    await SettingsUtil.changeShowDiscussionExcerpt(value);
   }
 
   static double _loadTextScaleFactor() {

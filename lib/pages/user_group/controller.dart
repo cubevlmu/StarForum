@@ -8,8 +8,9 @@ import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/log_util.dart';
 
 class UserGroupController extends GetxController {
@@ -18,7 +19,8 @@ class UserGroupController extends GetxController {
   final RxList<UserInfo> users = <UserInfo>[].obs;
   final RxString searchText = ''.obs;
   final RxnString selectedGroup = RxnString();
-  final Rx<UserSort> sort = UserSort.username.obs;
+  final Rx<UserDirectorySort> sort = UserDirectorySort.username.obs;
+  final userRepo = getIt<UserRepo>();
   final ScrollController scrollController = ScrollController();
   final EasyRefreshController refreshController = EasyRefreshController(
     controlFinishRefresh: true,
@@ -89,7 +91,20 @@ class UserGroupController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _restoreCachedUsers();
     onRefresh(useSkeleton: true);
+  }
+
+  Future<void> _restoreCachedUsers() async {
+    final cached = await userRepo.getCachedUserDirectory(
+      limit: _pageSize,
+      sort: sort.value,
+    );
+    if (cached.isEmpty || isClosed) return;
+    users.assignAll(cached);
+    _offset = cached.length;
+    isInitialLoading.value = false;
+    isCriteriaLoading.value = false;
   }
 
   @override
@@ -111,16 +126,19 @@ class UserGroupController extends GetxController {
     try {
       _offset = 0;
       _hasMore = true;
-      final data = await Api.getUserDirectory(
+      final result = await userRepo.getUserDirectory(
         limit: _pageSize,
         offset: _offset,
         sort: sort.value,
       );
-      if (data != null) {
-        users.assignAll(data);
-        _hasMore = data.length >= _pageSize;
-        _offset = data.length;
+      if (result.isFailure) {
+        _finishRefreshSafe(IndicatorResult.fail);
+        return;
       }
+      final data = result.data ?? const <UserInfo>[];
+      users.assignAll(data);
+      _hasMore = result.hasMore;
+      _offset = data.length;
       _finishRefreshSafe(IndicatorResult.success);
       _finishLoadSafe(
         _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
@@ -146,17 +164,21 @@ class UserGroupController extends GetxController {
     }
     _loading = true;
     try {
-      final data = await Api.getUserDirectory(
+      final result = await userRepo.getUserDirectory(
         limit: _pageSize,
         offset: _offset,
         sort: sort.value,
       );
-      final next = data ?? const <UserInfo>[];
+      if (result.isFailure) {
+        _finishLoadSafe(IndicatorResult.fail);
+        return;
+      }
+      final next = result.data ?? const <UserInfo>[];
       if (next.isNotEmpty) {
         users.addAll(next);
         _offset += next.length;
       }
-      _hasMore = next.length >= _pageSize;
+      _hasMore = result.hasMore;
       _finishLoadSafe(
         _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
       );
@@ -178,7 +200,7 @@ class UserGroupController extends GetxController {
     reloadForCriteriaChange();
   }
 
-  Future<void> updateSort(UserSort value) async {
+  Future<void> updateSort(UserDirectorySort value) async {
     sort.value = value;
     await reloadForCriteriaChange();
   }
@@ -188,6 +210,7 @@ class UserGroupController extends GetxController {
     await Future<void>.delayed(Duration.zero);
     if (!isClosed) {
       users.clear();
+      await _restoreCachedUsers();
       await onRefresh(useSkeleton: true);
     }
   }

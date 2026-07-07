@@ -1,4 +1,4 @@
-import 'base.dart';
+import 'package:star_forum/data/api/flarum_links.dart';
 
 class UploadFileInfo {
   final int id;
@@ -36,28 +36,6 @@ class UploadFileInfo {
     required this.canHide,
     required this.canDelete,
   });
-
-  factory UploadFileInfo.fromBaseData(BaseData data) {
-    final attrs = data.attrs;
-    return UploadFileInfo(
-      id: data.id,
-      baseName: attrs.string('baseName'),
-      path: attrs.string('path'),
-      url: attrs.string('url'),
-      type: attrs.string('type'),
-      size: attrs.integer('size'),
-      humanSize: attrs.string('humanSize'),
-      createdAt: attrs.dateTime('createdAt'),
-      uuid: attrs.string('uuid'),
-      tag: attrs.string('tag'),
-      hidden: attrs.boolean('hidden'),
-      bbcode: attrs.string('bbcode'),
-      shared: attrs.boolean('shared'),
-      canViewInfo: attrs.boolean('canViewInfo'),
-      canHide: attrs.boolean('canHide'),
-      canDelete: attrs.boolean('canDelete'),
-    );
-  }
 }
 
 class UploadFileList {
@@ -65,18 +43,4 @@ class UploadFileList {
   final Links links;
 
   const UploadFileList({required this.list, required this.links});
-
-  factory UploadFileList.fromMap(Map map) {
-    return UploadFileList.fromBase(BaseListBean.fromMap(map));
-  }
-
-  factory UploadFileList.fromBase(BaseListBean base) {
-    final list = <UploadFileInfo>[];
-    for (final item in base.data.list) {
-      if (item.type == 'files') {
-        list.add(UploadFileInfo.fromBaseData(item));
-      }
-    }
-    return UploadFileList(list: list, links: base.links);
-  }
 }

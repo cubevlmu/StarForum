@@ -6,6 +6,7 @@
 import 'dart:async';
 
 import 'package:easy_refresh/easy_refresh.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_item.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
@@ -34,18 +35,39 @@ class PostListController extends GetxController {
 
   late final Worker _worker;
   StreamSubscription<List<DiscussionItem>>? _sub;
+  final CancelToken _cancelToken = CancelToken();
 
   @override
   void onInit() {
     super.onInit();
 
-    _worker = ever<int>(_visibleCount, (limit) {
-      _sub?.cancel();
-      _sub = repo.watchDiscussionItems(limit: limit).listen(items.assignAll);
-    });
-
-    _visibleCount.value = _visibleCount.value;
+    _worker = ever<int>(_visibleCount, _watchItems);
+    _watchItems(_visibleCount.value);
     _restorePagingState();
+  }
+
+  void _watchItems(int limit) {
+    _sub?.cancel();
+    _sub = repo.watchDiscussionItems(limit: limit).listen((cachedItems) {
+      if (_sameItems(items, cachedItems)) {
+        if (cachedItems.isNotEmpty) {
+          isInitialLoading.value = false;
+        }
+        return;
+      }
+      items.assignAll(cachedItems);
+      if (cachedItems.isNotEmpty) {
+        isInitialLoading.value = false;
+      }
+    });
+  }
+
+  bool _sameItems(List<DiscussionItem> current, List<DiscussionItem> next) {
+    if (current.length != next.length) return false;
+    for (var i = 0; i < current.length; i += 1) {
+      if (current[i] != next[i]) return false;
+    }
+    return true;
   }
 
   Future<void> _restorePagingState() async {
@@ -55,11 +77,15 @@ class PostListController extends GetxController {
       _offset = count;
       _visibleCount.value = _pageSize;
       _hasMore = true;
+      isInitialLoading.value = false;
     }
   }
 
   @override
   void onClose() {
+    if (!_cancelToken.isCancelled) {
+      _cancelToken.cancel('Post list closed.');
+    }
     _worker.dispose();
     _sub?.cancel();
     scrollController.dispose();
@@ -81,8 +107,16 @@ class PostListController extends GetxController {
 
       _visibleCount.value = _pageSize;
 
-      await repo.syncDiscussionPage(offset: 0, limit: _pageSize);
-      await repo.cleanupDeletedDiscussions();
+      await repo.syncDiscussionPage(
+        offset: 0,
+        limit: _pageSize,
+        cancelToken: _cancelToken,
+      );
+      unawaited(
+        repo.cleanupDeletedDiscussions().catchError((Object e, StackTrace s) {
+          LogUtil.errorE('[PostList] cleanup deleted discussions failed', e, s);
+        }),
+      );
 
       _offset = _pageSize;
 
@@ -118,6 +152,8 @@ class PostListController extends GetxController {
       _hasMore = await repo.syncDiscussionPage(
         offset: _offset,
         limit: _pageSize,
+        cancelToken: _cancelToken,
+        reportStatus: false,
       );
 
       _offset += _pageSize;

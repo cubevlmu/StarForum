@@ -1,17 +1,18 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
  * @LastEditors: cubevlmu khfahqp@gmail.com
- * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/settings/settings_page.dart';
 import 'package:star_forum/pages/account/controller.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
 import 'package:star_forum/pages/user/view.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/widgets/shared_dialog.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:get/get.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -33,68 +34,76 @@ class _AccountPageState extends State<AccountPage>
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     super.build(context);
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: _AccountPageTitle(controller: controller),
-      body: Obx(() {
-        if (!controller.isLogin.value) {
-          return NotLoginNotice(
-            title: AppLocalizations.of(context)!.commonNotLoggedInTitle,
-            tipsText: AppLocalizations.of(context)!.authNotLoginTips,
-          );
-        } else {
-          return UserPage(userId: controller.getTrueId(), isAccountPage: true);
-        }
-      }),
+      backgroundColor: colors.background,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                FUITokens.pagePadding,
+                FUITokens.gap12,
+                FUITokens.pagePadding,
+                FUITokens.gap4,
+              ),
+              child: FuiPageHead(
+                showNavigation: false,
+                title: l10n.accountAppBarTitle,
+                actions: [
+                  Obx(() {
+                    if (!controller.isLogin.value) {
+                      return const SizedBox.shrink();
+                    }
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FUIIconButton(
+                          icon: FUIIcons.logout,
+                          variant: FUIIconButtonVariant.ghost,
+                          tooltip: l10n.commonActionLogout,
+                          onPressed: () =>
+                              SharedDialog.showLogoutDialog(context),
+                        ),
+                      ],
+                    );
+                  }),
+                  FUIIconButton(
+                    icon: FUIIcons.settings,
+                    variant: FUIIconButtonVariant.ghost,
+                    onPressed: () => FuiNavigation.openDetail(
+                      context,
+                      builder: (_) => const SettingsPage(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Obx(() {
+                if (!controller.isLogin.value) {
+                  return NotLoginNotice(
+                    title: l10n.commonNotLoggedInTitle,
+                    tipsText: l10n.authNotLoginTips,
+                  );
+                }
+                return UserPage(
+                  userId: controller.getTrueId(),
+                  isAccountPage: true,
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   bool get wantKeepAlive => true;
-}
-
-class _AccountPageTitle extends StatelessWidget implements PreferredSizeWidget {
-  final AccountPageController controller;
-
-  const _AccountPageTitle({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      title: Text(AppLocalizations.of(context)!.accountAppBarTitle),
-      actions: [
-        Obx(() {
-          if (controller.isLogin.value) {
-            return IconButton(
-              onPressed: () => _onLogOut(context),
-              icon: const Icon(Icons.logout_outlined),
-            );
-          }
-          return SizedBox.shrink();
-        }),
-        const SizedBox(width: 10),
-        IconButton(
-          onPressed: () {
-            openSettingsAdaptive(context);
-          },
-          icon: const Icon(Icons.settings_outlined),
-        ),
-        const SizedBox(width: 10),
-      ],
-    );
-  }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
-  void _onLogOut(BuildContext context) {
-    SharedDialog.showLogoutDialog(context);
-  }
 }

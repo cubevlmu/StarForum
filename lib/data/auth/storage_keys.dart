@@ -6,10 +6,11 @@
 
 class AuthStorageKeys {
   static const String accessToken = 'accessToken';
+  static const String authKind = 'authKind';
 
   static const String tokenCreatedAt = 'tokenCreatedAt';
   static const String userId = 'userId';
-  
+
   static const String autoRelogin = 'autoRelogin';
   static const String username = 'username';
   static const String password = 'password';

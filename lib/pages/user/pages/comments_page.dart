@@ -25,7 +25,7 @@ class _UserCommentsSection extends StatelessWidget {
           return CustomScrollView(
             controller: controller.commentsScrollController,
             physics: effectivePhysics,
-            cacheExtent: 320,
+            scrollCacheExtent: const ScrollCacheExtent.pixels(320),
             slivers: [
               if (showSkeleton)
                 const SliverToBoxAdapter(child: _UserPostListLoadingSkeleton())
@@ -37,7 +37,7 @@ class _UserCommentsSection extends StatelessWidget {
                       bottom: MediaQuery.paddingOf(context).bottom + 24,
                     ),
                     child: NoticeWidget(
-                      emoji: "🧐",
+                      emoji: '🧐',
                       title: AppLocalizations.of(
                         context,
                       )!.commonEmptyPostsTitle,
@@ -54,37 +54,26 @@ class _UserCommentsSection extends StatelessWidget {
                       final item = items[index];
                       final discussion =
                           controller.commentDiscussions[item.discussion];
-
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(15, 12, 15, 0),
-                            child: _DiscussionHint(
-                              title: discussion?.title ?? "",
-                              onTap: () async {
-                                if (controller.isLoading.value) return;
-                                final result = await controller.naviToDisPage(
-                                  item.discussion,
-                                );
-                                if (result == null) return;
-                                if (!context.mounted) return;
-                                openDiscussionAdaptive(context, result);
-                              },
-                            ),
+                          _DiscussionHint(
+                            title: discussion?.title ?? '',
+                            onTap: () async {
+                              if (controller.isLoading.value) return;
+                              final result = await controller.naviToDisPage(
+                                item.discussion,
+                              );
+                              if (result == null) return;
+                              if (!context.mounted) return;
+                              FuiNavigation.openDetail(
+                                context,
+                                builder: (_) =>
+                                    PostPage(item: result, embedded: true),
+                              );
+                            },
                           ),
-                          const SizedBox(height: 5),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
-                            child: PostItemWidget(reply: item, isUserPage: true),
-                          ),
-                          const SizedBox(height: 5),
-                          const Divider(
-                            height: 1,
-                            thickness: 0.5,
-                            indent: 12,
-                            endIndent: 12,
-                          ),
+                          PostItemWidget(reply: item, isUserPage: true),
                         ],
                       );
                     },
@@ -93,7 +82,7 @@ class _UserCommentsSection extends StatelessWidget {
                     addRepaintBoundaries: true,
                   ),
                 ),
-              const SliverToBoxAdapter(child: SizedBox(height: 18)),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           );
         },
@@ -110,31 +99,40 @@ class _DiscussionHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodySmall;
-
+    final colors = context.colors;
+    if (title.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Text(
-            AppLocalizations.of(context)!.userDiscussionHintPrefix,
-            style: style?.copyWith(color: Colors.grey),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(
+        FUITokens.pagePadding,
+        FUITokens.gap10,
+        FUITokens.pagePadding,
+        FUITokens.gap4,
+      ),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Row(
+          children: [
+            Icon(ForumIcons.reply, size: 13, color: colors.textTertiary),
+            const SizedBox(width: FUITokens.gap6),
+            Text(
+              AppLocalizations.of(context)!.userDiscussionHintPrefix,
+              style: TextStyle(color: colors.textTertiary, fontSize: 12),
+            ),
+            const SizedBox(width: FUITokens.gap4),
+            Expanded(
               child: Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: style?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w500,
+                style: TextStyle(
+                  color: colors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -150,9 +148,9 @@ class _UserPostListLoadingSkeleton extends StatelessWidget {
       highlightStrength: 0.2,
       builder: (context, palette) {
         return Column(
-          children: List<Widget>.generate(
+          children: List.generate(
             3,
-            (index) => _UserPostLoadingCard(
+            (_) => _UserPostLoadingCard(
               pillDecoration: palette.line(),
               circleDecoration: palette.circle(),
             ),
@@ -174,76 +172,70 @@ class _UserPostLoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(15, 12, 15, 0),
+          padding: const EdgeInsets.fromLTRB(
+            FUITokens.pagePadding,
+            FUITokens.gap10,
+            FUITokens.pagePadding,
+            FUITokens.gap4,
+          ),
           child: SkeletonBar(
             decoration: pillDecoration,
             widthFactor: 0.42,
             height: 12,
           ),
         ),
-        const SizedBox(height: 5),
         Padding(
-          padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(width: 45, height: 45, decoration: circleDecoration),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.3,
-                      height: 14,
-                    ),
-                    const SizedBox(height: 8),
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.22,
-                      height: 10,
-                    ),
-                    const SizedBox(height: 14),
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.95,
-                      height: 12,
-                    ),
-                    const SizedBox(height: 8),
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.86,
-                      height: 12,
-                    ),
-                    const SizedBox(height: 8),
-                    SkeletonBar(
-                      decoration: pillDecoration,
-                      widthFactor: 0.6,
-                      height: 12,
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Container(
-                          width: 72,
-                          height: 32,
-                          decoration: pillDecoration,
-                        ),
-                      ],
-                    ),
-                  ],
+          padding: const EdgeInsets.fromLTRB(
+            FUITokens.pagePadding,
+            FUITokens.gap4,
+            FUITokens.pagePadding,
+            FUITokens.gap4,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(FUITokens.radiusLg),
+              border: Border.all(color: colors.border),
+            ),
+            padding: const EdgeInsets.all(FUITokens.gap12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(width: 36, height: 36, decoration: circleDecoration),
+                const SizedBox(width: FUITokens.gap10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonBar(
+                        decoration: pillDecoration,
+                        widthFactor: 0.3,
+                        height: 13,
+                      ),
+                      const SizedBox(height: FUITokens.gap8),
+                      SkeletonBar(
+                        decoration: pillDecoration,
+                        widthFactor: 0.95,
+                        height: 12,
+                      ),
+                      const SizedBox(height: 6),
+                      SkeletonBar(
+                        decoration: pillDecoration,
+                        widthFactor: 0.8,
+                        height: 12,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 5),
-        const Divider(height: 1, thickness: 0.5, indent: 12, endIndent: 12),
       ],
     );
   }

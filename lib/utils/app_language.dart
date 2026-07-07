@@ -22,7 +22,11 @@ const languages = [
   AppLanguage(Locale('en'), _languageEnglish),
   AppLanguage(Locale('zh'), _languageSimplifiedChinese),
   AppLanguage(
-    Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant', countryCode: 'TW'),
+    Locale.fromSubtags(
+      languageCode: 'zh',
+      scriptCode: 'Hant',
+      countryCode: 'TW',
+    ),
     _languageTraditionalChinese,
   ),
 ];

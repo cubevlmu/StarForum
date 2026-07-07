@@ -35,14 +35,14 @@ class CachedNetworkImage extends image.CachedNetworkImage {
              : (_, _, _) => errorWidget(),
          memCacheWidth: cacheWidth,
          memCacheHeight: cacheHeight,
-         fadeInDuration: const Duration(milliseconds: 200),
-         fadeOutDuration: const Duration(milliseconds: 200),
+         fadeInDuration: Duration.zero,
+         fadeOutDuration: Duration.zero,
          cacheKey: imageUrl,
        );
 
   static Widget _defaultPlaceholder() {
     return Padding(
-      padding: EdgeInsetsGeometry.all(40),
+      padding: const EdgeInsets.all(40),
       child: Center(child: Icon(Icons.image_not_supported_outlined, size: 28)),
     );
   }

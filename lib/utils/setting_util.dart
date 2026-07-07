@@ -43,6 +43,67 @@ class SettingsUtil {
     setValue(SettingsStorageKeys.appTheme, theme.index);
     Get.forceAppUpdate();
   }
+
+  static bool get buttonGroupIconOnly {
+    final value = getValue(
+      SettingsStorageKeys.buttonGroupIconOnly,
+      defaultValue: false,
+    );
+    return value == true;
+  }
+
+  static Future<void> changeButtonGroupIconOnly(bool value) async {
+    await setValue(SettingsStorageKeys.buttonGroupIconOnly, value);
+    await Get.forceAppUpdate();
+  }
+
+  static ButtonGroupAlignmentPreference get buttonGroupAlignment {
+    final index = getValue(
+      SettingsStorageKeys.buttonGroupAlignment,
+      defaultValue: ButtonGroupAlignmentPreference.automatic.index,
+    );
+    if (index is int &&
+        index >= 0 &&
+        index < ButtonGroupAlignmentPreference.values.length) {
+      return ButtonGroupAlignmentPreference.values[index];
+    }
+    return ButtonGroupAlignmentPreference.automatic;
+  }
+
+  static Future<void> changeButtonGroupAlignment(
+    ButtonGroupAlignmentPreference value,
+  ) async {
+    await setValue(SettingsStorageKeys.buttonGroupAlignment, value.index);
+    await Get.forceAppUpdate();
+  }
+
+  static bool get showDiscussionExcerpt {
+    final value = getValue(
+      SettingsStorageKeys.showDiscussionExcerpt,
+      defaultValue: true,
+    );
+    return value != false;
+  }
+
+  static Future<void> changeShowDiscussionExcerpt(bool value) async {
+    await setValue(SettingsStorageKeys.showDiscussionExcerpt, value);
+    await Get.forceAppUpdate();
+  }
+}
+
+enum ButtonGroupAlignmentPreference { automatic, leading, centered }
+
+extension ButtonGroupAlignmentPreferenceX on ButtonGroupAlignmentPreference {
+  String get label {
+    switch (this) {
+      case ButtonGroupAlignmentPreference.automatic:
+        return '自动';
+      case ButtonGroupAlignmentPreference.leading:
+        return '左起';
+      case ButtonGroupAlignmentPreference.centered:
+        return '居中';
+    }
+  }
 }
 
 extension ThemeModeString on ThemeMode {

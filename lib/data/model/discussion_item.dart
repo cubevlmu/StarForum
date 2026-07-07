@@ -33,6 +33,37 @@ class DiscussionItem {
     this.likeCount = -1,
     this.commentCount = -1,
     required this.userId,
-    required this.subscription
+    required this.subscription,
   });
+
+  @override
+  bool operator ==(Object other) {
+    return other is DiscussionItem &&
+        other.id == id &&
+        other.title == title &&
+        other.excerpt == excerpt &&
+        other.authorAvatar == authorAvatar &&
+        other.authorName == authorName &&
+        other.viewCount == viewCount &&
+        other.lastPostedAt == lastPostedAt &&
+        other.likeCount == likeCount &&
+        other.commentCount == commentCount &&
+        other.userId == userId &&
+        other.subscription == subscription;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    title,
+    excerpt,
+    authorAvatar,
+    authorName,
+    viewCount,
+    lastPostedAt,
+    likeCount,
+    commentCount,
+    userId,
+    subscription,
+  );
 }

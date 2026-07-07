@@ -7,9 +7,14 @@
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/app/forum_icons.dart';
 
 class EditorTagSelection {
-  const EditorTagSelection({required this.primaryTag, required this.secondaryTags});
+  const EditorTagSelection({
+    required this.primaryTag,
+    required this.secondaryTags,
+  });
 
   final TagInfo? primaryTag;
   final List<TagInfo> secondaryTags;
@@ -67,51 +72,60 @@ class _EditorTagDialogState extends State<EditorTagDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = context.colors;
 
     return Dialog(
+      backgroundColor: colors.surface,
+      surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(FUITokens.radiusXl),
+        side: BorderSide(color: colors.border),
+      ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 580, maxHeight: 760),
+        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+              padding: const EdgeInsets.fromLTRB(18, 16, 12, 14),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       l10n.tagDialogTitle,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
-                  IconButton(
+                  FUIIconButton(
+                    icon: FUIIcons.close,
+                    variant: FUIIconButtonVariant.outline,
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                    visualDensity: VisualDensity.compact,
                   ),
                 ],
               ),
             ),
-            Divider(height: 1, color: colorScheme.outlineVariant),
+            Divider(height: 1, color: colors.border),
+            // Selection preview + confirm
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: _TagInputShell(
+                    child: _TagSelectionPreview(
                       primaryTag: _selectedPrimaryTag,
                       secondaryTags: _selectedSecondaryTags,
+                      placeholder: l10n.editorTagPrimaryPlaceholder,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  FilledButton(
+                  const SizedBox(width: FUITokens.gap10),
+                  FUIButton(
+                    label: l10n.commonActionConfirm,
                     onPressed: _selectedPrimaryTag == null
                         ? null
                         : () => Navigator.of(context).pop(
@@ -120,68 +134,55 @@ class _EditorTagDialogState extends State<EditorTagDialog> {
                               secondaryTags: _selectedSecondaryTags,
                             ),
                           ),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, 52),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                    child: Text(l10n.commonActionConfirm),
                   ),
                 ],
               ),
             ),
-            Divider(height: 1, color: colorScheme.outlineVariant),
+            Divider(height: 1, color: colors.border),
+            // Tag list
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                padding: const EdgeInsets.fromLTRB(
+                  FUITokens.gap10,
+                  FUITokens.gap8,
+                  FUITokens.gap10,
+                  FUITokens.gap10,
+                ),
                 children: [
-                  _SectionTitle(label: l10n.editorPrimaryTagSection),
-                  const SizedBox(height: 6),
+                  _SectionLabel(label: l10n.editorPrimaryTagSection),
+                  const SizedBox(height: FUITokens.gap6),
                   ..._primaryEntries.map((entry) {
                     final selected = _selectedPrimaryTag?.id == entry.tag.id;
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: _TagListTile(
+                      padding: const EdgeInsets.only(bottom: FUITokens.gap4),
+                      child: _TagTile(
                         tag: entry.tag,
                         depth: entry.depth,
                         selected: selected,
-                        trailing: selected
-                            ? Icon(
-                                Icons.check_circle_rounded,
-                                size: 20,
-                                color: colorScheme.primary,
-                              )
-                            : const Icon(
-                                Icons.radio_button_unchecked_rounded,
-                                size: 20,
-                              ),
+                        isCheckbox: false,
                         onTap: () {
-                          setState(() {
-                            _selectedPrimaryTag = entry.tag;
-                          });
+                          setState(() => _selectedPrimaryTag = entry.tag);
                         },
                       ),
                     );
                   }),
                   if (widget.normalTags.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Divider(height: 1, color: colorScheme.outlineVariant),
-                    const SizedBox(height: 10),
-                    _SectionTitle(label: l10n.editorSecondaryTagSection),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: FUITokens.gap10),
+                    Divider(height: 1, color: colors.border),
+                    const SizedBox(height: FUITokens.gap10),
+                    _SectionLabel(label: l10n.editorSecondaryTagSection),
+                    const SizedBox(height: FUITokens.gap6),
                     ...widget.normalTags.map((tag) {
                       final selected = _selectedSecondaryTags.any(
                         (item) => item.id == tag.id,
                       );
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: _TagListTile(
+                        padding: const EdgeInsets.only(bottom: FUITokens.gap4),
+                        child: _TagTile(
                           tag: tag,
                           depth: 0,
                           selected: selected,
-                          trailing: Checkbox(
-                            value: selected,
-                            onChanged: (_) => _toggleSecondaryTag(tag),
-                          ),
+                          isCheckbox: true,
                           onTap: () => setState(() => _toggleSecondaryTag(tag)),
                         ),
                       );
@@ -197,22 +198,23 @@ class _EditorTagDialogState extends State<EditorTagDialog> {
   }
 
   void _toggleSecondaryTag(TagInfo tag) {
-    final index = _selectedSecondaryTags.indexWhere((item) => item.id == tag.id);
+    final index = _selectedSecondaryTags.indexWhere(
+      (item) => item.id == tag.id,
+    );
     if (index >= 0) {
       _selectedSecondaryTags.removeAt(index);
-      return;
+    } else {
+      _selectedSecondaryTags.add(tag);
     }
-    _selectedSecondaryTags.add(tag);
   }
 
   List<({TagInfo tag, int depth})> _flattenTags(List<TagInfo> roots) {
     final result = <({TagInfo tag, int depth})>[];
 
     void visit(TagInfo tag, int depth) {
-      if (!tag.canStartDiscussion) {
-        return;
+      if (tag.canStartDiscussion) {
+        result.add((tag: tag, depth: depth));
       }
-      result.add((tag: tag, depth: depth));
       final children = tag.children?.values.toList() ?? const <TagInfo>[];
       for (final child in children) {
         visit(child, depth + 1);
@@ -226,65 +228,73 @@ class _EditorTagDialogState extends State<EditorTagDialog> {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.label});
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label});
 
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        fontWeight: FontWeight.w700,
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(FUITokens.gap4, 0, 0, 0),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: colors.textSecondary,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
-class _TagInputShell extends StatelessWidget {
-  const _TagInputShell({
+class _TagSelectionPreview extends StatelessWidget {
+  const _TagSelectionPreview({
     required this.primaryTag,
     required this.secondaryTags,
+    required this.placeholder,
   });
 
   final TagInfo? primaryTag;
   final List<TagInfo> secondaryTags;
+  final String placeholder;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = context.colors;
     final hasSelection = primaryTag != null || secondaryTags.isNotEmpty;
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 52),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      constraints: const BoxConstraints(minHeight: 46),
+      padding: const EdgeInsets.symmetric(
+        horizontal: FUITokens.gap12,
+        vertical: FUITokens.gap8,
+      ),
       alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outlineVariant),
+        color: colors.surfaceAlt,
+        borderRadius: BorderRadius.circular(FUITokens.radiusMd),
+        border: Border.all(color: colors.border),
       ),
       child: !hasSelection
           ? Text(
-              l10n.editorTagPrimaryPlaceholder,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              placeholder,
+              style: TextStyle(color: colors.textTertiary, fontSize: 13),
             )
           : Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: FUITokens.gap6,
+              runSpacing: FUITokens.gap6,
               children: [
                 if (primaryTag != null)
-                  _SelectedTagChip(
+                  FUITag(
                     label: primaryTag!.name,
-                    emphasized: true,
+                    variant: FUITagVariant.primary,
                   ),
                 ...secondaryTags.map(
-                  (tag) => _SelectedTagChip(label: tag.name, emphasized: false),
+                  (tag) =>
+                      FUITag(label: tag.name, variant: FUITagVariant.neutral),
                 ),
               ],
             ),
@@ -292,107 +302,87 @@ class _TagInputShell extends StatelessWidget {
   }
 }
 
-class _SelectedTagChip extends StatelessWidget {
-  const _SelectedTagChip({required this.label, required this.emphasized});
-
-  final String label;
-  final bool emphasized;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: emphasized
-            ? colorScheme.secondaryContainer
-            : colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: emphasized
-              ? colorScheme.onSecondaryContainer
-              : colorScheme.onSurface,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _TagListTile extends StatelessWidget {
-  const _TagListTile({
+class _TagTile extends StatelessWidget {
+  const _TagTile({
     required this.tag,
     required this.depth,
     required this.selected,
-    required this.trailing,
+    required this.isCheckbox,
     required this.onTap,
   });
 
   final TagInfo tag;
   final int depth;
   final bool selected;
-  final Widget trailing;
+  final bool isCheckbox;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = context.colors;
     final description = tag.description.trim();
 
     return Material(
-      color: selected
-          ? colorScheme.secondaryContainer.withValues(alpha: 0.7)
-          : Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
+      color: selected && !isCheckbox ? colors.primarySoft : Colors.transparent,
+      borderRadius: BorderRadius.circular(FUITokens.radiusMd),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(FUITokens.radiusMd),
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.fromLTRB(12 + depth * 18, 12, 8, 12),
+          padding: EdgeInsets.fromLTRB(
+            FUITokens.gap12 + depth * 18.0,
+            FUITokens.gap10,
+            FUITokens.gap8,
+            FUITokens.gap10,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Icon box
               Container(
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
                   color: selected
-                      ? colorScheme.primary.withValues(alpha: 0.14)
-                      : colorScheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(8),
+                      ? colors.primary.withValues(alpha: 0.12)
+                      : colors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(FUITokens.radiusSm),
+                  border: Border.all(
+                    color: selected
+                        ? colors.primary.withValues(alpha: 0.3)
+                        : colors.border,
+                  ),
                 ),
                 alignment: Alignment.center,
                 child: Icon(
-                  _tagIcon(tag),
-                  size: 18,
-                  color: selected
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
+                  _tagIcon(),
+                  size: FUITokens.iconSm,
+                  color: selected ? colors.primary : colors.textTertiary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: FUITokens.gap10),
+              // Text
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       tag.name,
-                      style: theme.textTheme.titleSmall?.copyWith(
+                      style: TextStyle(
+                        color: selected ? colors.primary : colors.textPrimary,
+                        fontSize: 14,
                         fontWeight: selected
                             ? FontWeight.w700
                             : FontWeight.w600,
                       ),
                     ),
                     if (description.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         description,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 12,
                           height: 1.35,
                         ),
                       ),
@@ -400,8 +390,35 @@ class _TagListTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              trailing,
+              const SizedBox(width: FUITokens.gap8),
+              // Trailing indicator
+              if (isCheckbox)
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: selected ? colors.primary : colors.surface,
+                    borderRadius: BorderRadius.circular(FUITokens.radiusXs),
+                    border: Border.all(
+                      color: selected ? colors.primary : colors.border,
+                    ),
+                  ),
+                  child: selected
+                      ? Icon(
+                          FUIIcons.checkmark,
+                          size: 14,
+                          color: colors.textInverse,
+                        )
+                      : null,
+                )
+              else
+                Icon(
+                  selected
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  size: 20,
+                  color: selected ? colors.primary : colors.textTertiary,
+                ),
             ],
           ),
         ),
@@ -409,13 +426,9 @@ class _TagListTile extends StatelessWidget {
     );
   }
 
-  IconData _tagIcon(TagInfo tag) {
-    if (tag.isChild) {
-      return Icons.subdirectory_arrow_right_rounded;
-    }
-    if ((tag.position ?? 99) <= 3) {
-      return Icons.push_pin_outlined;
-    }
-    return Icons.sell_outlined;
+  IconData _tagIcon() {
+    if (tag.isChild) return Icons.subdirectory_arrow_right_rounded;
+    if ((tag.position ?? 99) <= 3) return Icons.push_pin_outlined;
+    return ForumIcons.tags;
   }
 }

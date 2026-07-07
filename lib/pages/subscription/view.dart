@@ -1,12 +1,22 @@
+/*
+ * @Author: cubevlmu khfahqp@gmail.com
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
+ */
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/api/api.dart';
 import 'package:star_forum/data/model/discussions.dart';
-import 'package:star_forum/pages/home/controller.dart';
+import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
-import 'package:star_forum/pages/main/adaptive_navigation.dart';
+import 'package:star_forum/pages/post_detail/view.dart';
+import 'package:star_forum/pages/home/controller.dart';
 import 'package:star_forum/pages/subscription/controller.dart';
-import 'package:star_forum/widgets/discussion_list_item_card.dart';
+import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/app/forum_layout.dart';
+import 'package:star_forum/widgets/forum/forum_discussion_tile.dart';
+import 'package:star_forum/widgets/forum/forum_meta_row.dart';
+import 'package:star_forum/utils/html_utils.dart';
+import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/simple_easy_refresher.dart';
@@ -27,16 +37,12 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   void initState() {
     super.initState();
     homeController = Get.find<HomeController>();
-    if (homeController.isLogin.value) {
-      _ensureController();
-    }
+    if (homeController.isLogin.value) _ensureController();
   }
 
   SubscriptionController _ensureController() {
     final existing = _controller;
-    if (existing != null) {
-      return existing;
-    }
+    if (existing != null) return existing;
     final created = Get.isRegistered<SubscriptionController>(tag: _tag)
         ? Get.find<SubscriptionController>(tag: _tag)
         : Get.put(SubscriptionController(), tag: _tag);
@@ -76,10 +82,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             controller: controller.scrollController,
             physics: effectivePhysics,
             slivers: [
-              SliverToBoxAdapter(
-                child: _SubscriptionToolbar(controller: controller),
-              ),
-              const SliverToBoxAdapter(child: Divider(height: 1)),
+              SliverToBoxAdapter(child: _SortBar(controller: controller)),
               if (showSkeleton)
                 const SliverFillRemaining(
                   hasScrollBody: false,
@@ -96,10 +99,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 )
               else
                 SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final item = controller.items[index];
-                    return _FollowingListItem(item: item);
-                  }, childCount: controller.items.length),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) =>
+                        _FollowingItem(item: controller.items[index]),
+                    childCount: controller.items.length,
+                  ),
                 ),
               const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
@@ -110,132 +114,160 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 }
 
-class _SubscriptionToolbar extends StatelessWidget {
-  const _SubscriptionToolbar({required this.controller});
+class _SortBar extends StatelessWidget {
+  const _SortBar({required this.controller});
 
   final SubscriptionController controller;
 
+  static const _options = [
+    DiscussionFollowingSort.hottest,
+    DiscussionFollowingSort.latestReply,
+    DiscussionFollowingSort.newest,
+    DiscussionFollowingSort.oldest,
+    DiscussionFollowingSort.mostViews,
+  ];
+
+  String _label(BuildContext context, DiscussionFollowingSort s) {
+    final l10n = AppLocalizations.of(context)!;
+    return switch (s) {
+      DiscussionFollowingSort.hottest => l10n.homeFollowingSortHottest,
+      DiscussionFollowingSort.latestReply => l10n.homeFollowingSortLatestReply,
+      DiscussionFollowingSort.newest => l10n.homeFollowingSortNewest,
+      DiscussionFollowingSort.oldest => l10n.homeFollowingSortOldest,
+      DiscussionFollowingSort.mostViews => l10n.homeFollowingSortMostViews,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final colors = context.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(
+        ForumLayout.edge,
+        FUITokens.gap10,
+        ForumLayout.edge,
+        FUITokens.gap4,
+      ),
+      child: FUISurface(
+        padding: const EdgeInsets.symmetric(
+          horizontal: FUITokens.gap14,
+          vertical: FUITokens.gap8,
+        ),
+        child: Row(
+          children: [
+            Text(
+              AppLocalizations.of(context)!.homeFollowingSort,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            Obx(
+              () => _PopupPicker<DiscussionFollowingSort>(
+                value: controller.sort.value,
+                options: _options,
+                labelOf: (s) => _label(context, s),
+                onChanged: controller.updateSort,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PopupPicker<T> extends StatelessWidget {
+  const _PopupPicker({
+    required this.value,
+    required this.options,
+    required this.labelOf,
+    required this.onChanged,
+  });
+
+  final T value;
+  final List<T> options;
+  final String Function(T) labelOf;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return PopupMenuButton<T>(
+      initialValue: value,
+      onSelected: onChanged,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(FUITokens.radiusLg),
+        side: BorderSide(color: colors.border),
+      ),
+      color: colors.surface,
+      elevation: 2,
+      itemBuilder: (_) => [
+        for (final opt in options)
+          PopupMenuItem<T>(
+            value: opt,
+            child: Text(
+              labelOf(opt),
+              style: TextStyle(
+                color: opt == value ? colors.primary : colors.textPrimary,
+                fontWeight: opt == value ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
+          ),
+      ],
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: DropdownButtonFormField<FollowingSort>(
-              initialValue: controller.sort.value,
-              isExpanded: true,
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: l10n.homeFollowingSort,
-                border: const OutlineInputBorder(),
-              ),
-              items: [
-                DropdownMenuItem(
-                  value: FollowingSort.hottest,
-                  child: Text(
-                    l10n.homeFollowingSortHottest,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: FollowingSort.latestReply,
-                  child: Text(
-                    l10n.homeFollowingSortLatestReply,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: FollowingSort.newest,
-                  child: Text(
-                    l10n.homeFollowingSortNewest,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: FollowingSort.oldest,
-                  child: Text(
-                    l10n.homeFollowingSortOldest,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: FollowingSort.mostViews,
-                  child: Text(
-                    l10n.homeFollowingSortMostViews,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-              onChanged: (next) {
-                if (next != null) {
-                  controller.updateSort(next);
-                }
-              },
+          Text(
+            labelOf(value),
+            style: TextStyle(
+              color: colors.primary,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButtonFormField<String>(
-              initialValue: 'posts',
-              isExpanded: true,
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: l10n.homeFollowingFilter,
-                border: const OutlineInputBorder(),
-              ),
-              items: [
-                DropdownMenuItem(
-                  value: 'posts',
-                  child: Text(
-                    l10n.homeFollowingFilterPosts,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'tags',
-                  enabled: false,
-                  child: Text(
-                    l10n.homeFollowingFilterTags,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-              onChanged: null,
-            ),
-          ),
+          const SizedBox(width: FUITokens.gap4),
+          Icon(Icons.expand_more_rounded, size: 16, color: colors.primary),
         ],
       ),
     );
   }
 }
 
-class _FollowingListItem extends StatelessWidget {
-  const _FollowingListItem({required this.item});
+class _FollowingItem extends StatelessWidget {
+  const _FollowingItem({required this.item});
 
   final DiscussionInfo item;
 
   @override
   Widget build(BuildContext context) {
+    final excerpt = htmlToPlainText(item.firstPost?.contentHtml ?? '').trim();
+    final tags = item.tags.take(3).map((t) => t.name).toList();
     return RepaintBoundary(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => openDiscussionAdaptive(context, item.toItem()),
-            child: DiscussionListItemCard(discussion: item),
+      child: Padding(
+        padding: ForumLayout.listItemPadding,
+        child: ForumDiscussionTile(
+          title: item.title,
+          excerpt: excerpt.isEmpty ? null : excerpt,
+          author: item.user?.displayName,
+          avatarUrl: item.user?.avatarUrl,
+          tags: tags,
+          meta: [
+            ForumMetaItem(
+              icon: Icons.schedule_outlined,
+              label: StringUtil.dateTimeToAgoDate(item.lastPostedAt),
+            ),
+          ],
+          replyCount: item.commentCount > 0 ? item.commentCount - 1 : 0,
+          unread: item.subscription == 1,
+          onTap: () => FuiNavigation.openDetail(
+            context,
+            builder: (_) => PostPage(item: item.toItem(), embedded: true),
           ),
-          const Divider(height: 1, thickness: 0.5, indent: 12, endIndent: 12),
-        ],
+        ),
       ),
     );
   }

@@ -46,5 +46,9 @@ class SettingsStorageKeys {
   static const String showSearchHistory = "showSearchHistory";
 
   static const String textScaleFactor = 'textScaleFactor';
+  static const String buttonGroupIconOnly = 'buttonGroupIconOnly';
+  static const String buttonGroupAlignment = 'buttonGroupAlignment';
+  static const String showDiscussionExcerpt = 'showDiscussionExcerpt';
   static const String apiBaseUrl = 'apiBaseUrl';
+  static const String forumInfoCache = 'forumInfoCache';
 }

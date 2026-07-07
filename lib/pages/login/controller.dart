@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/data/model/users.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
@@ -12,6 +13,7 @@ import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
+import 'package:star_forum/utils/shared_dialog.dart' as shared;
 
 class LoginController extends GetxController {
   LoginController({
@@ -38,15 +40,22 @@ class LoginController extends GetxController {
     update(["password_login"]);
   }
 
-  void startLogin() async {
+  Future<void> startLogin(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     if (account.isEmpty || password.isEmpty) {
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.authEmptyCredential,
+      await shared.SharedDialog.showConfirmDialog(
+        context,
+        title: l10n.authLogin,
+        content: l10n.authEmptyCredential,
+        cancelText: '',
+        confirmText: l10n.commonActionConfirm,
+        variant: shared.SharedDialogVariant.warning,
       );
       return;
     }
 
     _setLoading(true);
+    var clearLoadingInFinally = true;
 
     try {
       final r = await repo.login(
@@ -54,40 +63,58 @@ class LoginController extends GetxController {
         password,
         autoRelogin: autoRelogin.value,
       );
+      if (!context.mounted) return;
       if (!r) {
         LogUtil.error("[LoginPage] Login failed with empty response");
-        SnackbarUtils.showMessage(
-          msg: AppLocalizations.of(Get.context!)!.authLoginFailed,
-        );
+        await _showLoginFailedDialog(context, message: l10n.authLoginFailed);
         return;
       }
 
       if (repo.user == null) {
         LogUtil.error("[LoginPage] Empty user info response.");
-        SnackbarUtils.showMessage(
-          msg: AppLocalizations.of(Get.context!)!.authUserInfoError,
-        );
+        await _showLoginFailedDialog(context, message: l10n.authUserInfoError);
         return;
       }
 
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(
-          Get.context!,
-        )!.authLoginSuccess(repo.user?.displayName ?? ""),
+      SnackbarUtils.showSuccess(
+        msg: l10n.authLoginSuccess(repo.user?.displayName ?? ""),
       );
       await onLoginSuccess(repo.user!);
+      await repo.refreshCurrentUser();
+      Get.forceAppUpdate();
 
+      if (!context.mounted) return;
+      _setLoading(false);
+      clearLoadingInFinally = false;
       if (closeToRootOnSuccess) {
-        Navigator.of(Get.context!).popUntil((route) => route.isFirst);
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else {
+        FuiNavigation.closeCurrent(context);
       }
     } catch (e, st) {
       LogUtil.errorE("[LoginPage] Failed to login.", e, st);
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.authLoginFailed,
-      );
+      if (!context.mounted) return;
+      await _showLoginFailedDialog(context, message: l10n.authLoginFailed);
     } finally {
-      _setLoading(false);
+      if (clearLoadingInFinally) {
+        _setLoading(false);
+      }
     }
+  }
+
+  Future<void> _showLoginFailedDialog(
+    BuildContext context, {
+    required String message,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    return shared.SharedDialog.showConfirmDialog(
+      context,
+      title: l10n.authLoginFailed,
+      content: message,
+      cancelText: '',
+      confirmText: l10n.commonActionConfirm,
+      variant: shared.SharedDialogVariant.danger,
+    );
   }
 
   Future<void> onLoginSuccess(UserInfo user) {

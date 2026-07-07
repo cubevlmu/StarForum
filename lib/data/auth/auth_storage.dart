@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:star_forum/data/auth/storage_keys.dart';
 import 'package:star_forum/utils/storage_utils.dart';
 import 'package:hive/hive.dart';
+import 'package:star_forum/data/api/flarum_auth.dart';
 
 class AuthStorage {
   final _secure = FlutterSecureStorage(
@@ -30,20 +31,52 @@ class AuthStorage {
     return _cachedToken;
   }
 
-  Future<String?> get password async =>
-      _secure.read(key: AuthStorageKeys.password);
+  FlarumAuthKind get authKind {
+    final value = _box.get(AuthStorageKeys.authKind)?.toString();
+    return FlarumAuthKind.values.firstWhere(
+      (kind) => kind.name == value,
+      orElse: () => FlarumAuthKind.accessToken,
+    );
+  }
+
+  Future<FlarumAuthToken> get authToken async {
+    final stored = await accessToken;
+    final parsedUserId = int.tryParse(userId ?? '');
+    final parsed = FlarumAuthToken.parseLegacy(
+      stored,
+      storedKind: authKind,
+      storedUserId: parsedUserId,
+    );
+    if (stored != null && stored != parsed.token) {
+      _cachedToken = parsed.token;
+      await _secure.write(
+        key: AuthStorageKeys.accessToken,
+        value: parsed.token,
+      );
+      _box.put(AuthStorageKeys.authKind, parsed.kind.name);
+    }
+    return parsed;
+  }
+
+  Future<String?> takeLegacyPassword() async {
+    final value = await _secure.read(key: AuthStorageKeys.password);
+    await _secure.delete(key: AuthStorageKeys.password);
+    _box.delete(AuthStorageKeys.lastInputPwd);
+    _box.delete(AuthStorageKeys.autoRelogin);
+    return value;
+  }
 
   Future<void> saveLogin({
     required String token,
     required String userId,
-    bool autoRelogin = false,
+    FlarumAuthKind authKind = FlarumAuthKind.accessToken,
     String? username,
-    String? password,
   }) async {
     _box.put(UserStorageKeys.hasLogin, true);
     _box.put(AuthStorageKeys.userId, userId);
-    _box.put(AuthStorageKeys.autoRelogin, autoRelogin);
+    _box.put(AuthStorageKeys.autoRelogin, false);
     _box.put(AuthStorageKeys.username, username);
+    _box.put(AuthStorageKeys.authKind, authKind.name);
     _box.put(
       AuthStorageKeys.tokenCreatedAt,
       DateTime.now().millisecondsSinceEpoch,
@@ -51,19 +84,20 @@ class AuthStorage {
 
     _cachedToken = token;
     await _secure.write(key: AuthStorageKeys.accessToken, value: token);
-
-    if (autoRelogin && password != null) {
-      await _secure.write(key: AuthStorageKeys.password, value: password);
-      _box.put(AuthStorageKeys.lastInputPwd, DateTime.now());
-    }
+    await _secure.delete(key: AuthStorageKeys.password);
+    _box.delete(AuthStorageKeys.lastInputPwd);
   }
 
   Future<void> clear() async {
     _cachedToken = null;
     _box.put(UserStorageKeys.hasLogin, false);
     _box.delete(AuthStorageKeys.userId);
+    _box.delete(AuthStorageKeys.authKind);
+    _box.delete(AuthStorageKeys.autoRelogin);
+    _box.delete(AuthStorageKeys.username);
 
     await _secure.delete(key: AuthStorageKeys.accessToken);
+    await _secure.delete(key: AuthStorageKeys.password);
   }
 
   void clearAutoLogin() async {
