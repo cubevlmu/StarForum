@@ -22,10 +22,13 @@ class CacheManagementPage extends StatefulWidget {
 class _CacheManagementPageState extends State<CacheManagementPage> {
   final LocalCacheRepository _localCacheRepo = getIt<LocalCacheRepository>();
   late Future<_CacheSnapshot> _snapshot;
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
     _reload();
   }
 

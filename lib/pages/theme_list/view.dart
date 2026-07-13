@@ -9,7 +9,6 @@ import 'package:star_forum/app/forum_layout.dart';
 import 'package:star_forum/widgets/post_card.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
 
 class TagListPage extends StatefulWidget {
   const TagListPage({super.key});
@@ -37,78 +36,70 @@ class _TagListPageState extends State<TagListPage>
   Widget build(BuildContext context) {
     super.build(context);
     final l10n = AppLocalizations.of(context)!;
-    return SafeArea(
-      bottom: false,
-      child: ColoredBox(
-        color: context.colors.background,
-        child: Obx(() {
-          if (controller.isLoading.value && controller.tags.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (controller.tags.isEmpty) {
-            return FUIEmptyState(
-              title: l10n.mainTagsPage,
-              message: l10n.commonPullToRefreshTips,
-              icon: ForumIcons.tags,
-              actionLabel: l10n.refreshPullToRefresh,
-              onAction: controller.reloadTags,
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: controller.reloadTags,
-            child: CustomScrollView(
-              key: const PageStorageKey('tag-directory'),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: ForumLayout.pageHeadPadding,
-                    child: FuiPageHead(
-                      showNavigation: false,
-                      title: l10n.mainTagsPage,
-                      subtitle: '浏览全部标签，选择感兴趣的分类查看介绍和最新讨论。',
-                    ),
+    return ColoredBox(
+      color: context.colors.background,
+      child: Obx(() {
+        if (controller.isLoading.value && controller.tags.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (controller.tags.isEmpty) {
+          return FUIEmptyState(
+            title: l10n.mainTagsPage,
+            message: l10n.commonPullToRefreshTips,
+            icon: ForumIcons.tags,
+            actionLabel: l10n.refreshPullToRefresh,
+            onAction: controller.reloadTags,
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: controller.reloadTags,
+          child: CustomScrollView(
+            key: const PageStorageKey('tag-directory'),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: ForumLayout.pageHeadPadding,
+                  child: FuiPageHead(
+                    showNavigation: false,
+                    title: l10n.mainTagsPage,
+                    subtitle: l10n.themeListSubtitle,
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    ForumLayout.edge,
-                    ForumLayout.cardGap,
-                    ForumLayout.edge,
-                    FUITokens.gap24,
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  ForumLayout.edge,
+                  ForumLayout.cardGap,
+                  ForumLayout.edge,
+                  FUITokens.gap24,
+                ),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 260,
+                    mainAxisExtent: 142,
+                    mainAxisSpacing: ForumLayout.sectionGap,
+                    crossAxisSpacing: ForumLayout.sectionGap,
                   ),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 260,
-                          mainAxisExtent: 142,
-                          mainAxisSpacing: ForumLayout.sectionGap,
-                          crossAxisSpacing: ForumLayout.sectionGap,
-                        ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _TagDirectoryCard(
-                        tag: controller.tags[index],
-                        color: _tagColor(
-                          controller.tags[index],
-                          context,
-                          index,
-                        ),
-                        onTap: () => FuiNavigation.openDetail(
-                          context,
-                          builder: (_) => TagDetailPage(
-                            tag: controller.tags[index],
-                            embedded: true,
-                          ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _TagDirectoryCard(
+                      tag: controller.tags[index],
+                      color: _tagColor(controller.tags[index], context, index),
+                      onTap: () => FuiNavigation.openDetail(
+                        context,
+                        builder: (_) => TagDetailPage(
+                          tag: controller.tags[index],
+                          embedded: true,
                         ),
                       ),
-                      childCount: controller.tags.length,
                     ),
+                    childCount: controller.tags.length,
                   ),
                 ),
-              ],
-            ),
-          );
-        }),
-      ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
@@ -126,6 +117,7 @@ class _TagDirectoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(FUITokens.radiusXl),
@@ -170,7 +162,7 @@ class _TagDirectoryCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 tag.description.trim().isEmpty
-                    ? '${tag.discussionCount} 个讨论'
+                    ? l10n.themeDiscussionCount(tag.discussionCount)
                     : tag.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -227,11 +219,11 @@ class _TagDetailPageState extends State<TagDetailPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final color = _tagColor(widget.tag, context, widget.tag.id);
-    final body = SimpleEasyRefresher(
-      easyRefreshController: controller.refreshController,
+    final body = FUIRefresh(
+      controller: controller.refreshController,
       onRefresh: controller.onRefresh,
       onLoad: controller.onLoad,
-      autoRefreshOnStart: false,
+      refreshOnStart: false,
       childBuilder: (context, physics) => Obx(() {
         final loading =
             controller.isInitialLoading.value && controller.items.isEmpty;
@@ -262,20 +254,17 @@ class _TagDetailPageState extends State<TagDetailPage> {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) => Padding(
                     padding: ForumLayout.listItemPadding,
-                    child: PostCard(item: controller.items[index].toItem()),
+                    child: PostCard(item: controller.items[index]),
                   ),
                   childCount: controller.items.length,
                 ),
               ),
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            const SliverToBoxAdapter(child: SizedBox(height: FUITokens.gap24)),
           ],
         );
       }),
     );
-    return Scaffold(
-      backgroundColor: context.colors.background,
-      body: widget.embedded ? body : SafeArea(bottom: false, child: body),
-    );
+    return Scaffold(backgroundColor: context.colors.background, body: body);
   }
 }
 
@@ -292,6 +281,7 @@ class _TagDetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: ForumLayout.pageHeadPadding,
       child: Column(
@@ -299,7 +289,7 @@ class _TagDetailHeader extends StatelessWidget {
         children: [
           FuiPageHead(
             title: tag.name,
-            subtitle: '${tag.discussionCount} 个讨论',
+            subtitle: l10n.themeDiscussionCount(tag.discussionCount),
             trailing: Container(
               width: 40,
               height: 40,

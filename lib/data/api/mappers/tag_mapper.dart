@@ -44,13 +44,17 @@ class TagMapper {
   TagInfo resourceItem(JsonApiResource resource) {
     final attrs = JsonReader(resource.attributes);
     final parentId = int.tryParse(resource.relatedId('parent') ?? '');
+    final rawPosition = attrs['position'];
+    final position = rawPosition == null
+        ? null
+        : JsonValue.asInt(rawPosition, -1);
     return TagInfo(
       attrs.string('name'),
       resource.intId,
       attrs.string('description'),
       attrs.string('slug'),
       attrs.integer('discussionCount'),
-      attrs.contains('position') ? attrs.integer('position', -1) : null,
+      position,
       attrs.string('lastPostedAt'),
       null,
       -1,

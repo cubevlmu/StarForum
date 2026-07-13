@@ -13,10 +13,12 @@ import 'package:star_forum/di/injector.dart';
 class EditorController extends GetxController {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController contentController = TextEditingController();
+  final FocusNode titleFocusNode = FocusNode();
   final FocusNode contentFocusNode = FocusNode();
 
   final Rxn<TagInfo> primaryTag = Rxn<TagInfo>();
   final RxList<TagInfo> secondaryTags = <TagInfo>[].obs;
+  final RxBool isSelectingTags = false.obs;
   final RxBool isSubmitting = false.obs;
 
   final TagRepo tagRepo = getIt<TagRepo>();
@@ -115,6 +117,7 @@ class EditorController extends GetxController {
   void onClose() {
     titleController.dispose();
     contentController.dispose();
+    titleFocusNode.dispose();
     contentFocusNode.dispose();
     super.onClose();
   }

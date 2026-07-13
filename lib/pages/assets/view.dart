@@ -12,7 +12,6 @@ import 'package:star_forum/utils/shared_dialog.dart' as shared;
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/widgets/cached_network_image.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
 
 class AssetsPage extends StatefulWidget {
   const AssetsPage({
@@ -51,10 +50,29 @@ class _AssetsPageState extends State<AssetsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: widget.embedded
           ? null
-          : AppBar(title: _AssetsPageTitle(controller: controller)),
+          : FUIAppBar(
+              title: l10n.assetsManagerTitle,
+              actions: [
+                Obx(() {
+                  final uploading = controller.isUploading.value;
+                  final canUpload = controller.canUpload.value;
+                  return FUIIconButton(
+                    icon: FUIIcons.update,
+                    tooltip: canUpload
+                        ? l10n.assetsUpload
+                        : l10n.assetsUploadDenied,
+                    loading: uploading,
+                    onPressed: uploading || !canUpload
+                        ? null
+                        : () => pickAndUploadWithNotice(context, controller),
+                  );
+                }),
+              ],
+            ),
       body: Column(
         children: [
           Expanded(
@@ -98,11 +116,11 @@ class _AssetsBody extends StatelessWidget {
       final isLoading =
           controller.isInitialLoading.value && controller.files.isEmpty;
 
-      return SimpleEasyRefresher(
-        easyRefreshController: controller.refreshController,
+      return FUIRefresh(
+        controller: controller.refreshController,
         onRefresh: controller.onRefresh,
         onLoad: controller.onLoad,
-        autoRefreshOnStart: false,
+        refreshOnStart: false,
         refreshEnabled: !isLoading,
         loadEnabled: !isLoading,
         childBuilder: (context, physics) {
@@ -180,7 +198,7 @@ class _AssetsHeader extends StatelessWidget {
           const SizedBox(width: 12),
           Obx(() {
             final uploading = controller.isUploading.value;
-            final canUpload = controller.userRepo.canUpload.value;
+            final canUpload = controller.canUpload.value;
             return Tooltip(
               message: canUpload ? l10n.assetsUpload : l10n.assetsUploadDenied,
               child: FUIButton(
@@ -197,44 +215,6 @@ class _AssetsHeader extends StatelessWidget {
           }),
         ],
       ),
-    );
-  }
-}
-
-class _AssetsPageTitle extends StatelessWidget {
-  const _AssetsPageTitle({required this.controller});
-
-  final AssetsController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            l10n.assetsManagerTitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        Obx(() {
-          final uploading = controller.isUploading.value;
-          final canUpload = controller.userRepo.canUpload.value;
-          return IconButton(
-            tooltip: canUpload ? l10n.assetsUpload : l10n.assetsUploadDenied,
-            onPressed: uploading || !canUpload
-                ? null
-                : () => pickAndUploadWithNotice(context, controller),
-            icon: uploading
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.file_upload_outlined),
-          );
-        }),
-      ],
     );
   }
 }
@@ -485,21 +465,16 @@ class _AssetActions extends StatelessWidget {
         children: [
           Obx(() {
             final deleting = controller.deletingIds.contains(file.id);
-            return Tooltip(
-              message: l10n.assetsDeleteFile,
-              child: IconButton(
-                visualDensity: VisualDensity.compact,
-                iconSize: 18,
-                onPressed: file.canDelete && !deleting
-                    ? () => _confirmDelete(context)
-                    : null,
-                icon: deleting
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.delete_outline),
-              ),
+            return FUIIconButton(
+              icon: FUIIcons.delete,
+              tooltip: l10n.assetsDeleteFile,
+              variant: FUIIconButtonVariant.danger,
+              size: 34,
+              iconSize: 18,
+              loading: deleting,
+              onPressed: file.canDelete && !deleting
+                  ? () => _confirmDelete(context)
+                  : null,
             );
           }),
         ],

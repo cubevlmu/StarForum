@@ -15,43 +15,86 @@ import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/model/uploads.dart';
 import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/data/perf/perf_log.dart';
 
 JsonApiDocument documentOf(Object? raw) => JsonApiDocument.from(raw);
 
-ForumInfo parseForum(Object? raw) =>
-    const ForumMapper().document(documentOf(raw)) ?? ForumInfo.empty;
+ForumInfo parseForum(Object? raw) => _measureParse(
+  'forum',
+  () => const ForumMapper().document(documentOf(raw)) ?? ForumInfo.empty,
+);
 
-Tags parseTags(Object? raw) => const TagMapper().documentList(documentOf(raw));
+ForumInfo parseForumDocument(JsonApiDocument document) => _measureParse(
+  'forum',
+  () => const ForumMapper().document(document) ?? ForumInfo.empty,
+);
 
-DiscussionInfo? parseDiscussion(Object? raw) =>
-    const DiscussionMapper().document(documentOf(raw));
+Tags parseTags(Object? raw) => _measureParse(
+  'tags',
+  () => const TagMapper().documentList(documentOf(raw)),
+);
 
-Discussions parseDiscussions(Object? raw) =>
-    const DiscussionMapper().documentList(documentOf(raw));
+DiscussionDetail? parseDiscussion(Object? raw) => _measureParse(
+  'discussion',
+  () => const DiscussionMapper().document(documentOf(raw)),
+);
 
-Posts parsePosts(Object? raw) =>
-    const PostMapper().documentList(documentOf(raw));
+List<DiscussionDetail> parseDiscussions(Object? raw) => _measureParse(
+  'discussions',
+  () => const DiscussionMapper().documentList(documentOf(raw)),
+);
 
-PostInfo? parsePost(Object? raw) =>
-    const PostMapper().document(documentOf(raw));
-
-UserInfo? parseUser(Object? raw) =>
-    const UserMapper().document(documentOf(raw));
-
-NotificationInfoList parseNotifications(Object? raw) =>
-    const NotificationMapper().documentList(documentOf(raw));
-
-NotificationsInfo parseNotification(Object? raw) =>
-    const NotificationMapper().document(documentOf(raw)) ??
-    NotificationsInfo(
-      id: -1,
-      contentType: '',
-      createdAt: DateTime.utc(1980),
-      isRead: false,
+List<DiscussionDetail> parseDiscussionsDocument(JsonApiDocument document) =>
+    _measureParse(
+      'discussions',
+      () => const DiscussionMapper().documentList(document),
     );
 
-UploadFileList parseUploads(Object? raw) =>
-    const UploadMapper().documentList(documentOf(raw));
+Posts parsePosts(Object? raw) => _measureParse(
+  'posts',
+  () => const PostMapper().documentList(documentOf(raw)),
+);
 
-BadgeCategories parseBadges(Object? raw) =>
-    const BadgeMapper().documentList(documentOf(raw));
+Posts parsePostsDocument(JsonApiDocument document) =>
+    _measureParse('posts', () => const PostMapper().documentList(document));
+
+PostInfo? parsePost(Object? raw) =>
+    _measureParse('post', () => const PostMapper().document(documentOf(raw)));
+
+UserInfo? parseUser(Object? raw) =>
+    _measureParse('user', () => const UserMapper().document(documentOf(raw)));
+
+NotificationInfoList parseNotifications(Object? raw) => _measureParse(
+  'notifications',
+  () => const NotificationMapper().documentList(documentOf(raw)),
+);
+
+NotificationsInfo parseNotification(Object? raw) => _measureParse(
+  'notification',
+  () =>
+      const NotificationMapper().document(documentOf(raw)) ??
+      NotificationsInfo(
+        id: -1,
+        contentType: '',
+        createdAt: DateTime.utc(1980),
+        isRead: false,
+      ),
+);
+
+UploadFileList parseUploads(Object? raw) => _measureParse(
+  'uploads',
+  () => const UploadMapper().documentList(documentOf(raw)),
+);
+
+BadgeCategories parseBadges(Object? raw) => _measureParse(
+  'badges',
+  () => const BadgeMapper().documentList(documentOf(raw)),
+);
+
+T _measureParse<T>(String name, T Function() parse) {
+  final watch = Stopwatch()..start();
+  final result = parse();
+  watch.stop();
+  PerfLog.parsing(name, parseUs: watch.elapsedMicroseconds);
+  return result;
+}

@@ -11,6 +11,9 @@ import 'package:star_forum/utils/storage_utils.dart';
 
 class LocaleController extends GetxController {
   static const Locale _englishLocale = Locale('en');
+  static const Locale _japaneseLocale = Locale('ja');
+  static const Locale _koreanLocale = Locale('ko');
+  static const Locale _vietnameseLocale = Locale('vi');
   static const Locale _simplifiedChineseLocale = Locale('zh');
   static const Locale _traditionalChineseLocale = Locale.fromSubtags(
     languageCode: 'zh',
@@ -42,7 +45,7 @@ class LocaleController extends GetxController {
       _locale.value = _resolveSystemLocale();
       return;
     }
-    final normalized = _normalizeSupported(decoded);
+    final normalized = normalizeSupported(decoded);
     if (normalized == null) {
       _locale.value = _resolveSystemLocale();
       return;
@@ -56,7 +59,7 @@ class LocaleController extends GetxController {
   }
 
   void changeLocale(Locale locale) {
-    final normalized = _normalizeSupported(locale);
+    final normalized = normalizeSupported(locale);
     if (normalized == null) {
       return;
     }
@@ -98,10 +101,16 @@ class LocaleController extends GetxController {
     );
   }
 
-  Locale? _normalizeSupported(Locale locale) {
+  static Locale? normalizeSupported(Locale locale) {
     switch (locale.languageCode) {
       case 'en':
         return _englishLocale;
+      case 'ja':
+        return _japaneseLocale;
+      case 'ko':
+        return _koreanLocale;
+      case 'vi':
+        return _vietnameseLocale;
       case 'zh':
         final scriptCode = locale.scriptCode?.toLowerCase();
         final countryCode = locale.countryCode?.toUpperCase();
@@ -128,7 +137,7 @@ class LocaleController extends GetxController {
   Locale _resolveSystemLocale() {
     final locales = WidgetsBinding.instance.platformDispatcher.locales;
     for (final locale in locales) {
-      final normalized = _normalizeSupported(locale);
+      final normalized = normalizeSupported(locale);
       if (normalized != null) {
         return normalized;
       }

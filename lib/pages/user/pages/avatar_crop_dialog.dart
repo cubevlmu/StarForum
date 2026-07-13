@@ -40,10 +40,29 @@ Uint8List _cropAvatarBytes(Map<String, Object> request) {
     height: cropSize,
   );
 
+  const maxOutputSize = 512;
+  final outputImage = cropSize > maxOutputSize
+      ? img.copyResize(
+          cropped,
+          width: maxOutputSize,
+          height: maxOutputSize,
+          interpolation: img.Interpolation.linear,
+        )
+      : cropped;
   final output = hasAlpha
-      ? img.encodePng(cropped)
-      : img.encodeJpg(cropped, quality: 92);
+      ? img.encodePng(outputImage, level: 6)
+      : img.encodeJpg(outputImage, quality: 90);
   return Uint8List.fromList(output);
+}
+
+Map<String, Object>? _readAvatarSourceMeta(Uint8List fileData) {
+  final decoded = img.decodeImage(fileData);
+  if (decoded == null) return null;
+  return <String, Object>{
+    'width': decoded.width,
+    'height': decoded.height,
+    'hasAlpha': decoded.hasAlpha,
+  };
 }
 
 class _AvatarCropResult {
@@ -76,7 +95,7 @@ class _EditableAvatarButton extends StatefulWidget {
     required this.height,
   });
 
-  final UserPageController controller;
+  final UserProfileController controller;
   final String avatarUrl;
   final bool canEdit;
   final double radius;
@@ -100,7 +119,7 @@ class _EditableAvatarButtonState extends State<_EditableAvatarButton> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const <String>['jpg', 'jpeg', 'png', 'webp'],
-      withData: true,
+      withData: kIsWeb,
     );
 
     if (!mounted || result == null || result.files.isEmpty) {
@@ -109,8 +128,8 @@ class _EditableAvatarButtonState extends State<_EditableAvatarButton> {
 
     try {
       final picked = result.files.single;
-      final fileData = picked.bytes;
-      if (fileData == null || fileData.isEmpty) {
+      final fileData = picked.bytes ?? await picked.xFile.readAsBytes();
+      if (fileData.isEmpty) {
         throw StateError('empty file data');
       }
       if (!mounted) {
@@ -235,6 +254,7 @@ class _AvatarCropDialogState extends State<_AvatarCropDialog> {
   double? _baseScale;
   Size? _childSize;
   bool _submitting = false;
+  bool _sourceLoading = true;
 
   bool get _ready =>
       _sourceMeta != null &&
@@ -245,14 +265,22 @@ class _AvatarCropDialogState extends State<_AvatarCropDialog> {
   @override
   void initState() {
     super.initState();
-    final decoded = img.decodeImage(widget.fileData);
-    if (decoded != null) {
-      _sourceMeta = _AvatarSourceMeta(
-        width: decoded.width,
-        height: decoded.height,
-        hasAlpha: decoded.hasAlpha,
-      );
-    }
+    unawaited(_loadSourceMeta());
+  }
+
+  Future<void> _loadSourceMeta() async {
+    final data = await compute(_readAvatarSourceMeta, widget.fileData);
+    if (!mounted) return;
+    setState(() {
+      _sourceLoading = false;
+      if (data != null) {
+        _sourceMeta = _AvatarSourceMeta(
+          width: data['width']! as int,
+          height: data['height']! as int,
+          hasAlpha: data['hasAlpha']! as bool,
+        );
+      }
+    });
   }
 
   @override
@@ -430,6 +458,11 @@ class _AvatarCropDialogState extends State<_AvatarCropDialog> {
                                   1.8)
                               .round();
 
+                      if (_sourceLoading) {
+                        return const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                        );
+                      }
                       if (sourceMeta == null) {
                         return Center(child: Text(l10n.userAvatarInvalidImage));
                       }
@@ -480,8 +513,14 @@ class _AvatarCropDialogState extends State<_AvatarCropDialog> {
                                     child: Image.memory(
                                       widget.fileData,
                                       fit: BoxFit.fill,
-                                      cacheWidth: previewCacheSize,
-                                      cacheHeight: previewCacheSize,
+                                      cacheWidth:
+                                          sourceMeta.width >= sourceMeta.height
+                                          ? previewCacheSize
+                                          : null,
+                                      cacheHeight:
+                                          sourceMeta.height > sourceMeta.width
+                                          ? previewCacheSize
+                                          : null,
                                       filterQuality: FilterQuality.medium,
                                     ),
                                   ),

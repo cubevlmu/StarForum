@@ -1,219 +1,118 @@
 # StarForum
 
-<a id="readme-top"></a>
-
 简体中文 | [English](README.md)
 
-[![Flutter][flutter-shield]][flutter-url]
-[![Dart][dart-shield]][dart-url]
-[![License][license-shield]][license-url]
+StarForum 是面向 Flarum 社区的跨平台 Flutter 客户端。当前 2.0 开发线处于公开测试阶段，主要目标是提供行为可预测的本地优先数据访问、统一的 FinUI 界面，以及一致的移动端和桌面端体验。
 
-<br />
-<div align="center">
-  <img src="assets/images/logo.svg" alt="StarForum Logo" width="120" height="120">
+## 当前状态
 
-  <h3 align="center">StarForum</h3>
+项目正在进行稳定性收尾。测试版本适合功能反馈和兼容性验证，但在下一个稳定版本发布前，数据库迁移和部分功能行为仍可能调整。
 
-  <p align="center">
-    一个面向 Flarum 社区的跨平台 Flutter 论坛客户端。
-    <br />
-    重点关注性能、桌面与移动端适配、本地缓存，以及更完整的 Material 3 使用体验。
-  </p>
-</div>
+支持的平台：
 
-## 目录
+- Android、iOS
+- Windows、macOS、Linux
 
-- [项目简介](#项目简介)
-- [技术栈](#技术栈)
-- [功能特性](#功能特性)
-- [项目结构](#项目结构)
-- [快速开始](#快速开始)
-- [构建发布版](#构建发布版)
-- [说明](#说明)
-- [路线图](#路线图)
-- [许可证](#许可证)
+支持的界面语言：
 
-## 项目简介
+- 英语
+- 简体中文
+- 繁体中文（台湾）
+- 日语
+- 韩语
+- 越南语
 
-StarForum 是一个基于 Flutter 构建的 Flarum 论坛客户端，支持 Android、iOS、Windows、macOS 和 Linux。
+## 主要功能
 
-项目目前主要关注：
+- 基于 FinUI 的移动端、侧边栏和分栏自适应导航
+- 基于 Drift 与 SQLite 的 Flarum 增量同步
+- 缓存优先页面、明确的数据有效期和后台刷新
+- 请求合并、结构化网络错误和有界内容缓存
+- 讨论信息流、标签、搜索、通知、用户资料、用户组和资源管理
+- 富文本帖子、回复编辑、标签选择、点赞和评论时间排序
+- 主题模式、动态强调色、多语言和缓存管理
 
-- 移动端与桌面端的一致性体验
-- 基于 Material 3 的界面和交互设计
-- 本地缓存与更友好的离线使用体验
-- 大列表、图片与富文本内容的性能优化
-- 以 API、Repository、可复用组件为核心的可维护架构
-
-<p align="right">(<a href="#readme-top">返回顶部</a>)</p>
-
-## 技术栈
-
-- [Flutter](https://flutter.dev/)
-- [Dart](https://dart.dev/)
-- [GetX](https://pub.dev/packages/get)
-- [Dio](https://pub.dev/packages/dio)
-- [Drift / SQLite](https://pub.dev/packages/drift)
-- [cached_network_image](https://pub.dev/packages/cached_network_image)
-- [easy_refresh](https://pub.dev/packages/easy_refresh)
-- [dynamic_color](https://pub.dev/packages/dynamic_color)
-
-<p align="right">(<a href="#readme-top">返回顶部</a>)</p>
-
-## 功能特性
-
-- 支持 Android、iOS、Windows、macOS、Linux 的跨平台运行
-- 基于 Material 3 的主题、颜色、语言和个性化设置
-- 桌面端分栏详情导航，并支持详情页状态保活
-- 多个页面接入静默首屏加载与骨架动画
-- 帖子详情页支持优化后的正文解析、图片加载与评论交互
-- 支持通知页、搜索结果页、用户主页、主题分类浏览等主要功能
-- 支持本地数据缓存与缓存管理
-- 支持英文、简体中文以及中文相关语言环境
-
-<p align="right">(<a href="#readme-top">返回顶部</a>)</p>
-
-## 项目结构
+## 工程结构
 
 ```text
 lib/
-├── app/        # 应用级控制器与启动状态
-├── data/       # API、数据库、数据模型、仓储层
-├── di/         # 依赖注入配置
-├── l10n/       # 国际化源文件与生成文件
-├── pages/      # 页面与功能模块
-├── utils/      # 通用工具
-├── widgets/    # 可复用组件与加载动画组件
-└── main.dart   # 应用入口
+|-- app/             应用外壳、导航、语言和布局状态
+|-- data/
+|   |-- api/         Flarum JSON:API 传输、服务与映射
+|   |-- db/          Drift 表、DAO 与缓存映射
+|   |-- repository/  缓存策略、同步与数据修改
+|   |-- session/     提供给表现层的认证状态快照
+|   `-- perf/        运行时与数据层性能指标
+|-- di/              依赖注册
+|-- l10n/            ARB 源文件和生成的多语言代码
+|-- pages/           功能控制器与页面
+|-- utils/           单一职责工具
+`-- widgets/         共享领域展示组件
 ```
 
-<p align="right">(<a href="#readme-top">返回顶部</a>)</p>
+页面只与 Repository 和 SessionState 交互，不直接访问数据库。Repository 负责 API 调用、缓存写入、有效期判断和失败回退；领域模型不依赖 Drift 数据行或 JSON:API Resource。
 
-## 快速开始
+## 开发环境
 
-### 环境要求
-
-- Flutter SDK，建议使用稳定版
-- Flutter 自带 Dart SDK
-- Android Studio、VS Code 或其他 Flutter 开发环境
-
-检查本地环境：
+需要 Flutter stable、Dart 3.12 或更高版本，以及目标平台对应的构建工具链。
 
 ```sh
-flutter doctor
+flutter pub get
+flutter gen-l10n
+dart run build_runner build --delete-conflicting-outputs
 ```
 
-### 安装
-
-1. 克隆仓库
-
-   ```sh
-   git clone <your-repo-url>
-   cd forum
-   ```
-
-2. 安装依赖
-
-   ```sh
-   flutter pub get
-   ```
-
-3. 生成国际化文件
-
-   ```sh
-   flutter gen-l10n
-   ```
-
-4. 如有需要，生成应用图标
-
-   ```sh
-   dart run flutter_launcher_icons
-   ```
-
-5. 如果数据库结构或注解有改动，重新生成相关代码
-
-   ```sh
-   dart run build_runner build --delete-conflicting-outputs
-   ```
-
-### 运行
-
-```sh
-flutter run
-```
-
-示例：
+运行示例：
 
 ```sh
 flutter run -d android
 flutter run -d windows
-flutter run -d macos
-flutter run -d linux
-flutter run
 ```
 
-<p align="right">(<a href="#readme-top">返回顶部</a>)</p>
+当前收尾分支通过 `../../ClassTool/fui` 引用本地 FinUI。用于 CI 或其他机器构建前，需要发布匹配的 FinUI 版本，或将该路径替换为可访问的依赖源。
 
-## 构建发布版
-
-### Android
+## 质量检查
 
 ```sh
-flutter build appbundle --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
-flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=./symbols --tree-shake-icons
+dart format --output=none --set-exit-if-changed lib test benchmark
+flutter analyze
+flutter test
+flutter test benchmark/data_layer_benchmark_test.dart
 ```
 
-### iOS
+Benchmark 只适合在相同设备和构建模式下比较。具体流程见 [benchmark/README.md](benchmark/README.md)。
+
+## 测试构建
+
+Android ARM64 APK：
 
 ```sh
-flutter build ios --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
+flutter build apk --release --target-platform android-arm64 \
+  --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
-### 桌面端
+Android App Bundle：
 
 ```sh
-flutter build windows --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
-flutter build macos --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
-flutter build linux --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
+flutter build appbundle --release \
+  --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
-<p align="right">(<a href="#readme-top">返回顶部</a>)</p>
+固定论坛地址并隐藏运行时重新配置入口：
 
-## 说明
+```sh
+flutter build apk --release \
+  --dart-define=FIXED_API=https://forum.example.com
+```
 
-- Android 9 及以上默认会限制明文 HTTP，请在论坛接口未启用 HTTPS 时额外配置网络安全策略。
-- 一部分生成文件依赖 `flutter gen-l10n` 和 `build_runner`。
-- 上面给出的发布命令默认启用了混淆与符号分离。
-- 如果要在编译时固定论坛地址，可追加 `--dart-define=FIXED_API=https://forum.example.com`。设置后应用会优先使用这个地址，并隐藏运行时“重新配置站点”入口。
-- 大列表、富文本和图片较多的页面，建议优先在 release 模式下测试真实性能。
+请保留生成的 `symbols/` 用于崩溃符号化。Drift 的 `*.g.dart` 不提交到仓库，数据库结构变化后需要重新生成。
 
-<p align="right">(<a href="#readme-top">返回顶部</a>)</p>
+## 兼容性说明
 
-## 路线图
+Flarum 扩展可能增加字段、权限和接口。StarForum 会将可选扩展作为能力检测，并在接口不可用时回退。提交问题时请附带应用版本、平台、Flarum 版本、启用的扩展，以及开发者页面导出的相关日志。
 
-- [x] 跨平台 Flarum 客户端基础能力
-- [x] Material 3 设置页、个性化和主题支持
-- [x] 多语言支持
-- [x] 桌面端分栏详情导航
-- [x] 静默首屏骨架加载体验
-- [ ] 补充更完整的架构和模块文档
-- [ ] 增加更多功能模块的自动化测试覆盖
-- [ ] 完善发布与贡献说明
-
-<p align="right">(<a href="#readme-top">返回顶部</a>)</p>
+开发者入口 Tile 只在 Debug 构建中显示。其他构建可以在“关于”页面连续点击版本号六次打开诊断页面。
 
 ## 许可证
 
-本项目使用 **GNU General Public License v2.0**。
-
-详见 [LICENSE](LICENSE) 与 [assets/licenses/GPL-2.0.txt](assets/licenses/GPL-2.0.txt)。
-
-<p align="right">(<a href="#readme-top">返回顶部</a>)</p>
-
-[flutter-shield]: https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white
-[flutter-url]: https://flutter.dev/
-[dart-shield]: https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white
-[dart-url]: https://dart.dev/
-[m3-shield]: https://img.shields.io/badge/Material%203-Enabled-4E5BA6?style=for-the-badge
-[license-shield]: https://img.shields.io/badge/License-GPLv2-blue?style=for-the-badge
-[license-url]: ./LICENSE
+StarForum 使用 GNU General Public License v2.0，详见 [LICENSE](LICENSE) 和 [assets/licenses/GPL-2.0.txt](assets/licenses/GPL-2.0.txt)。

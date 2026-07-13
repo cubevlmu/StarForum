@@ -3,14 +3,14 @@ part of '../view.dart';
 class _UserBadgesSection extends StatelessWidget {
   const _UserBadgesSection({required this.controller});
 
-  final UserPageController controller;
+  final UserBadgesController controller;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Obx(() {
-      final badges = controller.badges;
-      if (controller.isBadgesLoading.value && badges.isEmpty) {
+      final badges = controller.items;
+      if (controller.isLoading.value && badges.isEmpty) {
         return const _UserBadgeLoadingSkeleton();
       }
 

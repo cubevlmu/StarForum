@@ -1,17 +1,6 @@
 import 'flarum_query.dart';
 
 class DiscussionQueries {
-  static const discussionIndexFields = [
-    'title',
-    'lastPostedAt',
-    'lastPostNumber',
-    'commentCount',
-    'viewCount',
-    'views',
-    'subscription',
-    'firstPost',
-  ];
-
   static const discussionFields = [
     'title',
     'createdAt',
@@ -60,27 +49,9 @@ class DiscussionQueries {
         .sort(sort)
         .include(['user', 'lastPostedUser', 'tags', 'firstPost'])
         .fields('discussions', discussionFields)
-        .fields('posts', PostQueries.indexFields)
+        .fields('posts', PostQueries.fields)
         .fields('users', userFields)
         .fields('tags', tagFields);
-    if (tagSlug != null && tagSlug.isNotEmpty) {
-      query.filter('tag', tagSlug);
-    }
-    return query;
-  }
-
-  static FlarumQuery feedIndex({
-    required String sort,
-    required int offset,
-    required int limit,
-    String? tagSlug,
-  }) {
-    final query = FlarumQuery()
-        .page(offset: offset, limit: limit)
-        .sort(sort)
-        .include(['firstPost'])
-        .fields('discussions', discussionIndexFields)
-        .fields('posts', PostQueries.indexFields);
     if (tagSlug != null && tagSlug.isNotEmpty) {
       query.filter('tag', tagSlug);
     }
@@ -107,17 +78,6 @@ class DiscussionQueries {
 }
 
 class PostQueries {
-  static const indexFields = [
-    'number',
-    'createdAt',
-    'contentType',
-    'editedAt',
-    'likesCount',
-    'isLiked',
-    'user',
-    'discussion',
-  ];
-
   static const fields = [
     'number',
     'createdAt',

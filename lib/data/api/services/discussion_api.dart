@@ -14,7 +14,7 @@ class DiscussionApi {
 
   final FlarumApiClient client;
 
-  Future<FlarumPage<DiscussionInfo>?> list(
+  Future<FlarumPage<DiscussionDetail>?> list(
     String sort, {
     String? tagSlug,
     int offset = 0,
@@ -33,26 +33,7 @@ class DiscussionApi {
     );
   }
 
-  Future<FlarumPage<DiscussionInfo>?> listIndex(
-    String sort, {
-    String? tagSlug,
-    int offset = 0,
-    int limit = 20,
-    CancelToken? cancelToken,
-  }) {
-    return _list(
-      DiscussionQueries.feedIndex(
-        sort: sort,
-        offset: offset,
-        limit: limit,
-        tagSlug: tagSlug,
-      ),
-      limit: limit,
-      cancelToken: cancelToken,
-    );
-  }
-
-  Future<FlarumPage<DiscussionInfo>?> following({
+  Future<FlarumPage<DiscussionDetail>?> following({
     FollowingSort sort = FollowingSort.hottest,
     int offset = 0,
     int limit = 20,
@@ -72,27 +53,7 @@ class DiscussionApi {
     return _list(query, limit: limit);
   }
 
-  Future<FlarumPage<DiscussionInfo>?> followingIndex({
-    FollowingSort sort = FollowingSort.hottest,
-    int offset = 0,
-    int limit = 20,
-  }) {
-    final sortValue = switch (sort) {
-      FollowingSort.hottest => '',
-      FollowingSort.latestReply => '-commentCount',
-      FollowingSort.newest => '-createdAt',
-      FollowingSort.oldest => 'createdAt',
-      FollowingSort.mostViews => '-viewCount',
-    };
-    final query = DiscussionQueries.feedIndex(
-      sort: sortValue,
-      offset: offset,
-      limit: limit,
-    ).filter('subscription', 'following');
-    return _list(query, limit: limit);
-  }
-
-  Future<FlarumPage<DiscussionInfo>?> search({
+  Future<FlarumPage<DiscussionDetail>?> search({
     required String key,
     String? tagSlug,
     int offset = 0,
@@ -111,7 +72,7 @@ class DiscussionApi {
     );
   }
 
-  Future<FlarumPage<DiscussionInfo>?> byTag({
+  Future<FlarumPage<DiscussionDetail>?> byTag({
     required String tag,
     int offset = 0,
     int limit = 20,
@@ -127,7 +88,7 @@ class DiscussionApi {
     );
   }
 
-  Future<FlarumPage<DiscussionInfo>?> byAuthor({
+  Future<FlarumPage<DiscussionDetail>?> byAuthor({
     required String username,
     int offset = 0,
     int limit = 20,
@@ -141,7 +102,10 @@ class DiscussionApi {
     return _list(query, limit: limit, cancelToken: cancelToken);
   }
 
-  Future<DiscussionInfo?> getById(String id, {CancelToken? cancelToken}) async {
+  Future<DiscussionDetail?> getById(
+    String id, {
+    CancelToken? cancelToken,
+  }) async {
     final response = await client.get<Object?>(
       '/api/discussions/$id',
       query: DiscussionQueries.detailHeader().build(),
@@ -150,7 +114,7 @@ class DiscussionApi {
     return parseDiscussion(response.data);
   }
 
-  Future<DiscussionInfo?> create(
+  Future<DiscussionDetail?> create(
     List<int> tags,
     String title,
     String content,
@@ -205,7 +169,7 @@ class DiscussionApi {
     return response.statusCode == 200;
   }
 
-  Future<FlarumPage<DiscussionInfo>?> _list(
+  Future<FlarumPage<DiscussionDetail>?> _list(
     FlarumQuery query, {
     required int limit,
     CancelToken? cancelToken,
@@ -216,11 +180,11 @@ class DiscussionApi {
       cancelToken: cancelToken,
     );
     final document = documentOf(response.data);
-    final parsed = parseDiscussions(document.raw);
+    final parsed = parseDiscussionsDocument(document);
     final next = document.links['next']?.toString();
     final prev = document.links['prev']?.toString();
     return FlarumPage(
-      items: parsed.list,
+      items: parsed,
       nextUrl: next == null || next.isEmpty ? null : next,
       prevUrl: prev == null || prev.isEmpty ? null : prev,
       total: int.tryParse(document.meta['total']?.toString() ?? ''),

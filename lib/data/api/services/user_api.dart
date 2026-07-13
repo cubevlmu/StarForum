@@ -6,8 +6,10 @@ import 'package:star_forum/data/api/flarum_endpoint.dart';
 import 'package:star_forum/data/api/flarum_page.dart';
 import 'package:star_forum/data/api/flarum_query.dart';
 import 'package:star_forum/data/api/mappers/badge_mapper.dart';
+import 'package:star_forum/data/api/mappers/mapper_support.dart';
 import 'package:star_forum/data/api/mappers/user_mapper.dart';
 import 'package:star_forum/data/model/badge.dart';
+import 'package:star_forum/data/model/group_info.dart';
 import 'package:star_forum/data/model/users.dart';
 
 import 'api_parsing.dart';
@@ -55,6 +57,7 @@ class UserApi {
     int limit = 100,
     int offset = 0,
     UserSort sort = UserSort.unknown,
+    int? groupId,
     CancelToken? cancelToken,
   }) async {
     final sortValue = switch (sort) {
@@ -81,6 +84,9 @@ class UserApi {
           'lastSeenAt',
           'groups',
         ]);
+    if (groupId != null && groupId > 0) {
+      query.filter('group', groupId.toString());
+    }
     final response = await client.get<Object?>(
       '/api/users',
       query: query.build(),
@@ -94,6 +100,19 @@ class UserApi {
       nextUrl: next == null || next.isEmpty ? null : next,
       total: int.tryParse(document.meta['total']?.toString() ?? ''),
     );
+  }
+
+  Future<List<GroupInfo>> groups({CancelToken? cancelToken}) async {
+    final response = await client.get<Object?>(
+      '/api/groups',
+      cancelToken: cancelToken,
+    );
+    final document = documentOf(response.data);
+    const mapper = UserMapper();
+    return [
+      for (final resource in documentResources(document))
+        if (resource.type == 'groups') mapper.groupItem(resource),
+    ];
   }
 
   Future<List<UserBadge>> badges(int userId, {CancelToken? cancelToken}) async {

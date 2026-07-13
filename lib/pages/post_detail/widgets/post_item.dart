@@ -34,18 +34,31 @@ class PostItemWidget extends StatefulWidget {
 
 class _PostItemWidgetState extends State<PostItemWidget> {
   bool _isLikeSubmitting = false;
+  late PostInfo _reply;
+
+  @override
+  void initState() {
+    super.initState();
+    _reply = widget.reply;
+  }
+
+  @override
+  void didUpdateWidget(covariant PostItemWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.reply != widget.reply) _reply = widget.reply;
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final user = widget.reply.user;
+    final user = _reply.user;
     final avatarUrl = user?.avatarUrl ?? "";
-    final author = UserInfo.displayLabel(user, fallbackId: widget.reply.userId);
-    final createdAt = widget.reply.editedAt.isEmpty
-        ? widget.reply.createdAt
-        : widget.reply.editedAt;
+    final author = UserInfo.displayLabel(user, fallbackId: _reply.userId);
+    final createdAt = _reply.editedAt.isEmpty
+        ? _reply.createdAt
+        : _reply.editedAt;
     final canInteract = !widget.isUserPage;
-    final canOpenUser = canInteract && widget.reply.userId > 0;
+    final canOpenUser = canInteract && _reply.userId > 0;
 
     return RepaintBoundary(
       child: Padding(
@@ -59,9 +72,9 @@ class _PostItemWidgetState extends State<PostItemWidget> {
           author: author,
           avatarUrl: avatarUrl,
           meta: [if (createdAt.isNotEmpty) ForumMetaItem(label: createdAt)],
-          content: ContentView(content: widget.reply.contentHtml),
-          likeCount: widget.reply.likes,
-          isLiked: widget.reply.isLiked,
+          content: ContentView(content: _reply.contentHtml),
+          likeCount: _reply.likes,
+          isLiked: _reply.isLiked,
           likeLabel: l10n.commonLike,
           replyLabel: l10n.postActionComment,
           likeLoading: _isLikeSubmitting,
@@ -70,7 +83,7 @@ class _PostItemWidgetState extends State<PostItemWidget> {
               ? () => FuiNavigation.openDetail(
                   context,
                   builder: (_) =>
-                      UserPage(userId: widget.reply.userId, embedded: true),
+                      UserPage(userId: _reply.userId, embedded: true),
                 )
               : null,
           onLike: canInteract && !_isLikeSubmitting ? _handleLikePressed : null,
@@ -86,11 +99,10 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     });
 
     try {
-      final r = await ReplyUtil.addLikeToPost(widget.reply);
+      final r = await ReplyUtil.toggleLikeForPost(_reply);
       if (r != null && mounted) {
         setState(() {
-          widget.reply.likes = r.likes;
-          widget.reply.isLiked = r.isLiked;
+          _reply = _reply.copyWith(likes: r.likes, isLiked: r.isLiked);
         });
       }
     } finally {
@@ -109,9 +121,9 @@ class _PostItemWidgetState extends State<PostItemWidget> {
     ReplyUtil.showAddReplySheet2(
       context: context,
       discussionId: controller.getId(),
-      pi: widget.reply,
+      pi: _reply,
       newReplyItems: controller.newReplyItems,
-      updateWidget: () {},
+      updateWidget: controller.onReplyCreated,
       scrollController: null,
     );
   }

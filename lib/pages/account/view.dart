@@ -41,65 +41,61 @@ class _AccountPageState extends State<AccountPage>
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                FUITokens.pagePadding,
-                FUITokens.gap12,
-                FUITokens.pagePadding,
-                FUITokens.gap4,
-              ),
-              child: FuiPageHead(
-                showNavigation: false,
-                title: l10n.accountAppBarTitle,
-                actions: [
-                  Obx(() {
-                    if (!controller.isLogin.value) {
-                      return const SizedBox.shrink();
-                    }
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FUIIconButton(
-                          icon: FUIIcons.logout,
-                          variant: FUIIconButtonVariant.ghost,
-                          tooltip: l10n.commonActionLogout,
-                          onPressed: () =>
-                              SharedDialog.showLogoutDialog(context),
-                        ),
-                      ],
-                    );
-                  }),
-                  FUIIconButton(
-                    icon: FUIIcons.settings,
-                    variant: FUIIconButtonVariant.ghost,
-                    onPressed: () => FuiNavigation.openDetail(
-                      context,
-                      builder: (_) => const SettingsPage(),
-                    ),
-                  ),
-                ],
-              ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              FUITokens.pagePadding,
+              FUITokens.gap12,
+              FUITokens.pagePadding,
+              FUITokens.gap4,
             ),
-            Expanded(
-              child: Obx(() {
-                if (!controller.isLogin.value) {
-                  return NotLoginNotice(
-                    title: l10n.commonNotLoggedInTitle,
-                    tipsText: l10n.authNotLoginTips,
+            child: FuiPageHead(
+              showNavigation: false,
+              title: l10n.accountAppBarTitle,
+              actions: [
+                Obx(() {
+                  if (!controller.isLogin.value) {
+                    return const SizedBox.shrink();
+                  }
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FUIIconButton(
+                        icon: FUIIcons.logout,
+                        variant: FUIIconButtonVariant.ghost,
+                        tooltip: l10n.commonActionLogout,
+                        onPressed: () => SharedDialog.showLogoutDialog(context),
+                      ),
+                    ],
                   );
-                }
-                return UserPage(
-                  userId: controller.getTrueId(),
-                  isAccountPage: true,
-                );
-              }),
+                }),
+                FUIIconButton(
+                  icon: FUIIcons.settings,
+                  variant: FUIIconButtonVariant.ghost,
+                  onPressed: () => FuiNavigation.openDetail(
+                    context,
+                    builder: (_) => const SettingsPage(),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: Obx(() {
+              if (!controller.isLogin.value) {
+                return NotLoginNotice(
+                  title: l10n.commonNotLoggedInTitle,
+                  tipsText: l10n.authNotLoginTips,
+                );
+              }
+              return UserPage(
+                userId: controller.getTrueId(),
+                isAccountPage: true,
+              );
+            }),
+          ),
+        ],
       ),
     );
   }

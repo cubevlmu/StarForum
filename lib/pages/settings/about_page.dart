@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/settings/dev_page.dart';
@@ -110,7 +109,7 @@ class _AboutPageState extends State<AboutPage> {
       backgroundColor: context.colors.background,
       body: FUIPage(
         children: [
-          FuiPageHead(title: l10n.aboutTitle, subtitle: '版本信息、开源项目和许可'),
+          FuiPageHead(title: l10n.aboutTitle, subtitle: l10n.aboutSubtitle),
           const SizedBox(height: FUITokens.gap16),
           FUISurface(
             padding: const EdgeInsets.all(20),
@@ -133,7 +132,7 @@ class _AboutPageState extends State<AboutPage> {
                 ),
                 const SizedBox(height: FUITokens.gap4),
                 GestureDetector(
-                  onTap: kDebugMode ? _handleVersionTap : null,
+                  onTap: _handleVersionTap,
                   child: FutureBuilder<String>(
                     future: AppInfo.versionLabel(),
                     builder: (context, snapshot) {
@@ -151,7 +150,7 @@ class _AboutPageState extends State<AboutPage> {
                 ),
                 const SizedBox(height: FUITokens.gap12),
                 Text(
-                  '面向 Flarum 社区的跨平台客户端，提供讨论浏览、回复、通知和个人资料管理。',
+                  l10n.aboutDescription,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context.colors.textSecondary,
@@ -170,7 +169,7 @@ class _AboutPageState extends State<AboutPage> {
           ),
           const SizedBox(height: FUITokens.gap16),
           FUISection(
-            title: '项目',
+            title: l10n.aboutProjectSection,
             children: [
               FUITile(
                 icon: FUIIcons.person,
@@ -188,12 +187,12 @@ class _AboutPageState extends State<AboutPage> {
           ),
           const SizedBox(height: FUITokens.gap16),
           FUISection(
-            title: '支持',
+            title: l10n.aboutSupportSection,
             children: [
               FUITile(
                 icon: FUIIcons.privacy,
                 title: l10n.aboutLicense,
-                subtitle: '查看应用及第三方组件的开源许可',
+                subtitle: l10n.aboutLicensesSubtitle,
                 onTap: () => FuiNavigation.openDetail(
                   context,
                   builder: (_) => const LicensePage(
@@ -218,7 +217,7 @@ class _AboutPageState extends State<AboutPage> {
 
   void _handleVersionTap() {
     tapTimes++;
-    if (tapTimes != 5) return;
+    if (tapTimes < 6) return;
     tapTimes = 0;
     FuiNavigation.openDetail(context, builder: (_) => const DevSettingPage());
   }

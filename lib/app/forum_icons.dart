@@ -40,6 +40,10 @@ abstract final class ForumIcons {
   static const IconData attachment = FluentIcons.attach_24_regular;
   static const IconData send = FluentIcons.send_24_regular;
   static const IconData upload = FluentIcons.arrow_upload_24_regular;
+  static const IconData sortAscending =
+      FluentIcons.arrow_sort_up_lines_24_regular;
+  static const IconData sortDescending =
+      FluentIcons.arrow_sort_down_lines_24_regular;
   static const IconData folder = FluentIcons.folder_24_regular;
   static const IconData folderFilled = FluentIcons.folder_24_filled;
 

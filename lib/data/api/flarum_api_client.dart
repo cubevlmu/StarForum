@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:star_forum/data/api/api_constants.dart';
@@ -24,12 +24,8 @@ class FlarumApiClient {
   final Dio _dio;
   FlarumApiEnvironment _environment;
   FlarumAuthToken _auth = const FlarumAuthToken.none();
-  final Map<
-    String,
-    ({Response<dynamic> response, DateTime freshUntil, DateTime staleUntil})
-  >
-  _cache = {};
   final Map<String, Future<Response<dynamic>>> _pending = {};
+  final Random _random = Random();
 
   FlarumApiEnvironment get environment => _environment;
   String get baseUrl => _environment.baseUrl;
@@ -37,7 +33,6 @@ class FlarumApiClient {
 
   void setEnvironment(FlarumApiEnvironment env) {
     if (_environment.baseUrl != env.baseUrl) {
-      _cache.clear();
       _pending.clear();
     }
     _environment = env.copyWith(
@@ -47,7 +42,7 @@ class FlarumApiClient {
 
   void setAuth(FlarumAuthToken token) {
     if (_auth.kind != token.kind || _auth.token != token.token) {
-      _cache.clear();
+      _pending.clear();
     }
     _auth = token;
     final header = token.toAuthorizationHeader();
@@ -83,36 +78,26 @@ class FlarumApiClient {
     Map<String, dynamic>? query,
     Options? options,
     CancelToken? cancelToken,
-    bool bypassCache = false,
   }) {
     final url = resolveUrl(path);
-    final key = _requestKey(url, query);
-    final cached = bypassCache ? null : _cache[key];
-    final now = DateTime.now();
-    if (cached != null && now.isBefore(cached.freshUntil)) {
-      return Future.value(cached.response as Response<T>);
+    if (cancelToken != null || options != null) {
+      return _request(
+        path,
+        'GET',
+        () => _dio.get<T>(
+          url,
+          queryParameters: query,
+          options: options,
+          cancelToken: cancelToken,
+        ),
+      );
     }
-    if (cached != null && now.isBefore(cached.staleUntil)) {
-      if (!_pending.containsKey(key)) {
-        unawaited(
-          _fetchAndCache<T>(
-            path: path,
-            method: 'GET',
-            url: url,
-            key: key,
-            query: query,
-            options: options,
-            cancelToken: null,
-          ).catchError((_) => cached.response as Response<T>),
-        );
-      }
-      return Future.value(cached.response as Response<T>);
-    }
-    _cache.remove(key);
-    final pending = bypassCache ? null : _pending[key];
+    final key = _requestKey<T>(url, query);
+    final pending = _pending[key];
+    PerfLog.coalescing('http', hit: pending != null);
     if (pending != null) return pending.then((value) => value as Response<T>);
 
-    return _fetchAndCache<T>(
+    return _fetch<T>(
       path: path,
       method: 'GET',
       url: url,
@@ -123,7 +108,7 @@ class FlarumApiClient {
     );
   }
 
-  Future<Response<T>> _fetchAndCache<T>({
+  Future<Response<T>> _fetch<T>({
     required String path,
     required String method,
     required String url,
@@ -143,20 +128,9 @@ class FlarumApiClient {
       ),
     );
     _pending[key] = request;
-    return request
-        .then((response) {
-          final policy = _cachePolicy(url, query);
-          final now = DateTime.now();
-          _cache[key] = (
-            response: response,
-            freshUntil: now.add(policy.fresh),
-            staleUntil: now.add(policy.stale),
-          );
-          return response;
-        })
-        .whenComplete(() {
-          if (identical(_pending[key], request)) _pending.remove(key);
-        });
+    return request.whenComplete(() {
+      if (identical(_pending[key], request)) _pending.remove(key);
+    });
   }
 
   Future<Response<T>> post<T>(
@@ -218,98 +192,18 @@ class FlarumApiClient {
     String method,
     Future<Response<T>> Function() call,
   ) async {
-    final response = await _request(path, method, call);
-    _invalidateForPath(path);
-    return response;
+    return _request(path, method, call);
   }
 
-  String _requestKey(String url, Map<String, dynamic>? query) {
-    final uri = Uri.parse(url).replace(
-      queryParameters: query?.map(
-        (key, value) => MapEntry(key, value.toString()),
-      ),
-    );
-    return 'GET ${uri.toString()}';
-  }
-
-  ({Duration fresh, Duration stale}) _cachePolicy(
-    String url,
-    Map<String, dynamic>? query,
-  ) {
-    final path = Uri.parse(url).path;
-    final offset = int.tryParse(query?['page[offset]']?.toString() ?? '') ?? 0;
-    if (path == '/api') {
-      return (
-        fresh: const Duration(minutes: 5),
-        stale: const Duration(days: 1),
-      );
-    }
-    if (path == '/api/tags') {
-      return (
-        fresh: const Duration(minutes: 10),
-        stale: const Duration(days: 1),
-      );
-    }
-    if (path.contains('/notifications')) {
-      return (
-        fresh: const Duration(seconds: 8),
-        stale: const Duration(minutes: 2),
-      );
-    }
-    if (path.contains('/posts')) {
-      return (
-        fresh: const Duration(seconds: 30),
-        stale: const Duration(minutes: 30),
-      );
-    }
-    if (path.contains('/users/')) {
-      return (
-        fresh: const Duration(minutes: 2),
-        stale: const Duration(days: 1),
-      );
-    }
-    if (path == '/api/users') {
-      return (
-        fresh: const Duration(minutes: 2),
-        stale: const Duration(minutes: 30),
-      );
-    }
-    if (path == '/api/discussions') {
-      return offset == 0
-          ? (
-              fresh: const Duration(seconds: 20),
-              stale: const Duration(minutes: 10),
-            )
-          : (
-              fresh: const Duration(minutes: 1),
-              stale: const Duration(minutes: 30),
-            );
-    }
-    if (path.startsWith('/api/discussions/')) {
-      return (
-        fresh: const Duration(seconds: 30),
-        stale: const Duration(minutes: 30),
-      );
-    }
-    return (
-      fresh: const Duration(seconds: 20),
-      stale: const Duration(minutes: 5),
-    );
-  }
-
-  void _invalidateForPath(String path) {
-    final uriPath = Uri.parse(resolveUrl(path)).path;
-    final targets = <String>{uriPath};
-    if (uriPath.contains('/posts') || uriPath.contains('/discussions')) {
-      targets.addAll({'/api/posts', '/api/discussions'});
-    }
-    if (uriPath.contains('/notifications')) {
-      targets.add('/api/notifications');
-    }
-    if (uriPath.contains('/users')) targets.add('/api/users');
-    _cache.removeWhere(
-      (key, _) => targets.any((target) => key.contains(target)),
-    );
+  String _requestKey<T>(String url, Map<String, dynamic>? query) {
+    final normalizedQuery = query == null
+        ? null
+        : <String, String>{
+            for (final key in query.keys.toList(growable: false)..sort())
+              key: query[key].toString(),
+          };
+    final uri = Uri.parse(url).replace(queryParameters: normalizedQuery);
+    return 'GET<$T> ${uri.toString()}';
   }
 
   Future<Response<T>> _request<T>(
@@ -318,41 +212,116 @@ class FlarumApiClient {
     Future<Response<T>> Function() call,
   ) async {
     final watch = Stopwatch()..start();
-    try {
-      final header = _auth.toAuthorizationHeader();
-      if (header != null) {
-        _dio.options.headers['Authorization'] = header;
+    var requestMs = 0;
+    var attempt = 0;
+    while (true) {
+      attempt += 1;
+      final attemptWatch = Stopwatch()..start();
+      try {
+        final header = _auth.toAuthorizationHeader();
+        if (header != null) {
+          _dio.options.headers['Authorization'] = header;
+        }
+        final response = await call();
+        attemptWatch.stop();
+        requestMs += attemptWatch.elapsedMilliseconds;
+        watch.stop();
+        PerfLog.request(
+          '$method ${Uri.parse(resolveUrl(path)).path}',
+          requestMs: requestMs,
+          totalMs: watch.elapsedMilliseconds,
+          details: _responseDetails(response, attempt),
+        );
+        return response;
+      } on DioException catch (error) {
+        attemptWatch.stop();
+        requestMs += attemptWatch.elapsedMilliseconds;
+        if (_shouldRetry(method, error, attempt)) {
+          await Future<void>.delayed(_retryDelay(attempt, error));
+          continue;
+        }
+        watch.stop();
+        PerfLog.request(
+          '$method ${Uri.parse(resolveUrl(path)).path}',
+          requestMs: requestMs,
+          totalMs: watch.elapsedMilliseconds,
+          details:
+              'status=${error.response?.statusCode ?? 'network-error'} attempts=$attempt',
+        );
+        final document = JsonApiDocument.from(error.response?.data);
+        final apiError = document.errors.isEmpty ? null : document.errors.first;
+        throw FlarumTransportError(
+          message: apiError?.detail ?? error.message ?? 'Request failed.',
+          path: Uri.parse(resolveUrl(path)).path,
+          statusCode: error.response?.statusCode,
+          errors: document.errors,
+          cause: error,
+          cancelled: CancelToken.isCancel(error),
+          network:
+              error.response == null &&
+              error.type != DioExceptionType.badResponse,
+          kind: _transportErrorKind(error),
+        );
       }
-      final response = await call();
-      watch.stop();
-      PerfLog.request(
-        '$method ${Uri.parse(resolveUrl(path)).path}',
-        requestMs: watch.elapsedMilliseconds,
-        totalMs: watch.elapsedMilliseconds,
-        details: 'status=${response.statusCode}',
-      );
-      return response;
-    } on DioException catch (error) {
-      watch.stop();
-      PerfLog.request(
-        '$method ${Uri.parse(resolveUrl(path)).path}',
-        requestMs: watch.elapsedMilliseconds,
-        totalMs: watch.elapsedMilliseconds,
-        details: 'status=${error.response?.statusCode ?? 'network-error'}',
-      );
-      final document = JsonApiDocument.from(error.response?.data);
-      final apiError = document.errors.isEmpty ? null : document.errors.first;
-      throw FlarumTransportError(
-        message: apiError?.detail ?? error.message ?? 'Request failed.',
-        path: Uri.parse(resolveUrl(path)).path,
-        statusCode: error.response?.statusCode,
-        errors: document.errors,
-        cause: error,
-        cancelled: CancelToken.isCancel(error),
-        network:
-            error.response == null &&
-            error.type != DioExceptionType.badResponse,
-      );
     }
+  }
+
+  FlarumTransportErrorKind _transportErrorKind(DioException error) {
+    if (CancelToken.isCancel(error)) {
+      return FlarumTransportErrorKind.cancelled;
+    }
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout) {
+      return FlarumTransportErrorKind.timeout;
+    }
+    final status = error.response?.statusCode;
+    if (status != null) {
+      return status >= 500
+          ? FlarumTransportErrorKind.server
+          : FlarumTransportErrorKind.client;
+    }
+    if (error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.unknown) {
+      return FlarumTransportErrorKind.networkUnavailable;
+    }
+    return FlarumTransportErrorKind.unknown;
+  }
+
+  String _responseDetails(Response<dynamic> response, int attempts) {
+    final contentLength = response.headers.value(Headers.contentLengthHeader);
+    final encoding = response.headers.value(Headers.contentEncodingHeader);
+    final httpVersion = response.extra[HttpClientAdapter.extraKeyHttpVersion]
+        ?.toString();
+    return [
+      'status=${response.statusCode}',
+      'attempts=$attempts',
+      if (contentLength != null) 'bytes=$contentLength',
+      if (encoding != null) 'encoding=$encoding',
+      if (httpVersion != null) 'http=$httpVersion',
+    ].join(' ');
+  }
+
+  bool _shouldRetry(String method, DioException error, int attempt) {
+    if (method != 'GET' || attempt >= 3 || CancelToken.isCancel(error)) {
+      return false;
+    }
+    final status = error.response?.statusCode;
+    if (status != null) {
+      return status == 408 || status == 429 || status >= 500;
+    }
+    return error.type != DioExceptionType.badCertificate &&
+        error.type != DioExceptionType.badResponse;
+  }
+
+  Duration _retryDelay(int attempt, DioException error) {
+    final retryAfter = int.tryParse(
+      error.response?.headers.value('retry-after') ?? '',
+    );
+    if (retryAfter != null && retryAfter >= 0) {
+      return Duration(seconds: retryAfter.clamp(0, 30));
+    }
+    final exponentialMs = 250 * (1 << (attempt - 1));
+    return Duration(milliseconds: exponentialMs + _random.nextInt(151));
   }
 }

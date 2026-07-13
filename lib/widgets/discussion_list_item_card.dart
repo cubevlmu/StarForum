@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/app/forum_icons.dart';
-import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/model/tags.dart';
-import 'package:star_forum/data/model/users.dart';
-import 'package:star_forum/utils/html_utils.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/avatar.dart';
 
 class DiscussionListItemCard extends StatelessWidget {
   const DiscussionListItemCard({super.key, required this.discussion});
 
-  final DiscussionInfo discussion;
+  final DiscussionSummary discussion;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final excerpt = htmlToPlainText(discussion.firstPost?.contentHtml ?? "");
+    final excerpt = discussion.excerpt;
     final tags = discussion.tags;
-    final author = discussion.user;
-    final authorName = UserInfo.displayLabel(author, fallbackId: author?.id);
+    final authorName = discussion.authorName;
     final replies = discussion.commentCount > 0
         ? discussion.commentCount - 1
         : 0;
@@ -33,7 +32,7 @@ class DiscussionListItemCard extends StatelessWidget {
           Column(
             children: [
               AvatarWidget(
-                avatarUrl: author?.avatarUrl ?? '',
+                avatarUrl: discussion.authorAvatar,
                 radius: 18,
                 width: 36,
                 height: 36,
@@ -77,7 +76,10 @@ class DiscussionListItemCard extends StatelessWidget {
                   children: [
                     for (final tag in tags.take(2)) _TopicTagPill(tag: tag),
                     Text(
-                      '$authorName 发布于 ${StringUtil.dateTimeToAgoDate(discussion.createdAt)}',
+                      l10n.discussionPublishedBy(
+                        authorName,
+                        StringUtil.dateTimeToAgoDate(discussion.createdAt),
+                      ),
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -91,18 +93,18 @@ class DiscussionListItemCard extends StatelessWidget {
                   children: [
                     _TopicMetaText(
                       icon: ForumIcons.people,
-                      label: '参与人数',
+                      label: l10n.discussionParticipantCountLabel,
                       value: '${discussion.participantCount}',
                     ),
                     _TopicMetaText(
                       icon: FUIIcons.schedule,
-                      label: '发布于',
+                      label: l10n.discussionPublishedAtLabel,
                       value: _formatDate(discussion.createdAt),
                     ),
                     _TopicMetaText(
                       icon: FUIIcons.visibility,
                       label: null,
-                      value: '${discussion.views}',
+                      value: '${discussion.viewCount}',
                     ),
                   ],
                 ),

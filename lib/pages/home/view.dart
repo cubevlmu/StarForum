@@ -18,8 +18,8 @@ import 'package:star_forum/pages/user_group/view.dart';
 import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/app/forum_layout.dart';
+import 'package:star_forum/utils/setting_util.dart';
 import 'package:star_forum/widgets/avatar.dart';
-import 'package:star_forum/widgets/forum_button_group.dart';
 import 'package:star_forum/widgets/sheet_util.dart';
 import 'package:star_forum/utils/html_utils.dart';
 
@@ -59,50 +59,47 @@ class _HomePageState extends State<HomePage>
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: ForumLayout.pageHeadPadding,
-              child: _HomeHeader(controller: controller),
-            ),
-            _HomeButtonGroup(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: ForumLayout.pageHeadPadding,
+            child: _HomeHeader(controller: controller),
+          ),
+          _HomeButtonGroup(
+            controller: _tabController,
+            items: [
+              FUIButtonGroupTabItem(
+                icon: ForumIcons.forum,
+                label: l10n.homeSectionAllTopics,
+              ),
+              FUIButtonGroupTabItem(
+                icon: ForumIcons.bookmark,
+                label: l10n.homeSectionFollowing,
+              ),
+              FUIButtonGroupTabItem(
+                icon: ForumIcons.people,
+                label: l10n.homeSectionUsers,
+              ),
+              FUIButtonGroupTabItem(
+                icon: ForumIcons.badge,
+                label: l10n.homeSectionBadges,
+              ),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
               controller: _tabController,
-              items: [
-                ForumButtonGroupItem(
-                  icon: ForumIcons.forum,
-                  label: l10n.homeSectionAllTopics,
-                ),
-                ForumButtonGroupItem(
-                  icon: ForumIcons.bookmark,
-                  label: l10n.homeSectionFollowing,
-                ),
-                ForumButtonGroupItem(
-                  icon: ForumIcons.people,
-                  label: l10n.homeSectionUsers,
-                ),
-                ForumButtonGroupItem(
-                  icon: ForumIcons.badge,
-                  label: l10n.homeSectionBadges,
-                ),
+              physics: const NeverScrollableScrollPhysics(),
+              children: const [
+                PostListPage(),
+                SubscriptionPage(),
+                UserGroupPage(),
+                BadgePage(),
               ],
             ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: const [
-                  PostListPage(),
-                  SubscriptionPage(),
-                  UserGroupPage(),
-                  BadgePage(),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -112,16 +109,19 @@ class _HomeButtonGroup extends StatelessWidget {
   const _HomeButtonGroup({required this.controller, required this.items});
 
   final TabController controller;
-  final List<ForumButtonGroupItem> items;
+  final List<FUIButtonGroupTabItem> items;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: controller,
-      builder: (context, _) => ForumButtonGroup(
+      builder: (context, _) => FUIButtonGroupTabBar(
         items: items,
         selectedIndex: controller.index,
         onSelected: controller.animateTo,
+        showLabels: !SettingsUtil.buttonGroupIconOnly,
+        alignment: SettingsUtil.buttonGroupAlignment.alignment,
+        padding: const EdgeInsets.symmetric(horizontal: ForumLayout.edge),
       ),
     );
   }

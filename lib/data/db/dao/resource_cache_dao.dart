@@ -12,17 +12,58 @@ class ResourceCacheDao extends DatabaseAccessor<AppDatabase>
   ResourceCacheDao(super.db);
 
   Future<void> upsertUsers(List<DbUsersCompanion> users) async {
-    if (users.isEmpty) return;
-    final ids = users
-        .where((user) => user.id.present)
-        .map((user) => user.id.value)
-        .toSet()
-        .toList(growable: false);
+    final pendingById = <int, DbUsersCompanion>{};
+    for (final user in users) {
+      if (!user.id.present || user.id.value <= 0) continue;
+      final id = user.id.value;
+      final pending = pendingById[id];
+      pendingById[id] = pending == null
+          ? user
+          : _mergePendingUser(pending, user);
+    }
+    if (pendingById.isEmpty) return;
+
+    final ids = pendingById.keys.toList(growable: false);
     final current = await getUsersByIds(ids);
-    final merged = users
-        .map((user) => _mergeUser(user, current[user.id.value]))
-        .toList(growable: false);
+    final merged = <DbUsersCompanion>[];
+    for (final entry in pendingById.entries) {
+      final existing = current[entry.key];
+      final candidate = _mergeUser(entry.value, existing);
+      if (existing == null || !_matchesUser(candidate, existing)) {
+        merged.add(candidate);
+      }
+    }
+    if (merged.isEmpty) return;
     await batch((batch) => batch.insertAllOnConflictUpdate(dbUsers, merged));
+  }
+
+  DbUsersCompanion _mergePendingUser(
+    DbUsersCompanion current,
+    DbUsersCompanion incoming,
+  ) {
+    return DbUsersCompanion(
+      id: incoming.id,
+      username: _preferText(incoming.username, current.username),
+      displayName: _preferText(incoming.displayName, current.displayName),
+      avatarUrl: _preferText(incoming.avatarUrl, current.avatarUrl),
+      avatarSrcset: _preferText(incoming.avatarSrcset, current.avatarSrcset),
+      joinedAt: _preferDate(incoming.joinedAt, current.joinedAt),
+      lastSeenAt: _preferDate(incoming.lastSeenAt, current.lastSeenAt),
+      discussionCount: _preferCount(
+        incoming.discussionCount,
+        current.discussionCount,
+      ),
+      commentCount: _preferCount(incoming.commentCount, current.commentCount),
+      email: _preferText(incoming.email, current.email),
+      bio: _preferText(incoming.bio, current.bio),
+      rawJson: incoming.rawJson.present ? incoming.rawJson : current.rawJson,
+      syncedAt: incoming.syncedAt.present
+          ? incoming.syncedAt
+          : current.syncedAt,
+      deletedAt: incoming.deletedAt.present
+          ? incoming.deletedAt
+          : current.deletedAt,
+    );
   }
 
   DbUsersCompanion _mergeUser(DbUsersCompanion incoming, DbUser? current) {
@@ -87,6 +128,41 @@ class ResourceCacheDao extends DatabaseAccessor<AppDatabase>
   bool _isFallbackDate(DateTime? value) {
     if (value == null) return true;
     return !value.isAfter(DateTime.utc(1981));
+  }
+
+  Value<String> _preferText(Value<String> incoming, Value<String> current) {
+    if (incoming.present && incoming.value.trim().isNotEmpty) return incoming;
+    return current.present ? current : incoming;
+  }
+
+  Value<DateTime?> _preferDate(
+    Value<DateTime?> incoming,
+    Value<DateTime?> current,
+  ) {
+    if (incoming.present && !_isFallbackDate(incoming.value)) return incoming;
+    return current.present ? current : incoming;
+  }
+
+  Value<int> _preferCount(Value<int> incoming, Value<int> current) {
+    if (incoming.present && (incoming.value > 0 || !current.present)) {
+      return incoming;
+    }
+    return current.present ? current : incoming;
+  }
+
+  bool _matchesUser(DbUsersCompanion candidate, DbUser current) {
+    return candidate.username.value == current.username &&
+        candidate.displayName.value == current.displayName &&
+        candidate.avatarUrl.value == current.avatarUrl &&
+        candidate.avatarSrcset.value == current.avatarSrcset &&
+        candidate.joinedAt.value == current.joinedAt &&
+        candidate.lastSeenAt.value == current.lastSeenAt &&
+        candidate.discussionCount.value == current.discussionCount &&
+        candidate.commentCount.value == current.commentCount &&
+        candidate.email.value == current.email &&
+        candidate.bio.value == current.bio &&
+        candidate.rawJson.value == current.rawJson &&
+        candidate.deletedAt.value == current.deletedAt;
   }
 
   Future<DbUser?> getUser(int id) {

@@ -7,17 +7,20 @@ import 'package:get/get.dart';
 import 'package:star_forum/data/model/uploads.dart';
 import 'package:star_forum/data/repository/upload_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/data/session/session_state.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 
 class AssetsController extends GetxController {
   final UserRepo userRepo = getIt<UserRepo>();
+  final SessionState sessionState = getIt<SessionState>();
   final UploadRepository uploadRepo = getIt<UploadRepository>();
   final RxList<UploadFileInfo> files = <UploadFileInfo>[].obs;
   final Rxn<UploadFileInfo> selectedFile = Rxn<UploadFileInfo>();
   final RxBool isInitialLoading = true.obs;
   final RxBool isUploading = false.obs;
+  final RxBool canUpload = false.obs;
   final RxSet<int> deletingIds = <int>{}.obs;
 
   final ScrollController scrollController = ScrollController();
@@ -34,7 +37,13 @@ class AssetsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    sessionState.state.addListener(_handleSessionChanged);
+    _handleSessionChanged();
     onRefresh();
+  }
+
+  void _handleSessionChanged() {
+    canUpload.value = sessionState.current.canUpload;
   }
 
   void selectFile(UploadFileInfo file) {
@@ -42,7 +51,7 @@ class AssetsController extends GetxController {
   }
 
   Future<bool?> pickAndUpload() async {
-    if (isUploading.value || !userRepo.canUpload.value) {
+    if (isUploading.value || !canUpload.value) {
       return false;
     }
 
@@ -220,6 +229,7 @@ class AssetsController extends GetxController {
 
   @override
   void onClose() {
+    sessionState.state.removeListener(_handleSessionChanged);
     scrollController.dispose();
     refreshController.dispose();
     CacheUtils.assetThumbCacheManager.store.emptyMemoryCache();

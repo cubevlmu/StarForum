@@ -1,9 +1,9 @@
 import 'package:star_forum/data/api/json_api/json_api_document.dart';
 import 'package:star_forum/data/api/json_api/json_api_resource.dart';
-import 'package:star_forum/data/api/flarum_links.dart';
 import 'package:star_forum/data/json/json_reader.dart';
 import 'package:star_forum/data/model/discussions.dart';
 import 'package:star_forum/data/model/posts.dart';
+import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/model/users.dart';
 
 import 'mapper_support.dart';
@@ -22,45 +22,49 @@ class DiscussionMapper {
   final PostMapper postMapper;
   final TagMapper tagMapper;
 
-  DiscussionInfo? document(JsonApiDocument document) {
+  DiscussionDetail? document(JsonApiDocument document) {
     final resource = documentResource(document);
     if (resource == null || resource.type != 'discussions') return null;
-    return resourceItem(resource, document);
-  }
-
-  Discussions documentList(JsonApiDocument document) {
-    return Discussions(
-      list: [
-        for (final resource in documentResources(document))
-          if (resource.type == 'discussions') resourceItem(resource, document),
-      ],
-      links: Links(
-        first: linkValue(document, 'first') ?? '',
-        prev: linkValue(document, 'prev') ?? '',
-        next: linkValue(document, 'next') ?? '',
-      ),
+    final included = _mapIncluded(document);
+    return resourceItem(
+      resource,
+      document,
+      includedUsers: included.users,
+      includedPosts: included.posts,
+      includedTags: included.tags,
     );
   }
 
-  DiscussionInfo resourceItem(
-    JsonApiResource resource,
-    JsonApiDocument document,
-  ) {
-    final attrs = JsonReader(resource.attributes);
-    final users = <int, UserInfo>{};
-    final posts = <int, PostInfo>{};
+  List<DiscussionDetail> documentList(JsonApiDocument document) {
+    final included = _mapIncluded(document);
+    return [
+      for (final resource in documentResources(document))
+        if (resource.type == 'discussions')
+          resourceItem(
+            resource,
+            document,
+            includedUsers: included.users,
+            includedPosts: included.posts,
+            includedTags: included.tags,
+          ),
+    ];
+  }
 
-    for (final userResource in document.index.ofType('users')) {
-      users[userResource.intId] = userMapper.resourceItem(
-        userResource,
-        document: document,
-      );
-    }
-    for (final postResource in document.index.ofType('posts')) {
-      final post = postMapper.resourceItem(postResource);
-      post.user = users[post.userId];
-      posts[post.id] = post;
-    }
+  DiscussionDetail resourceItem(
+    JsonApiResource resource,
+    JsonApiDocument document, {
+    Map<int, UserInfo>? includedUsers,
+    Map<int, PostInfo>? includedPosts,
+    Map<int, TagInfo>? includedTags,
+  }) {
+    final attrs = JsonReader(resource.attributes);
+    final mapped =
+        includedUsers == null || includedPosts == null || includedTags == null
+        ? _mapIncluded(document)
+        : null;
+    final users = includedUsers ?? mapped!.users;
+    final posts = includedPosts ?? mapped!.posts;
+    final tags = includedTags ?? mapped!.tags;
 
     final firstPostId =
         int.tryParse(resource.relatedId('firstPost') ?? '') ?? -1;
@@ -80,7 +84,7 @@ class DiscussionMapper {
     };
     final rawViews =
         resource.attributes['viewCount'] ?? resource.attributes['views'];
-    return DiscussionInfo(
+    return DiscussionDetail(
       resource.id,
       attrs.string('title'),
       attrs.integer('commentCount'),
@@ -100,16 +104,41 @@ class DiscussionMapper {
       },
       users,
       [
-        for (final tag in document.includedMany(resource, 'tags'))
-          tagMapper.resourceItem(tag),
+        for (final id in resource.relatedIds('tags').map(int.tryParse))
+          if (id != null && tags[id] != null) tags[id]!,
       ],
       subscription,
+      authorRelationshipLoaded: resource.relationships.containsKey('user'),
     );
   }
 
-  UserInfo _userOrPlaceholder(Map<int, UserInfo> users, String? rawId) {
-    final id = int.tryParse(rawId ?? '') ?? -1;
-    return users[id] ??
-        (id > 0 ? UserInfo.placeholder(id) : UserInfo.deletedUser);
+  ({Map<int, UserInfo> users, Map<int, PostInfo> posts, Map<int, TagInfo> tags})
+  _mapIncluded(JsonApiDocument document) {
+    final users = <int, UserInfo>{};
+    for (final resource in document.index.ofType('users')) {
+      users[resource.intId] = userMapper.resourceItem(
+        resource,
+        document: document,
+      );
+    }
+
+    final posts = <int, PostInfo>{};
+    for (final resource in document.index.ofType('posts')) {
+      final mapped = postMapper.resourceItem(resource);
+      final post = mapped.copyWith(user: users[mapped.userId]);
+      posts[post.id] = post;
+    }
+
+    final tags = <int, TagInfo>{};
+    for (final resource in document.index.ofType('tags')) {
+      tags[resource.intId] = tagMapper.resourceItem(resource);
+    }
+    return (users: users, posts: posts, tags: tags);
+  }
+
+  UserInfo? _userOrPlaceholder(Map<int, UserInfo> users, String? rawId) {
+    final id = int.tryParse(rawId ?? '');
+    if (id == null || id <= 0) return null;
+    return users[id] ?? UserInfo.placeholder(id);
   }
 }

@@ -43,7 +43,7 @@ class StarForumApp extends StatelessWidget {
             if (locale == null) {
               return const Locale('en');
             }
-            final normalized = _normalizeAppLocale(locale);
+            final normalized = LocaleController.normalizeSupported(locale);
             if (normalized != null) {
               return normalized;
             }
@@ -94,28 +94,4 @@ class StarForumApp extends StatelessWidget {
       ),
     ),
   );
-}
-
-Locale? _normalizeAppLocale(Locale locale) {
-  switch (locale.languageCode) {
-    case 'en':
-      return const Locale('en');
-    case 'zh':
-      final scriptCode = locale.scriptCode?.toLowerCase();
-      final countryCode = locale.countryCode?.toUpperCase();
-      const traditionalCountries = {'TW', 'HK', 'MO'};
-      if (scriptCode == 'hant' ||
-          (scriptCode == null &&
-              countryCode != null &&
-              traditionalCountries.contains(countryCode))) {
-        return const Locale.fromSubtags(
-          languageCode: 'zh',
-          scriptCode: 'Hant',
-          countryCode: 'TW',
-        );
-      }
-      return const Locale('zh');
-    default:
-      return null;
-  }
 }

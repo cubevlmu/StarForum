@@ -26,6 +26,7 @@ class NotificationRepository {
   final NotificationApi notificationApi;
   final ResourceCacheDao resourceCacheDao;
   final CacheCollectionDao collectionDao;
+  final RepoRequestCoalescer _requests = RepoRequestCoalescer();
 
   static const collectionKey = 'notification:all';
 
@@ -36,8 +37,15 @@ class NotificationRepository {
     return cached.map((row) => row.toNotificationInfo()).toList();
   }
 
-  Future<PagedRepoResult<NotificationsInfo>> getNotifications({
-    String? url,
+  Future<PagedRepoResult<NotificationsInfo>> getNotifications({String? url}) {
+    return _requests.run(
+      'notifications:${url ?? 'first'}',
+      () => _getNotifications(url: url),
+    );
+  }
+
+  Future<PagedRepoResult<NotificationsInfo>> _getNotifications({
+    required String? url,
   }) async {
     try {
       final data = await notificationApi.list(nextUrl: url);
@@ -51,7 +59,7 @@ class NotificationRepository {
             .map((notification) => notification.toDbNotification(syncTime))
             .toList(growable: false),
       );
-      await collectionDao.replaceWindow(
+      await collectionDao.replaceWindowAndMarkSynced(
         collectionKey: collectionKey,
         resourceType: CacheResourceType.notification,
         offset: offset,
@@ -69,12 +77,8 @@ class NotificationRepository {
             ),
         ],
         keepLimit: 300,
-      );
-      await collectionDao.setSyncState(
-        collectionKey: collectionKey,
         nextUrl: data.nextUrl,
-        lastSyncAt: syncTime,
-        lastSuccessAt: syncTime,
+        syncedAt: syncTime,
         ttlSeconds: 10,
       );
       return PagedRepoResult.success(
@@ -98,7 +102,10 @@ class NotificationRepository {
   }
 
   Future<RepoResult<NotificationsInfo>> markRead(String id) async {
-    final result = await RepoResult.guard(() => notificationApi.markRead(id));
+    final result = await RepoResult.guard(
+      () => notificationApi.markRead(id),
+      name: 'notification.markRead',
+    );
     final parsedId = int.tryParse(id);
     if (parsedId != null && result.isSuccess) {
       await resourceCacheDao.markNotificationRead(parsedId);
@@ -113,7 +120,10 @@ class NotificationRepository {
   }
 
   Future<RepoResult<void>> readAll() async {
-    final result = await RepoResult.guardBool(notificationApi.readAll);
+    final result = await RepoResult.guardBool(
+      notificationApi.readAll,
+      name: 'notification.readAll',
+    );
     if (result.isSuccess) {
       await resourceCacheDao.markAllNotificationsRead();
     }

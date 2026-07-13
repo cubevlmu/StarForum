@@ -7,7 +7,7 @@ import 'package:star_forum/data/model/posts.dart';
 
 import 'api_parsing.dart';
 
-enum PostSort { time, number }
+enum PostSort { timeAscending, timeDescending, number }
 
 class PostApi {
   PostApi(this.client);
@@ -33,7 +33,8 @@ class PostApi {
     final query = FlarumQuery()
         .filter('discussion', discussionId)
         .sort(switch (sort) {
-          PostSort.time => '-createdAt',
+          PostSort.timeAscending => 'createdAt',
+          PostSort.timeDescending => '-createdAt',
           PostSort.number => 'number',
         })
         .page(offset: offset, limit: limit)
@@ -61,7 +62,8 @@ class PostApi {
     final query = FlarumQuery()
         .filter('discussion', discussionId)
         .sort(switch (sort) {
-          PostSort.time => '-createdAt',
+          PostSort.timeAscending => 'createdAt',
+          PostSort.timeDescending => '-createdAt',
           PostSort.number => 'number',
         })
         .page(offset: offset, limit: limit)
@@ -188,7 +190,7 @@ class PostApi {
       cancelToken: cancelToken,
     );
     final document = documentOf(response.data);
-    final parsed = parsePosts(document.raw);
+    final parsed = parsePostsDocument(document);
     final next = document.links['next']?.toString();
     final prev = document.links['prev']?.toString();
     return FlarumPage(

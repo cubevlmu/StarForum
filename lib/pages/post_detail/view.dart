@@ -8,24 +8,22 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:star_forum/app/forum_icons.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/forum_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_main.dart';
-import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:fin_ui/fin_ui.dart';
 
 class PostPage extends StatefulWidget {
   const PostPage({super.key, required this.item, this.embedded = false});
-  final DiscussionItem item;
+  final DiscussionSummary item;
   final bool embedded;
 
   @override
@@ -75,7 +73,7 @@ class _PostPageState extends State<PostPage>
     return Scaffold(
       backgroundColor: context.colors.background,
       floatingActionButton: _ReplyFab(controller: controller),
-      body: SafeArea(bottom: false, child: body),
+      body: body,
     );
   }
 }
@@ -87,22 +85,11 @@ class _ReplyFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton(
+    return FUIFloatingActionButton(
       heroTag: null,
       onPressed: () => controller.showAddReplySheet(context),
       tooltip: AppLocalizations.of(context)!.postActionComment,
-      backgroundColor: context.colors.primary,
-      foregroundColor: context.colors.textInverse,
-      focusColor: context.colors.primaryHover,
-      hoverColor: context.colors.primaryHover,
-      splashColor: context.colors.primaryPressed,
-      elevation: 2,
-      hoverElevation: 3,
-      highlightElevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(FUITokens.radiusLg),
-      ),
-      child: const Icon(ForumIcons.reply),
+      icon: ForumIcons.reply,
     );
   }
 }
@@ -114,6 +101,7 @@ class _SortReplyItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final showSortLabels = MediaQuery.sizeOf(context).width >= 600;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         FUITokens.pagePadding,
@@ -129,31 +117,53 @@ class _SortReplyItemWidget extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                l10n.postReplyPrefix(
-                  StringUtil.ensureNotNegative(
-                    replyController.discussion.commentCount - 1,
-                  ),
-                ),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-              ),
-            ),
-            Obx(
-              () => Text(
-                replyController.sortTypeText.value,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: context.colors.textSecondary,
-                  fontWeight: FontWeight.w700,
+              child: Obx(
+                () => Text(
+                  l10n.postReplyPrefix(replyController.replyCount.value),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
             ),
-            const SizedBox(width: FUITokens.gap6),
-            FUIIconButton(
-              icon: Icons.sort_rounded,
-              variant: FUIIconButtonVariant.outline,
-              onPressed: replyController.toggleSort,
+            const SizedBox(width: FUITokens.gap8),
+            IntrinsicWidth(
+              child: Obx(
+                () => FUIButtonGroupTabBar(
+                  selectedIndex: switch (replyController.replySort.value) {
+                    ReplySort.hot => 0,
+                    ReplySort.oldest => 1,
+                    ReplySort.newest => 2,
+                  },
+                  showLabels: showSortLabels,
+                  alignment: AlignmentDirectional.centerStart,
+                  items: [
+                    FUIButtonGroupTabItem(
+                      icon: ForumIcons.likeFilled,
+                      label: l10n.postSortByHot,
+                      tooltip: l10n.postSortByHot,
+                    ),
+                    FUIButtonGroupTabItem(
+                      icon: ForumIcons.sortAscending,
+                      label: l10n.postSortOldest,
+                      tooltip: l10n.postSortOldest,
+                    ),
+                    FUIButtonGroupTabItem(
+                      icon: ForumIcons.sortDescending,
+                      label: l10n.postSortNewest,
+                      tooltip: l10n.postSortNewest,
+                    ),
+                  ],
+                  onSelected: (index) =>
+                      replyController.updateReplySort(switch (index) {
+                        0 => ReplySort.hot,
+                        1 => ReplySort.oldest,
+                        _ => ReplySort.newest,
+                      }),
+                ),
+              ),
             ),
           ],
         ),
@@ -163,13 +173,19 @@ class _SortReplyItemWidget extends StatelessWidget {
 }
 
 class _PostDetailHeader extends StatelessWidget {
-  final DiscussionItem item;
+  final DiscussionSummary item;
+  final int replyCount;
   final VoidCallback onReply;
 
-  const _PostDetailHeader({required this.item, required this.onReply});
+  const _PostDetailHeader({
+    required this.item,
+    required this.replyCount,
+    required this.onReply,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         FUITokens.pagePadding,
@@ -178,14 +194,14 @@ class _PostDetailHeader extends StatelessWidget {
         FUITokens.gap8,
       ),
       child: FuiPageHead(
-        title: AppLocalizations.of(context)!.postTitlePrefix(item.title),
-        subtitle: '${StringUtil.ensureNotNegative(item.commentCount - 1)} 回复',
+        title: l10n.postTitlePrefix(item.title),
+        subtitle: l10n.postCardReplyCount(replyCount),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             FUIIconButton(
               onPressed: onReply,
-              tooltip: AppLocalizations.of(context)!.postActionComment,
+              tooltip: l10n.postActionComment,
               icon: ForumIcons.reply,
               variant: FUIIconButtonVariant.ghost,
             ),
@@ -212,7 +228,7 @@ class _PostDetailHeader extends StatelessWidget {
 
 class _DetailPageReplies extends StatelessWidget {
   final PostPageController controller;
-  final DiscussionItem item;
+  final DiscussionSummary item;
   final String controllerTag;
   final bool embedded;
   final VoidCallback onReply;
@@ -233,11 +249,11 @@ class _DetailPageReplies extends StatelessWidget {
       final hasReply = replyItems.isNotEmpty || newReplyItems.isNotEmpty;
       final showReplySkeleton = controller.isReplyLoading.value && !hasReply;
 
-      return SimpleEasyRefresher(
+      return FUIRefresh(
         onLoad: controller.onReplyLoad,
         onRefresh: controller.onReplyRefresh,
-        easyRefreshController: controller.refreshController,
-        autoRefreshOnStart: false,
+        controller: controller.refreshController,
+        refreshOnStart: false,
         refreshEnabled: !showReplySkeleton,
         loadEnabled: !showReplySkeleton,
         childBuilder: (context, physics) {
@@ -250,7 +266,13 @@ class _DetailPageReplies extends StatelessWidget {
             physics: effectivePhysics,
             slivers: [
               SliverToBoxAdapter(
-                child: _PostDetailHeader(item: item, onReply: onReply),
+                child: Obx(
+                  () => _PostDetailHeader(
+                    item: item,
+                    replyCount: controller.replyCount.value,
+                    onReply: onReply,
+                  ),
+                ),
               ),
               SliverToBoxAdapter(
                 child: PostMainWidget(content: item, controller: controller),

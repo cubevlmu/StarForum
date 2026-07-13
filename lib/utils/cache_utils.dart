@@ -10,8 +10,15 @@ class CacheUtils {
   static const String userAvatar = 'userAvatar';
   static const String contentImage = 'content';
   static const String assetThumb = 'assetThumb';
+  static const List<String> cacheKeys = [userAvatar, contentImage, assetThumb];
 
-  static final avatarCacheManager = CacheManager(Config(userAvatar));
+  static final avatarCacheManager = CacheManager(
+    Config(
+      userAvatar,
+      stalePeriod: const Duration(hours: 1),
+      maxNrOfCacheObjects: 300,
+    ),
+  );
   static final contentCacheManager = CacheManager(Config(contentImage));
   static final assetThumbCacheManager = CacheManager(
     Config(
@@ -35,7 +42,6 @@ class CacheUtils {
 
   static Future<void> deleteAllCacheImage() async {
     for (var cacheManager in cacheMangerList) {
-      if (cacheManager == avatarCacheManager) continue;
       await cacheManager.store.emptyCache();
     }
   }

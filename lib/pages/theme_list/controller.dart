@@ -1,7 +1,7 @@
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
@@ -36,7 +36,7 @@ class TagDetailController extends GetxController {
 
   final TagInfo tag;
   final discussionRepo = getIt<DiscussionRepository>();
-  final items = <DiscussionInfo>[].obs;
+  final items = <DiscussionSummary>[].obs;
   final isInitialLoading = true.obs;
   final isLoadingMore = false.obs;
   final scrollController = ScrollController();
@@ -52,7 +52,7 @@ class TagDetailController extends GetxController {
   @override
   void onReady() {
     super.onReady();
-    onRefresh();
+    loadInitial();
   }
 
   @override
@@ -62,15 +62,16 @@ class TagDetailController extends GetxController {
     super.onClose();
   }
 
-  Future<bool> _load() async {
+  Future<bool> _load({bool force = false}) async {
     try {
       final result = await discussionRepo.getDiscussByTag(
         tag: tag.slug,
         offset: _offset,
         limit: pageSize,
+        force: force,
       );
       if (result.isFailure) return false;
-      final next = result.data ?? const <DiscussionInfo>[];
+      final next = result.data ?? const <DiscussionSummary>[];
       items.addAll(next);
       _offset += next.length;
       _hasMore = result.hasMore && next.isNotEmpty;
@@ -86,11 +87,19 @@ class TagDetailController extends GetxController {
   }
 
   Future<void> onRefresh() async {
+    await _refresh(force: true);
+  }
+
+  Future<void> loadInitial() async {
+    await _refresh(force: false);
+  }
+
+  Future<void> _refresh({required bool force}) async {
     isInitialLoading.value = true;
     _offset = 0;
     _hasMore = true;
     items.clear();
-    final ok = await _load();
+    final ok = await _load(force: force);
     if (ok) {
       refreshController.finishRefresh();
       refreshController.resetFooter();

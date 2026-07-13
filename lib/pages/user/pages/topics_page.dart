@@ -3,19 +3,19 @@ part of '../view.dart';
 class _UserTopicsSection extends StatelessWidget {
   const _UserTopicsSection({required this.controller});
 
-  final UserPageController controller;
+  final UserTopicsController controller;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final items = controller.topics;
-      final showSkeleton = controller.isTopicsLoading.value && items.isEmpty;
+      final items = controller.items;
+      final showSkeleton = controller.isLoading.value && items.isEmpty;
 
-      return SimpleEasyRefresher(
-        easyRefreshController: controller.topicsRefreshController,
-        onRefresh: controller.onTopicsRefresh,
-        onLoad: controller.onTopicsLoad,
-        autoRefreshOnStart: false,
+      return FUIRefresh(
+        controller: controller.refreshController,
+        onRefresh: controller.refresh,
+        onLoad: controller.loadMore,
+        refreshOnStart: false,
         refreshEnabled: !showSkeleton,
         loadEnabled: !showSkeleton,
         childBuilder: (context, physics) {
@@ -23,7 +23,7 @@ class _UserTopicsSection extends StatelessWidget {
               ? const ClampingScrollPhysics()
               : physics;
           return CustomScrollView(
-            controller: controller.topicsScrollController,
+            controller: controller.scrollController,
             physics: effectivePhysics,
             scrollCacheExtent: const ScrollCacheExtent.pixels(320),
             slivers: [
@@ -55,9 +55,7 @@ class _UserTopicsSection extends StatelessWidget {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final discussion = items[index];
-                      final excerpt = htmlToPlainText(
-                        discussion.firstPost?.contentHtml ?? '',
-                      ).trim();
+                      final excerpt = discussion.excerpt.trim();
                       final tags = discussion.tags
                           .take(3)
                           .map((t) => t.name)
@@ -73,8 +71,8 @@ class _UserTopicsSection extends StatelessWidget {
                           child: ForumDiscussionTile(
                             title: discussion.title,
                             excerpt: excerpt.isEmpty ? null : excerpt,
-                            author: discussion.user?.displayName,
-                            avatarUrl: discussion.user?.avatarUrl,
+                            author: discussion.authorName,
+                            avatarUrl: discussion.authorAvatar,
                             tags: tags,
                             meta: [
                               ForumMetaItem(
@@ -89,10 +87,8 @@ class _UserTopicsSection extends StatelessWidget {
                                 : 0,
                             onTap: () => FuiNavigation.openDetail(
                               context,
-                              builder: (_) => PostPage(
-                                item: discussion.toItem(),
-                                embedded: true,
-                              ),
+                              builder: (_) =>
+                                  PostPage(item: discussion, embedded: true),
                             ),
                           ),
                         ),

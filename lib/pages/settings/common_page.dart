@@ -42,11 +42,11 @@ class _CommonSettingsPageState extends State<CommonSettingsPage> {
         children: [
           FuiPageHead(
             title: l10n.settingsCommonTitle,
-            subtitle: '管理语言、更新策略、缓存和当前论坛站点',
+            subtitle: l10n.settingsCommonPageSubtitle,
           ),
           const SizedBox(height: FUITokens.gap16),
           FUISection(
-            title: '应用行为',
+            title: l10n.settingsBehaviorSection,
             children: [
               SettingsToggleTile(
                 icon: FUIIcons.update,
@@ -90,19 +90,10 @@ class _CommonSettingsPageState extends State<CommonSettingsPage> {
               FUITile(
                 icon: ForumIcons.cache,
                 title: l10n.settingsCacheManagement,
-                subtitle: '查看并清理图片、接口及临时文件缓存',
+                subtitle: l10n.settingsCacheSubtitle,
                 onTap: () => FuiNavigation.openDetail(
                   context,
                   builder: (_) => const CacheManagementPage(),
-                ),
-              ),
-              FUITile(
-                icon: FUIIcons.chart,
-                title: l10n.settingsDataManagement,
-                subtitle: '管理保存在本地的帖子列表数据',
-                onTap: () => FuiNavigation.openDetail(
-                  context,
-                  builder: (_) => const DataBasePage(),
                 ),
               ),
             ],
@@ -110,7 +101,7 @@ class _CommonSettingsPageState extends State<CommonSettingsPage> {
           if (!forumRepo.hasFixedBaseUrl) ...[
             const SizedBox(height: FUITokens.gap16),
             FUISection(
-              title: '论坛站点',
+              title: l10n.settingsForumSection,
               children: [
                 FUITile(
                   icon: FUIIcons.building,
@@ -184,7 +175,7 @@ class _DataBasePageState extends State<DataBasePage> {
         children: [
           FuiPageHead(
             title: l10n.settingsDataManagement,
-            subtitle: '按类别清理本地持久化数据',
+            subtitle: l10n.cacheDataManagementSubtitle,
             trailing: FUIIconButton(
               icon: FUIIcons.delete,
               tooltip: l10n.dialogClearCacheConfirm,
@@ -202,14 +193,16 @@ class _DataBasePageState extends State<DataBasePage> {
               final items = snapshot.data ?? const <LocalCacheSummary>[];
               final total = items.fold<int>(0, (sum, item) => sum + item.count);
               return FUISection(
-                title: '本地数据 · $total 条记录',
+                title: l10n.cacheLocalDataCount(total),
                 children: [
                   for (final item in items)
                     FUITile(
                       icon: item.category.icon,
-                      title: item.category.label,
-                      subtitle:
-                          '${item.count} 条 · ${item.category.description}',
+                      title: item.category.label(l10n),
+                      subtitle: l10n.cacheCategorySummary(
+                        item.count,
+                        item.category.description(l10n),
+                      ),
                       showChevron: item.count > 0,
                       onTap: item.count == 0
                           ? null
@@ -238,59 +231,73 @@ class _DataBasePageState extends State<DataBasePage> {
 
   Future<void> _clearCategory(LocalCacheCategory category) async {
     final l10n = AppLocalizations.of(context)!;
-    if (!await _confirm('确认清理「${category.label}」？')) return;
+    if (!await _confirm(l10n.cacheClearCategoryConfirm(category.label(l10n)))) {
+      return;
+    }
+    if (!mounted) return;
     try {
       await repo.clear(category);
+      if (!mounted) return;
       setState(_reload);
     } catch (_) {
-      SnackbarUtils.showMessage(msg: l10n.commonNoticeDeleteFailed);
+      if (!mounted) return;
+      SnackbarUtils.showMessage(
+        msg: l10n.commonNoticeDeleteFailed,
+        context: context,
+      );
     }
   }
 
   Future<void> _clearAll() async {
     final l10n = AppLocalizations.of(context)!;
     if (!await _confirm(l10n.dialogClearCacheConfirm)) return;
+    if (!mounted) return;
     try {
       await repo.clearAll();
+      if (!mounted) return;
       setState(_reload);
     } catch (_) {
-      SnackbarUtils.showMessage(msg: l10n.commonNoticeDeleteFailed);
+      if (!mounted) return;
+      SnackbarUtils.showMessage(
+        msg: l10n.commonNoticeDeleteFailed,
+        context: context,
+      );
     }
   }
 }
 
 extension _LocalCacheCategoryView on LocalCacheCategory {
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case LocalCacheCategory.discussions:
-        return '主题信息';
+        return l10n.cacheDiscussionsTitle;
       case LocalCacheCategory.posts:
-        return '帖子正文';
+        return l10n.cachePostsTitle;
       case LocalCacheCategory.users:
-        return '用户资料';
+        return l10n.cacheUsersTitle;
       case LocalCacheCategory.tags:
-        return '标签目录';
+        return l10n.cacheTagsTitle;
       case LocalCacheCategory.notifications:
-        return '通知记录';
+        return l10n.cacheNotificationsTitle;
       case LocalCacheCategory.collections:
-        return '列表索引';
+        return l10n.cacheCollectionsTitle;
     }
   }
 
-  String get description {
+  String description(AppLocalizations l10n) {
     switch (this) {
       case LocalCacheCategory.discussions:
-        return '首页、关注和用户主题的主题元数据';
+        return l10n.cacheDiscussionsDesc;
       case LocalCacheCategory.posts:
-        return '首帖、回复和用户回复正文缓存';
+        return l10n.cachePostsDesc;
       case LocalCacheCategory.users:
-        return '用户资料和用户目录缓存';
+        return l10n.cacheUsersDesc;
       case LocalCacheCategory.tags:
-        return '论坛标签和标签层级缓存';
+        return l10n.cacheTagsDesc;
       case LocalCacheCategory.notifications:
-        return '通知列表和已读状态缓存';
+        return l10n.cacheNotificationsDesc;
       case LocalCacheCategory.collections:
-        return '首页、关注、名录等列表排序窗口';
+        return l10n.cacheCollectionsDesc;
     }
   }
 

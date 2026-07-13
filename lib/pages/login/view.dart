@@ -88,7 +88,7 @@ class _LoginBrandHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FuiPageHead(title: l10n.loginTitle, subtitle: '登录后可回复讨论、接收通知并管理个人内容。'),
+        FuiPageHead(title: l10n.loginTitle, subtitle: l10n.loginSubtitle),
         const SizedBox(height: FUITokens.gap10),
         Row(
           children: [
@@ -143,14 +143,14 @@ class _LoginPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '论坛账号',
+                      l10n.loginForumAccountTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: FUITokens.gap4),
                     Text(
-                      '使用当前站点的用户名或邮箱登录',
+                      l10n.loginForumAccountSubtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textSecondary,
                       ),
@@ -188,7 +188,9 @@ class _LoginPanel extends StatelessWidget {
                 icon: controller.obscurePassword.value
                     ? FUIIcons.visibilityOff
                     : FUIIcons.visibility,
-                tooltip: controller.obscurePassword.value ? '显示密码' : '隐藏密码',
+                tooltip: controller.obscurePassword.value
+                    ? l10n.loginShowPassword
+                    : l10n.loginHidePassword,
                 onPressed: controller.isLoading
                     ? null
                     : controller.togglePasswordVisible,
@@ -277,14 +279,14 @@ class _LoginHelpPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '登录说明',
+            l10n.loginHelpTitle,
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: FUITokens.gap8),
           Text(
-            '账号凭据仅发送到当前论坛站点。若站点开启验证码、双重认证或第三方登录，密码登录可能不可用。',
+            l10n.loginHelpDescription,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: context.colors.textSecondary,
               height: 1.45,

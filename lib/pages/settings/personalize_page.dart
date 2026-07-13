@@ -43,7 +43,7 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
         children: [
           FuiPageHead(
             title: l10n.settingsPersonalizeTitle,
-            subtitle: '调整主题模式和界面文字大小',
+            subtitle: l10n.settingsPersonalizeSubtitle,
           ),
           const SizedBox(height: FUITokens.gap16),
           FUISection(
@@ -119,15 +119,15 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
               children: [
                 SettingsToggleTile(
                   icon: FUIIcons.apps,
-                  title: '按钮组只显示图标',
-                  subtitle: '主页、用户页等切换按钮始终隐藏文字，仅通过图标和提示说明显示含义',
+                  title: l10n.settingsButtonGroupIconOnly,
+                  subtitle: l10n.settingsButtonGroupIconOnlyDesc,
                   value: controller.buttonGroupIconOnly.value,
                   onChanged: controller.changeButtonGroupIconOnly,
                 ),
                 SettingsToggleTile(
                   icon: FUIIcons.list,
-                  title: '显示主题简介',
-                  subtitle: '开启后会缓存并同步首帖内容来生成列表简介，关闭可减少请求和解析开销',
+                  title: l10n.settingsShowDiscussionExcerpt,
+                  subtitle: l10n.settingsShowDiscussionExcerptDesc,
                   value: controller.showDiscussionExcerpt.value,
                   onChanged: controller.changeShowDiscussionExcerpt,
                 ),
@@ -137,7 +137,7 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '按钮组对齐',
+                        l10n.settingsButtonGroupAlignment,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: context.colors.textPrimary,
                           fontWeight: FontWeight.w700,
@@ -151,7 +151,7 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
                               in ButtonGroupAlignmentPreference.values)
                             FUISegmentedItem(
                               value: item,
-                              label: item.label,
+                              label: item.label(l10n),
                               icon:
                                   item ==
                                       ButtonGroupAlignmentPreference.centered
@@ -169,6 +169,7 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
                   title: l10n.settingsFontSize,
                   subtitle: _fontScaleDescription(
                     controller.textScaleFactor.value,
+                    l10n,
                   ),
                   trailing: Text(
                     '${(controller.textScaleFactor.value * 100).round()}%',
@@ -203,10 +204,10 @@ class _PersonalizeSettingsPageState extends State<PersonalizeSettingsPage> {
     );
   }
 
-  String _fontScaleDescription(double value) {
-    if (value < 0.9) return '紧凑，适合希望显示更多内容的界面';
-    if (value > 1.1) return '较大，提升正文和控件文字可读性';
-    return '标准大小，适合大多数手机屏幕';
+  String _fontScaleDescription(double value, AppLocalizations l10n) {
+    if (value < 0.9) return l10n.settingsFontScaleCompactDesc;
+    if (value > 1.1) return l10n.settingsFontScaleLargeDesc;
+    return l10n.settingsFontScaleStandardDesc;
   }
 }
 
@@ -317,7 +318,7 @@ class _FontScaleDialog extends StatelessWidget {
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
-            Slider(
+            FUISlider(
               value: current,
               min: 0.5,
               max: 1.5,
@@ -326,7 +327,7 @@ class _FontScaleDialog extends StatelessWidget {
               onChanged: (next) => value.value = next,
             ),
             Text(
-              'StarForum 文字预览',
+              AppLocalizations.of(context)!.settingsFontPreviewText,
               textScaler: TextScaler.linear(current),
               style: TextStyle(color: context.colors.textSecondary),
             ),

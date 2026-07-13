@@ -21,17 +21,17 @@ class SetupSitePage extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return SetupBodyView(
       title: l10n.setupSiteConfigTitle,
-      secondaryTitle: '连接你的 Flarum 社区，验证通过后保存为当前站点',
+      secondaryTitle: l10n.setupConnectSubtitle,
       header: FuiPageHead(
         title: l10n.setupSiteConfigTitle,
-        subtitle: '连接你的 Flarum 社区，验证通过后保存为当前站点',
+        subtitle: l10n.setupConnectSubtitle,
         onNavigationPressed: onBackPressed,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           FUISection(
-            title: '站点信息',
+            title: l10n.setupSiteInfoSection,
             children: [
               Padding(
                 padding: const EdgeInsets.all(FUITokens.gap14),
@@ -39,7 +39,7 @@ class SetupSitePage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      '论坛地址',
+                      l10n.setupSiteAddressLabel,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: context.colors.textPrimary,
                         fontWeight: FontWeight.w700,
@@ -47,7 +47,7 @@ class SetupSitePage extends StatelessWidget {
                     ),
                     const SizedBox(height: FUITokens.gap4),
                     Text(
-                      '请输入站点主页地址，不需要填写 /api',
+                      l10n.setupSiteAddressHint,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textSecondary,
                       ),
@@ -81,7 +81,9 @@ class SetupSitePage extends StatelessWidget {
       action: Obx(
         () => SetupNextButton(
           icon: FUIIcons.chevronRight,
-          text: controller.isLoading.value ? '正在验证站点' : '验证并继续',
+          text: controller.isLoading.value
+              ? l10n.setupValidatingSite
+              : l10n.setupValidateAndContinue,
           loading: controller.isLoading.value,
           onTap: controller.isLoading.value ? null : controller.setupUrl,
         ),
@@ -93,6 +95,7 @@ class SetupSitePage extends StatelessWidget {
 class _SiteInfoNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(FUITokens.gap12),
       decoration: BoxDecoration(
@@ -110,7 +113,7 @@ class _SiteInfoNotice extends StatelessWidget {
           const SizedBox(width: FUITokens.gap10),
           Expanded(
             child: Text(
-              '站点必须能够访问标准 Flarum API。验证成功后会显示论坛名称和连接状态。',
+              l10n.setupApiRequirement,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
                 height: 1.4,

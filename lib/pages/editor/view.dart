@@ -9,7 +9,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/model/uploads.dart';
-import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/data/session/session_state.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/assets/view.dart';
@@ -54,6 +54,7 @@ class _EditorPageState extends State<EditorPage> {
   void initState() {
     _controllerTag = 'EditorPage:${identityHashCode(this)}';
     controller = Get.put(EditorController(), tag: _controllerTag);
+    controller.contentFocusNode.addListener(_handleContentFocusChanged);
     final initialContent = widget.initialContent;
     if (initialContent != null && initialContent.isNotEmpty) {
       controller.contentController.text = initialContent;
@@ -66,10 +67,15 @@ class _EditorPageState extends State<EditorPage> {
 
   @override
   void dispose() {
+    controller.contentFocusNode.removeListener(_handleContentFocusChanged);
     if (Get.isRegistered<EditorController>(tag: _controllerTag)) {
       Get.delete<EditorController>(tag: _controllerTag);
     }
     super.dispose();
+  }
+
+  void _handleContentFocusChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -157,7 +163,9 @@ class _EditorPageState extends State<EditorPage> {
                                         label: controller.buildTagLabel(
                                           l10n.tagDialogTitle,
                                         ),
-                                        enabled: !isSubmitting,
+                                        enabled:
+                                            !isSubmitting &&
+                                            !controller.isSelectingTags.value,
                                         onTap: () => _showTagDialog(context),
                                       ),
                                       const SizedBox(height: FUITokens.gap10),
@@ -192,10 +200,19 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   Future<void> _showTagDialog(BuildContext context) async {
-    if (controller.isSubmitting.value) return;
+    if (controller.isSubmitting.value || controller.isSelectingTags.value) {
+      return;
+    }
+
+    FocusManager.instance.primaryFocus?.unfocus();
 
     final repo = controller.tagRepo;
-    if (!repo.isReady) await repo.syncTags();
+    controller.isSelectingTags.value = true;
+    try {
+      await repo.syncTags();
+    } finally {
+      controller.isSelectingTags.value = false;
+    }
     if (!mounted) return;
 
     final l10n = AppLocalizations.of(this.context)!;
@@ -219,7 +236,10 @@ class _EditorPageState extends State<EditorPage> {
     final canStartDiscussion =
         hasSelectableTag(primaryTags) || secondaryTags.isNotEmpty;
     if (!canStartDiscussion) {
-      SnackbarUtils.showMessage(msg: l10n.themeSelectTagHint);
+      SnackbarUtils.showMessage(
+        msg: l10n.themeSelectTagHint,
+        context: this.context,
+      );
       return;
     }
 
@@ -245,11 +265,17 @@ class _EditorPageState extends State<EditorPage> {
     final content = controller.contentController.text.trim();
 
     if (content.isEmpty || (!widget.isReplyMode && title.isEmpty)) {
-      SnackbarUtils.showMessage(msg: l10n.commonNoticeTitleContentEmpty);
+      SnackbarUtils.showMessage(
+        msg: l10n.commonNoticeTitleContentEmpty,
+        context: this.context,
+      );
       return;
     }
     if (!widget.isReplyMode && title.length < 6) {
-      SnackbarUtils.showMessage(msg: l10n.commonNoticeTitleTooShort);
+      SnackbarUtils.showMessage(
+        msg: l10n.commonNoticeTitleTooShort,
+        context: this.context,
+      );
       return;
     }
 
@@ -271,7 +297,10 @@ class _EditorPageState extends State<EditorPage> {
 
     final primaryTag = controller.primaryTag.value;
     if (primaryTag == null) {
-      SnackbarUtils.showMessage(msg: l10n.commonNoticePrimaryTagRequired);
+      SnackbarUtils.showMessage(
+        msg: l10n.commonNoticePrimaryTagRequired,
+        context: this.context,
+      );
       return;
     }
 
@@ -378,8 +407,10 @@ class _EditorTitleField extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: TextField(
         controller: controller.titleController,
+        focusNode: controller.titleFocusNode,
         enabled: enabled,
         textInputAction: TextInputAction.next,
+        onSubmitted: (_) => controller.contentFocusNode.requestFocus(),
         style: TextStyle(
           color: colors.textPrimary,
           fontSize: 18,
@@ -455,9 +486,19 @@ class _EditorFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final userRepo = getIt<UserRepo>();
-    final canUpload = userRepo.canUpload.value;
+    final sessionState = getIt<SessionState>();
+    return ValueListenableBuilder<SessionSnapshot>(
+      valueListenable: sessionState.state,
+      builder: (context, session, _) =>
+          _buildFooter(context, l10n, canUpload: session.canUpload),
+    );
+  }
 
+  Widget _buildFooter(
+    BuildContext context,
+    AppLocalizations l10n, {
+    required bool canUpload,
+  }) {
     final actions = <_ToolbarAction>[
       _ToolbarAction(
         FluentIcons.text_header_1_24_regular,
@@ -492,7 +533,10 @@ class _EditorFooter extends StatelessWidget {
       _ToolbarAction(
         FluentIcons.link_24_regular,
         l10n.editorToolbarLink,
-        () => controller.insertSnippet('[文字](https://)', cursorOffset: 1),
+        () => controller.insertSnippet(
+          '[${l10n.editorLinkTextPlaceholder}](https://)',
+          cursorOffset: 1,
+        ),
       ),
       _ToolbarAction(
         ForumIcons.image,

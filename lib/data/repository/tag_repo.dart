@@ -39,8 +39,8 @@ class TagRepo {
   }
 
   Future<void> _performSync() async {
-    await _restoreCachedTags();
     try {
+      await _restoreCachedTags();
       final r = await tagApi.list();
       if (r == null) {
         LogUtil.error("[TagRepo] empty tag response");
@@ -86,8 +86,7 @@ class TagRepo {
   }
 
   List<TagInfo> getRootTags() {
-    if (_tags == null) return const [];
-    return _tags!.tags.values.toList();
+    return getRootTagsForUI();
   }
 
   TagInfo? getMiniTag(int id) {
@@ -101,40 +100,7 @@ class TagRepo {
 
   List<TagInfo> getRootTagsForUI() {
     if (_tags == null) return const [];
-
-    final Map<int, List<TagInfo>> childrenMap = {};
-    final roots = <TagInfo>[];
-
-    for (final tag in _tags!.all.values) {
-      tag.children = tag.position == null ? null : SplayTreeMap<int, TagInfo>();
-    }
-
-    for (final tag in _tags!.all.values) {
-      if (tag.position == null) {
-        continue;
-      }
-
-      if (tag.isChild && tag.parentId != null) {
-        childrenMap.putIfAbsent(tag.parentId!, () => []).add(tag);
-      } else {
-        roots.add(tag);
-      }
-    }
-
-    for (final root in roots) {
-      final list = childrenMap[root.id];
-      if (list != null && list.isNotEmpty) {
-        root.children ??= SplayTreeMap();
-        for (final c in list) {
-          root.children!.addAll({c.position ?? 0: c});
-        }
-      }
-    }
-
-    roots.sort(
-      (a, b) => (a.position ?? 1 << 30).compareTo(b.position ?? 1 << 30),
-    );
-    return roots;
+    return _tags!.tags.values.toList(growable: false);
   }
 
   List<TagInfo> getTags() {

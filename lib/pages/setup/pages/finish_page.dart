@@ -41,7 +41,7 @@ class FinishPage extends StatelessWidget {
           child: Icon(FUIIcons.check, size: 30, color: context.colors.success),
         ),
         body: FUISection(
-          title: '站点信息',
+          title: l10n.setupSiteInfoSection,
           children: [
             FUITile(
               icon: FUIIcons.refresh,
@@ -63,7 +63,7 @@ class FinishPage extends StatelessWidget {
         action: SetupNextButton(
           icon: FUIIcons.checkmark,
           text: controller.isLoading.value
-              ? '正在初始化'
+              ? l10n.setupInitializing
               : l10n.commonActionFinishAndEnter,
           loading: controller.isLoading.value,
           onTap: controller.isLoading.value

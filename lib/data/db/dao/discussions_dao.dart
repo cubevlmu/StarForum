@@ -10,15 +10,21 @@ import 'package:star_forum/data/db/cache_keys.dart';
 import 'package:star_forum/data/db/tables/cache_collection_table.dart';
 import 'package:star_forum/data/db/tables/discussion_excerpt_cache.dart';
 import 'package:star_forum/data/db/tables/discussion_table.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/db/tables/resource_tables.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/model/discussions.dart';
-import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/data/db/mappers/discussion_cache_mapper.dart';
 import 'package:star_forum/utils/log_util.dart';
 
 part 'discussions_dao.g.dart';
 
 @DriftAccessor(
-  tables: [DbDiscussions, DbCacheCollectionItems, DbDiscussionExcerptCache],
+  tables: [
+    DbDiscussions,
+    DbCacheCollectionItems,
+    DbDiscussionExcerptCache,
+    DbUsers,
+  ],
 )
 class DiscussionsDao extends DatabaseAccessor<AppDatabase>
     with _$DiscussionsDaoMixin {
@@ -71,7 +77,7 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
         .go();
   }
 
-  Stream<List<DiscussionItem>> watchPaged(
+  Stream<List<DiscussionSummary>> watchPaged(
     int limit, {
     String collectionKey = 'discussion:feed:sort=default:tag=all',
     bool showExcerpt = true,
@@ -80,9 +86,13 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
       '''
       SELECT d.id,
              d.title,
-             COALESCE(e.excerpt, '...') AS excerpt,
-             d.author_name,
-             d.author_avatar,
+             COALESCE(e.excerpt, '') AS excerpt,
+             COALESCE(
+               NULLIF(u.display_name, ''),
+               NULLIF(u.username, ''),
+               d.author_name
+             ) AS author_name,
+             COALESCE(NULLIF(u.avatar_url, ''), d.author_avatar) AS author_avatar,
              d.view_count,
              d.last_posted_at,
              d.created_at,
@@ -95,6 +105,8 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
         ON d.id = c.resource_id
       LEFT JOIN db_discussion_excerpt_cache e
         ON e.discussion_id = d.id
+      LEFT JOIN db_users u
+        ON u.id = d.poster_id AND u.deleted_at IS NULL
       WHERE c.collection_key = ?
         AND c.resource_type = ?
         AND d.deleted_at IS NULL
@@ -110,6 +122,7 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
         dbCacheCollectionItems,
         dbDiscussions,
         dbDiscussionExcerptCache,
+        dbUsers,
       },
     ).watch().map((rows) {
       return [
@@ -123,42 +136,61 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
     return batch((b) => b.insertAllOnConflictUpdate(dbDiscussions, list));
   }
 
-  Future<Map<int, DiscussionInfo>> getByIds(List<int> ids) async {
-    if (ids.isEmpty) return const <int, DiscussionInfo>{};
+  Future<Map<int, DiscussionDetail>> getByIds(List<int> ids) async {
+    if (ids.isEmpty) return const <int, DiscussionDetail>{};
     final rows = await (select(
       dbDiscussions,
     )..where((t) => t.id.isIn(ids.map((id) => id.toString())))).get();
     return {
       for (final row in rows)
-        int.tryParse(row.id) ?? -1: row.toDiscussionInfo(),
+        int.tryParse(row.id) ?? -1: row.toDiscussionDetail(),
     }..remove(-1);
   }
 
   Future<Set<String>> findIdsWithMissingAuthor(Iterable<String> ids) async {
     final idList = ids.toList(growable: false);
     if (idList.isEmpty) return const <String>{};
-    final rows =
-        await (select(dbDiscussions)..where(
-              (t) =>
-                  t.id.isIn(idList) &
-                  (t.posterId.isSmallerOrEqualValue(0) |
-                      t.authorName.equals('')),
-            ))
-            .get();
-    return rows.map((row) => row.id).toSet();
+    final rows = await (select(
+      dbDiscussions,
+    )..where((t) => t.id.isIn(idList))).get();
+    final userIds = rows
+        .map((row) => row.posterId)
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toSet()
+        .toList(growable: false);
+    final userRows = userIds.isEmpty
+        ? const <DbUser>[]
+        : await (select(dbUsers)..where((t) => t.id.isIn(userIds))).get();
+    final users = {for (final user in userRows) user.id: user};
+    return {
+      for (final row in rows)
+        if (!row.authorResolved || _isMissingUser(row.posterId, users)) row.id,
+    };
   }
 
-  Future<List<DiscussionInfo>> getCachedCollection({
+  Future<List<DiscussionDetail>> getCachedCollection({
     required String collectionKey,
     required int offset,
     required int limit,
   }) async {
     final rows = await customSelect(
       '''
-      SELECT d.*
+      SELECT d.*,
+             COALESCE(
+               NULLIF(u.display_name, ''),
+               NULLIF(u.username, ''),
+               d.author_name
+             ) AS resolved_author_name,
+             COALESCE(
+               NULLIF(u.avatar_url, ''),
+               d.author_avatar
+             ) AS resolved_author_avatar
       FROM db_cache_collection_items c
       INNER JOIN db_discussions d
         ON d.id = c.resource_id
+      LEFT JOIN db_users u
+        ON u.id = d.poster_id AND u.deleted_at IS NULL
       WHERE c.collection_key = ?
         AND c.resource_type = ?
         AND d.deleted_at IS NULL
@@ -171,7 +203,7 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
         Variable<int>(limit),
         Variable<int>(offset),
       ],
-      readsFrom: {dbCacheCollectionItems, dbDiscussions},
+      readsFrom: {dbCacheCollectionItems, dbDiscussions, dbUsers},
     ).get();
     return [
       for (final row in rows)
@@ -183,8 +215,9 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
           participantCount: row.read<int>('participant_count'),
           viewCount: row.read<int>('view_count'),
           likeCount: row.read<int>('like_count'),
-          authorName: row.read<String>('author_name'),
-          authorAvatar: row.read<String>('author_avatar'),
+          authorName: row.read<String>('resolved_author_name'),
+          authorAvatar: row.read<String>('resolved_author_avatar'),
+          authorResolved: row.read<bool>('author_resolved'),
           createdAt: row.read<DateTime>('created_at'),
           lastPostedAt: row.readNullable<DateTime>('last_posted_at'),
           lastSeenAt: row.read<DateTime>('last_seen_at'),
@@ -192,10 +225,10 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
           deletedAt: row.readNullable<DateTime>('deleted_at'),
           lastPostNumber: row.read<int>('last_post_number'),
           firstPostId: row.read<int>('first_post_id'),
-          posterId: row.read<int>('poster_id'),
+          posterId: row.readNullable<int>('poster_id'),
           subscription: row.read<int>('subscription'),
           fingerprint: row.read<String>('fingerprint'),
-        ).toDiscussionInfo(),
+        ).toDiscussionDetail(),
     ];
   }
 
@@ -237,19 +270,19 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
   }
 }
 
-DiscussionItem _discussionItemFromRow(
+DiscussionSummary _discussionItemFromRow(
   QueryRow row, {
   required bool showExcerpt,
 }) {
-  final posterId = row.read<int>('poster_id');
+  final posterId = row.readNullable<int>('poster_id');
   final authorName = row.read<String>('author_name').trim();
-  return DiscussionItem(
+  return DiscussionSummary(
     id: row.read<String>('id'),
     title: row.read<String>('title'),
     excerpt: showExcerpt ? row.read<String>('excerpt') : '',
     authorName: authorName.isNotEmpty
         ? authorName
-        : posterId > 0
+        : posterId != null && posterId > 0
         ? '#$posterId'
         : '',
     authorAvatar: row.read<String>('author_avatar'),
@@ -257,46 +290,21 @@ DiscussionItem _discussionItemFromRow(
     lastPostedAt:
         row.readNullable<DateTime>('last_posted_at') ??
         row.read<DateTime>('created_at'),
+    createdAt: row.read<DateTime>('created_at'),
     commentCount: row.read<int>('comment_count'),
     likeCount: row.read<int>('like_count'),
-    userId: posterId,
+    userId: posterId ?? -1,
     subscription: row.read<int>('subscription'),
   );
 }
 
-extension on DbDiscussion {
-  DiscussionInfo toDiscussionInfo() {
-    final author = UserInfo(
-      posterId,
-      '',
-      authorName,
-      authorAvatar,
-      createdAt,
-      0,
-      0,
-      DateTime.utc(1980),
-      '',
-      null,
-      '',
-    );
-    return DiscussionInfo(
-      id,
-      title,
-      commentCount,
-      participantCount,
-      viewCount,
-      createdAt,
-      lastPostedAt ?? createdAt,
-      lastPostNumber,
-      firstPostId,
-      author,
-      null,
-      null,
-      firstPostId >= 0 ? [firstPostId] : const <int>[],
-      {},
-      {posterId: author},
-      const [],
-      subscription,
-    );
-  }
+bool _hasUsableIdentity(DbUser? user) {
+  return user != null &&
+      (user.username.trim().isNotEmpty ||
+          user.displayName.trim().isNotEmpty ||
+          user.avatarUrl.trim().isNotEmpty);
+}
+
+bool _isMissingUser(int? userId, Map<int, DbUser> users) {
+  return userId != null && userId > 0 && !_hasUsableIdentity(users[userId]);
 }

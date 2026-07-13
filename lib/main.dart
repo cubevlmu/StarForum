@@ -11,9 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/app/local_controller.dart';
+import 'package:star_forum/data/migration/local_data_migration.dart';
+import 'package:star_forum/data/perf/runtime_perf_monitor.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/star_forum_app.dart';
-import 'package:star_forum/utils/http_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/storage_utils.dart';
 import 'package:star_forum/utils/window_util.dart';
@@ -27,6 +28,7 @@ final kIsDesktopPlatform =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await LocalDataMigration.runBeforeBootstrap();
   final bootstrapTasks = <Future<void>>[
     StorageUtils.ensureInitialized(),
     LogUtil.init(),
@@ -39,8 +41,8 @@ void main() async {
   WindowResizeObserver.instance.init();
   setupInjector();
   Get.put(LocaleController(), permanent: true);
-  unawaited(HttpUtils().init());
   runApp(const StarForumApp());
+  RuntimePerfMonitor.start();
   unawaited(_configureSystemUi());
 }
 

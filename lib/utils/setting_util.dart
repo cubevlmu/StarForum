@@ -94,14 +94,23 @@ class SettingsUtil {
 enum ButtonGroupAlignmentPreference { automatic, leading, centered }
 
 extension ButtonGroupAlignmentPreferenceX on ButtonGroupAlignmentPreference {
-  String get label {
+  AlignmentGeometry get alignment {
+    return switch (this) {
+      ButtonGroupAlignmentPreference.automatic ||
+      ButtonGroupAlignmentPreference.leading =>
+        AlignmentDirectional.centerStart,
+      ButtonGroupAlignmentPreference.centered => Alignment.center,
+    };
+  }
+
+  String label(AppLocalizations l10n) {
     switch (this) {
       case ButtonGroupAlignmentPreference.automatic:
-        return '自动';
+        return l10n.settingsButtonGroupAlignmentAuto;
       case ButtonGroupAlignmentPreference.leading:
-        return '左起';
+        return l10n.settingsButtonGroupAlignmentLeading;
       case ButtonGroupAlignmentPreference.centered:
-        return '居中';
+        return l10n.settingsButtonGroupAlignmentCentered;
     }
   }
 }

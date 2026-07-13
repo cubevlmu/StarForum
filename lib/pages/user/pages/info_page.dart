@@ -6,7 +6,7 @@ class _UserInfoSection extends StatelessWidget {
     required this.isAccountPage,
   });
 
-  final UserPageController controller;
+  final UserProfileController controller;
   final bool isAccountPage;
 
   @override
@@ -55,7 +55,7 @@ class _UserIdentityCard extends StatelessWidget {
     required this.isAccountPage,
   });
 
-  final UserPageController controller;
+  final UserProfileController controller;
   final bool isAccountPage;
 
   @override
@@ -117,7 +117,7 @@ class _UserDetailsPanel extends StatelessWidget {
     required this.isAccountPage,
   });
 
-  final UserPageController controller;
+  final UserProfileController controller;
   final bool isAccountPage;
 
   @override

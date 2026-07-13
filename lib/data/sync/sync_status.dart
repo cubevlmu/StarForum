@@ -1,20 +1,17 @@
-import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 
-enum SyncPhase { idle, checking, hydrating, writing }
+enum SyncPhase { idle, checking, hydrating }
 
-class SyncStatusService extends GetxService {
-  final phase = SyncPhase.idle.obs;
-  final message = ''.obs;
+class SyncStatusService {
+  final phase = ValueNotifier(SyncPhase.idle);
 
   bool get isBusy => phase.value != SyncPhase.idle;
 
-  void start(SyncPhase nextPhase, String nextMessage) {
+  void start(SyncPhase nextPhase) {
     phase.value = nextPhase;
-    message.value = nextMessage;
   }
 
   void finish() {
     phase.value = SyncPhase.idle;
-    message.value = '';
   }
 }

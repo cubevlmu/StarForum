@@ -3,19 +3,19 @@ part of '../view.dart';
 class _UserCommentsSection extends StatelessWidget {
   const _UserCommentsSection({required this.controller});
 
-  final UserPageController controller;
+  final UserRepliesController controller;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final items = controller.comments;
-      final showSkeleton = controller.isCommentsLoading.value && items.isEmpty;
+      final items = controller.items;
+      final showSkeleton = controller.isLoading.value && items.isEmpty;
 
-      return SimpleEasyRefresher(
-        easyRefreshController: controller.commentsRefreshController,
-        onRefresh: controller.onCommentsRefresh,
-        onLoad: controller.onCommentsLoad,
-        autoRefreshOnStart: false,
+      return FUIRefresh(
+        controller: controller.refreshController,
+        onRefresh: controller.refresh,
+        onLoad: controller.loadMore,
+        refreshOnStart: false,
         refreshEnabled: !showSkeleton,
         loadEnabled: !showSkeleton,
         childBuilder: (context, physics) {
@@ -23,7 +23,7 @@ class _UserCommentsSection extends StatelessWidget {
               ? const ClampingScrollPhysics()
               : physics;
           return CustomScrollView(
-            controller: controller.commentsScrollController,
+            controller: controller.scrollController,
             physics: effectivePhysics,
             scrollCacheExtent: const ScrollCacheExtent.pixels(320),
             slivers: [
@@ -53,15 +53,15 @@ class _UserCommentsSection extends StatelessWidget {
                     (context, index) {
                       final item = items[index];
                       final discussion =
-                          controller.commentDiscussions[item.discussion];
+                          controller.discussions[item.discussion];
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _DiscussionHint(
                             title: discussion?.title ?? '',
                             onTap: () async {
-                              if (controller.isLoading.value) return;
-                              final result = await controller.naviToDisPage(
+                              if (controller.isOpeningDiscussion.value) return;
+                              final result = await controller.openDiscussion(
                                 item.discussion,
                               );
                               if (result == null) return;

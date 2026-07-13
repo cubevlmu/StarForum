@@ -1,3 +1,8 @@
 .gradle
 .kotlin
 gradle
+key.properties
+keystore.properties
+keystore/
+*.jks
+*.keystore

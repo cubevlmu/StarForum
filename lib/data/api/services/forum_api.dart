@@ -25,6 +25,8 @@ class ForumApi {
 
   final FlarumApiClient client;
   ForumProbeResult? _cached;
+  Future<ForumProbeResult?>? _pendingProbe;
+  String? _pendingBaseUrl;
 
   Future<ForumInfo?> getForumInfo(String baseUrl, {bool force = false}) async {
     return (await probe(baseUrl, force: force))?.environment.forumInfo;
@@ -35,6 +37,23 @@ class ForumApi {
     if (normalized == null || normalized.isEmpty) return null;
     if (!force && _cached?.environment.baseUrl == normalized) return _cached;
 
+    final pending = _pendingProbe;
+    if (pending != null && _pendingBaseUrl == normalized) return pending;
+
+    final task = _probe(normalized);
+    _pendingProbe = task;
+    _pendingBaseUrl = normalized;
+    try {
+      return await task;
+    } finally {
+      if (identical(_pendingProbe, task)) {
+        _pendingProbe = null;
+        _pendingBaseUrl = null;
+      }
+    }
+  }
+
+  Future<ForumProbeResult?> _probe(String normalized) async {
     final previous = client.environment;
     final previousAuth = client.auth;
     final switchingSite =
@@ -45,9 +64,9 @@ class ForumApi {
     client.setEnvironment(FlarumApiEnvironment(baseUrl: normalized));
     final watch = Stopwatch()..start();
     try {
-      final response = await client.get<Object?>('/api', bypassCache: force);
+      final response = await client.get<Object?>('/api');
       final document = documentOf(response.data);
-      final forum = parseForum(document.raw);
+      final forum = parseForumDocument(document);
       final data = asJsonMap(document.data);
       final attrs = asJsonMap(data['attributes']);
       final versionText = [

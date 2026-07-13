@@ -13,7 +13,7 @@ part of '../view.dart';
 class _UserHeadline extends StatelessWidget {
   const _UserHeadline({required this.controller, required this.canEditAvatar});
 
-  final UserPageController controller;
+  final UserProfileController controller;
   final bool canEditAvatar;
 
   Future<void> _editNickname(BuildContext context) async {
@@ -189,7 +189,7 @@ class _AdaptiveHeadlineText extends StatelessWidget {
 class _UserStatsRow extends StatelessWidget {
   const _UserStatsRow({required this.controller});
 
-  final UserPageController controller;
+  final UserProfileController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +286,7 @@ class _InlineStat extends StatelessWidget {
 class _UserBioCard extends StatelessWidget {
   const _UserBioCard({required this.controller});
 
-  final UserPageController controller;
+  final UserProfileController controller;
 
   Future<void> _editBio(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
@@ -377,7 +377,7 @@ class _UserBioCard extends StatelessWidget {
 class _UserExpPanel extends StatelessWidget {
   const _UserExpPanel({required this.controller});
 
-  final UserPageController controller;
+  final UserProfileController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -474,7 +474,7 @@ class _NicknameEditContent extends StatelessWidget {
 class _UserExpWidget extends StatefulWidget {
   const _UserExpWidget({required this.controller});
 
-  final UserPageController controller;
+  final UserProfileController controller;
 
   @override
   State<_UserExpWidget> createState() => _UserExpWidgetState();
@@ -537,7 +537,7 @@ class _UserExpWidgetState extends State<_UserExpWidget> {
 class _UserGroupsWrap extends StatelessWidget {
   const _UserGroupsWrap({required this.controller});
 
-  final UserPageController controller;
+  final UserProfileController controller;
 
   @override
   Widget build(BuildContext context) {

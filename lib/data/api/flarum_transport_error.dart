@@ -1,5 +1,14 @@
 import 'json_api/json_api_error.dart';
 
+enum FlarumTransportErrorKind {
+  unknown,
+  cancelled,
+  networkUnavailable,
+  timeout,
+  client,
+  server,
+}
+
 class FlarumTransportError implements Exception {
   const FlarumTransportError({
     required this.message,
@@ -9,6 +18,7 @@ class FlarumTransportError implements Exception {
     this.cause,
     this.cancelled = false,
     this.network = false,
+    this.kind = FlarumTransportErrorKind.unknown,
   });
 
   final String message;
@@ -18,6 +28,7 @@ class FlarumTransportError implements Exception {
   final Object? cause;
   final bool cancelled;
   final bool network;
+  final FlarumTransportErrorKind kind;
 
   JsonApiError? get apiError => errors.isEmpty ? null : errors.first;
 

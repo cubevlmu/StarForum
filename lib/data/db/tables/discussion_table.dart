@@ -19,6 +19,8 @@ class DbDiscussions extends Table {
 
   TextColumn get authorName => text().withDefault(const Constant(""))();
   TextColumn get authorAvatar => text().withDefault(const Constant(""))();
+  BoolColumn get authorResolved =>
+      boolean().withDefault(const Constant(false))();
 
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get lastPostedAt => dateTime().nullable()();
@@ -28,7 +30,7 @@ class DbDiscussions extends Table {
 
   IntColumn get lastPostNumber => integer()();
   IntColumn get firstPostId => integer().withDefault(const Constant(-1))();
-  IntColumn get posterId => integer()();
+  IntColumn get posterId => integer().nullable()();
   IntColumn get subscription => integer()();
   TextColumn get fingerprint => text().withDefault(const Constant(""))();
 

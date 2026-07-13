@@ -5,8 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:fin_ui/fin_ui.dart';
-import 'package:star_forum/app/forum_icons.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/pages/post_detail/view.dart';
 import 'package:star_forum/widgets/forum/forum_discussion_tile.dart';
 import 'package:star_forum/widgets/forum/forum_meta_row.dart';
@@ -15,7 +14,7 @@ import 'package:star_forum/utils/string_util.dart';
 class PostCard extends StatelessWidget {
   const PostCard({super.key, required this.item});
 
-  final DiscussionItem item;
+  final DiscussionSummary item;
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +34,6 @@ class PostCard extends StatelessWidget {
           icon: FUIIcons.visibility,
           label: StringUtil.numFormat(item.viewCount),
         ),
-        if (item.likeCount >= 0)
-          ForumMetaItem(
-            icon: ForumIcons.like,
-            label: StringUtil.numFormat(item.likeCount),
-          ),
       ],
       replyCount: item.commentCount > 0 ? item.commentCount - 1 : 0,
       unread: item.subscription == 1,

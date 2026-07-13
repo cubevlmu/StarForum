@@ -4,10 +4,13 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
+import 'dart:async';
+
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
+import 'package:star_forum/data/model/group_info.dart';
 import 'package:star_forum/data/model/users.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
@@ -17,8 +20,9 @@ class UserGroupController extends GetxController {
   final RxBool isInitialLoading = true.obs;
   final RxBool isCriteriaLoading = false.obs;
   final RxList<UserInfo> users = <UserInfo>[].obs;
+  final RxList<GroupInfo> groups = <GroupInfo>[].obs;
   final RxString searchText = ''.obs;
-  final RxnString selectedGroup = RxnString();
+  final RxnInt selectedGroupId = RxnInt();
   final Rx<UserDirectorySort> sort = UserDirectorySort.username.obs;
   final userRepo = getIt<UserRepo>();
   final ScrollController scrollController = ScrollController();
@@ -31,6 +35,7 @@ class UserGroupController extends GetxController {
   int _offset = 0;
   bool _hasMore = true;
   bool _loading = false;
+  Timer? _refreshTimer;
 
   void _finishRefreshSafe(IndicatorResult result) {
     SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -48,38 +53,31 @@ class UserGroupController extends GetxController {
     });
   }
 
-  List<String> get availableGroups {
-    final result = <String>{};
+  List<GroupInfo> get availableGroups {
+    final result = <int, GroupInfo>{
+      for (final group in groups) group.id: group,
+    };
     for (final user in users) {
-      final groups = user.groups?.list ?? const [];
-      for (final group in groups) {
-        final name = group.name.trim();
-        if (name.isNotEmpty) {
-          result.add(name);
+      final userGroups = user.groups?.list ?? const <GroupInfo>[];
+      for (final group in userGroups) {
+        if (group.id > 0 && group.name.trim().isNotEmpty) {
+          result[group.id] = group;
         }
       }
     }
-    final list = result.toList();
-    list.sort();
+    final list = result.values.toList();
+    list.sort((a, b) => a.name.compareTo(b.name));
     return list;
   }
 
   List<UserInfo> get filteredUsers {
     final keyword = searchText.value.trim().toLowerCase();
-    final group = selectedGroup.value;
     return users.where((user) {
       if (keyword.isNotEmpty) {
         final hit =
             user.displayName.toLowerCase().contains(keyword) ||
             user.username.toLowerCase().contains(keyword);
         if (!hit) {
-          return false;
-        }
-      }
-
-      if (group != null && group.isNotEmpty) {
-        final names = user.groups?.list.map((e) => e.name).toList() ?? const [];
-        if (!names.contains(group)) {
           return false;
         }
       }
@@ -91,14 +89,26 @@ class UserGroupController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    unawaited(_loadGroups());
     _restoreCachedUsers();
     onRefresh(useSkeleton: true);
+    _refreshTimer = Timer.periodic(const Duration(minutes: 15), (_) {
+      if (!_loading && !isClosed) unawaited(onRefresh());
+    });
+  }
+
+  Future<void> _loadGroups({bool force = false}) async {
+    final result = await userRepo.getUserGroups(force: force);
+    final data = result.data;
+    if (data == null || isClosed) return;
+    groups.assignAll(data.where((group) => group.id > 0));
   }
 
   Future<void> _restoreCachedUsers() async {
     final cached = await userRepo.getCachedUserDirectory(
       limit: _pageSize,
       sort: sort.value,
+      groupId: selectedGroupId.value,
     );
     if (cached.isEmpty || isClosed) return;
     users.assignAll(cached);
@@ -109,6 +119,7 @@ class UserGroupController extends GetxController {
 
   @override
   void onClose() {
+    _refreshTimer?.cancel();
     scrollController.dispose();
     refreshController.dispose();
     super.onClose();
@@ -130,6 +141,7 @@ class UserGroupController extends GetxController {
         limit: _pageSize,
         offset: _offset,
         sort: sort.value,
+        groupId: selectedGroupId.value,
       );
       if (result.isFailure) {
         _finishRefreshSafe(IndicatorResult.fail);
@@ -168,6 +180,7 @@ class UserGroupController extends GetxController {
         limit: _pageSize,
         offset: _offset,
         sort: sort.value,
+        groupId: selectedGroupId.value,
       );
       if (result.isFailure) {
         _finishLoadSafe(IndicatorResult.fail);
@@ -195,9 +208,10 @@ class UserGroupController extends GetxController {
     searchText.value = value;
   }
 
-  void updateGroup(String? value) {
-    selectedGroup.value = value;
-    reloadForCriteriaChange();
+  Future<void> updateGroup(int? value) async {
+    if (selectedGroupId.value == value) return;
+    selectedGroupId.value = value;
+    await reloadForCriteriaChange();
   }
 
   Future<void> updateSort(UserDirectorySort value) async {
@@ -210,6 +224,7 @@ class UserGroupController extends GetxController {
     await Future<void>.delayed(Duration.zero);
     if (!isClosed) {
       users.clear();
+      if (scrollController.hasClients) scrollController.jumpTo(0);
       await _restoreCachedUsers();
       await onRefresh(useSkeleton: true);
     }

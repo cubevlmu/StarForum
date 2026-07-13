@@ -29,9 +29,9 @@ class UserMapper {
         ? const <GroupInfo>[]
         : [
             for (final group in document.includedMany(resource, 'groups'))
-              _group(group),
+              groupItem(group),
           ];
-    final user = UserInfo(
+    return UserInfo(
       resource.intId,
       attrs.string('username'),
       attrs.string('displayName', attrs.string('username')),
@@ -47,20 +47,19 @@ class UserMapper {
       groups.isEmpty ? null : Groups(list: groups),
       attrs.string('bio'),
       avatarSrcset: attrs.string('avatarSrcset'),
+      expInfo: attrs.contains('expLevel')
+          ? ExpInfo(
+              attrs.string('expLevel'),
+              attrs.integer('expTotal'),
+              attrs.integer('expPercent'),
+              attrs.string('expNext'),
+              attrs.integer('expNextNeed'),
+            )
+          : null,
     );
-    if (attrs.contains('expLevel')) {
-      user.expInfo = ExpInfo(
-        attrs.string('expLevel'),
-        attrs.integer('expTotal'),
-        attrs.integer('expPercent'),
-        attrs.string('expNext'),
-        attrs.integer('expNextNeed'),
-      );
-    }
-    return user;
   }
 
-  GroupInfo _group(JsonApiResource resource) {
+  GroupInfo groupItem(JsonApiResource resource) {
     final attrs = JsonReader(resource.attributes);
     return GroupInfo(
       id: resource.intId,

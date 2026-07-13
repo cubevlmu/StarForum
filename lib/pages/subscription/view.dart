@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_detail/view.dart';
@@ -15,11 +15,9 @@ import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/app/forum_layout.dart';
 import 'package:star_forum/widgets/forum/forum_discussion_tile.dart';
 import 'package:star_forum/widgets/forum/forum_meta_row.dart';
-import 'package:star_forum/utils/html_utils.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -67,11 +65,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               controller.isCriteriaLoading.value) &&
           controller.items.isEmpty;
 
-      return SimpleEasyRefresher(
-        easyRefreshController: controller.refreshController,
+      return FUIRefresh(
+        controller: controller.refreshController,
         onRefresh: controller.onRefresh,
         onLoad: controller.onLoad,
-        autoRefreshOnStart: false,
+        refreshOnStart: false,
         refreshEnabled: !showSkeleton,
         loadEnabled: !showSkeleton,
         childBuilder: (context, physics) {
@@ -240,11 +238,11 @@ class _PopupPicker<T> extends StatelessWidget {
 class _FollowingItem extends StatelessWidget {
   const _FollowingItem({required this.item});
 
-  final DiscussionInfo item;
+  final DiscussionSummary item;
 
   @override
   Widget build(BuildContext context) {
-    final excerpt = htmlToPlainText(item.firstPost?.contentHtml ?? '').trim();
+    final excerpt = item.excerpt.trim();
     final tags = item.tags.take(3).map((t) => t.name).toList();
     return RepaintBoundary(
       child: Padding(
@@ -252,8 +250,8 @@ class _FollowingItem extends StatelessWidget {
         child: ForumDiscussionTile(
           title: item.title,
           excerpt: excerpt.isEmpty ? null : excerpt,
-          author: item.user?.displayName,
-          avatarUrl: item.user?.avatarUrl,
+          author: item.authorName,
+          avatarUrl: item.authorAvatar,
           tags: tags,
           meta: [
             ForumMetaItem(
@@ -265,7 +263,7 @@ class _FollowingItem extends StatelessWidget {
           unread: item.subscription == 1,
           onTap: () => FuiNavigation.openDetail(
             context,
-            builder: (_) => PostPage(item: item.toItem(), embedded: true),
+            builder: (_) => PostPage(item: item, embedded: true),
           ),
         ),
       ),

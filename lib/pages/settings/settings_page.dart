@@ -4,6 +4,7 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/settings/about_page.dart';
@@ -24,16 +25,16 @@ class SettingsPage extends StatelessWidget {
         children: [
           FuiPageHead(
             title: l10n.commonActionSettings,
-            subtitle: '管理论坛、外观和本地数据',
+            subtitle: l10n.settingsSubtitle,
           ),
           const SizedBox(height: FUITokens.gap16),
           FUISection(
-            title: '应用设置',
+            title: l10n.settingsAppSection,
             children: [
               FUITile(
                 icon: FUIIcons.settings,
                 title: l10n.settingsCommonTitle,
-                subtitle: '语言、更新、缓存和站点',
+                subtitle: l10n.settingsCommonSubtitle,
                 onTap: () => FuiNavigation.openDetail(
                   context,
                   builder: (_) => const CommonSettingsPage(),
@@ -42,7 +43,7 @@ class SettingsPage extends StatelessWidget {
               FUITile(
                 icon: FUIIcons.palette,
                 title: l10n.settingsPersonalizeTitle,
-                subtitle: '主题和字体大小',
+                subtitle: l10n.settingsAppearanceSubtitle,
                 onTap: () => FuiNavigation.openDetail(
                   context,
                   builder: (_) => const PersonalizeSettingsPage(),
@@ -52,26 +53,27 @@ class SettingsPage extends StatelessWidget {
           ),
           const SizedBox(height: FUITokens.gap16),
           FUISection(
-            title: '支持',
+            title: l10n.settingsSupportSection,
             children: [
               FUITile(
                 icon: FUIIcons.info,
                 title: l10n.aboutTitle,
-                subtitle: '版本、项目链接和许可',
+                subtitle: l10n.settingsAboutSubtitle,
                 onTap: () => FuiNavigation.openDetail(
                   context,
                   builder: (_) => const AboutPage(),
                 ),
               ),
-              FUITile(
-                icon: FUIIcons.bug,
-                title: l10n.devMenuTitle,
-                subtitle: '调试工具、日志导出和组件预览',
-                onTap: () => FuiNavigation.openDetail(
-                  context,
-                  builder: (_) => const DevSettingPage(),
+              if (kDebugMode)
+                FUITile(
+                  icon: FUIIcons.bug,
+                  title: l10n.devMenuTitle,
+                  subtitle: l10n.settingsDeveloperSubtitle,
+                  onTap: () => FuiNavigation.openDetail(
+                    context,
+                    builder: (_) => const DevSettingPage(),
+                  ),
                 ),
-              ),
             ],
           ),
         ],

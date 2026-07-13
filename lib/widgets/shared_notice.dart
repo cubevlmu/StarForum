@@ -35,9 +35,9 @@ class WorkInProgressNotice extends StatelessWidget {
             Text(
               l10n.noticeWorkInProgressTips,
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+              ),
             ),
 
             const SizedBox(height: 24),
@@ -80,15 +80,16 @@ class NotLoginNotice extends StatelessWidget {
             Text(
               tipsText,
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+              ),
             ),
 
             const SizedBox(height: 24),
-            ElevatedButton(
+            FUIButton(
+              label: AppLocalizations.of(context)!.authLogin,
+              icon: FUIIcons.login,
               onPressed: () => _onLoginBtnPressed(context),
-              child: Text(AppLocalizations.of(context)!.authLogin),
             ),
           ],
         ),
@@ -97,7 +98,10 @@ class NotLoginNotice extends StatelessWidget {
   }
 
   void _onLoginBtnPressed(BuildContext context) {
-    FuiNavigation.openDetail(context, builder: (_) => const LoginPage(embedded: true));
+    FuiNavigation.openDetail(
+      context,
+      builder: (_) => const LoginPage(embedded: true),
+    );
   }
 }
 
@@ -150,8 +154,8 @@ class WorkInProgressPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.commonNoticeWorkInProgress),
+      appBar: FUIAppBar(
+        title: AppLocalizations.of(context)!.commonNoticeWorkInProgress,
       ),
       body: const WorkInProgressNotice(),
     );

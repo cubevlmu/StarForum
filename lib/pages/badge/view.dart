@@ -12,7 +12,6 @@ import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/badge/controller.dart';
 import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:star_forum/widgets/two_column_loading_skeleton.dart';
 
 class BadgePage extends StatefulWidget {
@@ -54,10 +53,10 @@ class _BadgePageState extends State<BadgePage>
         return const _BadgeLoadingSkeleton();
       }
 
-      return SimpleEasyRefresher(
-        easyRefreshController: controller.refreshController,
+      return FUIRefresh(
+        controller: controller.refreshController,
         onRefresh: controller.refresh,
-        autoRefreshOnStart: false,
+        refreshOnStart: false,
         loadEnabled: false,
         childBuilder: (context, physics) {
           return CustomScrollView(

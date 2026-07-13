@@ -1,8 +1,11 @@
 import 'package:star_forum/data/api/flarum_transport_error.dart';
+import 'package:star_forum/data/perf/perf_log.dart';
 
 enum RepoErrorType {
   empty,
   network,
+  timeout,
+  server,
   tokenExpired,
   validation,
   forbidden,
@@ -69,6 +72,10 @@ class RepoError {
     final detail = error.apiError?.detail ?? error.message;
     final type = error.cancelled
         ? RepoErrorType.cancelled
+        : error.kind == FlarumTransportErrorKind.timeout
+        ? RepoErrorType.timeout
+        : error.kind == FlarumTransportErrorKind.server
+        ? RepoErrorType.server
         : error.network
         ? RepoErrorType.network
         : error.isAuthExpired
@@ -137,29 +144,53 @@ class RepoResult<T> {
     return RepoResult.fromNullable(data);
   }
 
-  static Future<RepoResult<T>> guard<T>(Future<T?> Function() call) async {
+  static Future<RepoResult<T>> guard<T>(
+    Future<T?> Function() call, {
+    String? name,
+  }) async {
+    final stopwatch = name == null ? null : (Stopwatch()..start());
+    RepoResult<T> result;
     try {
-      return RepoResult.fromNullable(await call());
+      result = RepoResult.fromNullable(await call());
     } on FlarumTransportError catch (e) {
-      return RepoResult.failure(RepoError.fromTransport(e));
+      result = RepoResult.failure(RepoError.fromTransport(e));
     } catch (e, s) {
-      return RepoResult.failure(RepoError.unknown(e, s));
+      result = RepoResult.failure(RepoError.unknown(e, s));
     }
+    if (stopwatch != null) {
+      PerfLog.repository(
+        name!,
+        elapsedUs: stopwatch.elapsedMicroseconds,
+        success: result.isSuccess,
+      );
+    }
+    return result;
   }
 
   static Future<RepoResult<void>> guardBool(
-    Future<bool> Function() call,
-  ) async {
+    Future<bool> Function() call, {
+    String? name,
+  }) async {
+    final stopwatch = name == null ? null : (Stopwatch()..start());
+    RepoResult<void> result;
     try {
       final ok = await call();
-      return ok
+      result = ok
           ? const RepoResult.success(null)
           : const RepoResult.failure(RepoError.operationFailed);
     } on FlarumTransportError catch (e) {
-      return RepoResult.failure(RepoError.fromTransport(e));
+      result = RepoResult.failure(RepoError.fromTransport(e));
     } catch (e, s) {
-      return RepoResult.failure(RepoError.unknown(e, s));
+      result = RepoResult.failure(RepoError.unknown(e, s));
     }
+    if (stopwatch != null) {
+      PerfLog.repository(
+        name!,
+        elapsedUs: stopwatch.elapsedMicroseconds,
+        success: result.isSuccess,
+      );
+    }
+    return result;
   }
 }
 
@@ -190,13 +221,21 @@ class PagedRepoResult<T> extends RepoResult<List<T>> {
 class RepoRequestCoalescer {
   final Map<String, Future<Object?>> _pending = <String, Future<Object?>>{};
 
-  Future<T> run<T>(String key, Future<T> Function() call) async {
+  Future<T> run<T>(
+    String key,
+    Future<T> Function() call, {
+    bool coalesce = true,
+  }) async {
+    final operation = key.split(':').first;
+    if (!coalesce) return _measure(operation, call);
+
     final pending = _pending[key];
+    PerfLog.coalescing('repository', hit: pending != null);
     if (pending != null) {
       return await pending as T;
     }
 
-    final future = call();
+    final future = _measure(operation, call);
     _pending[key] = future;
     try {
       return await future;
@@ -204,6 +243,35 @@ class RepoRequestCoalescer {
       if (identical(_pending[key], future)) {
         _pending.remove(key);
       }
+    }
+  }
+
+  Future<T> _measure<T>(String operation, Future<T> Function() call) async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final result = await call();
+      if (result is RepoResult<Object?>) {
+        PerfLog.repository(
+          operation,
+          elapsedUs: stopwatch.elapsedMicroseconds,
+          success: result.isSuccess,
+          fromCache: result.fromCache,
+        );
+      } else {
+        PerfLog.repository(
+          operation,
+          elapsedUs: stopwatch.elapsedMicroseconds,
+          success: true,
+        );
+      }
+      return result;
+    } catch (_) {
+      PerfLog.repository(
+        operation,
+        elapsedUs: stopwatch.elapsedMicroseconds,
+        success: false,
+      );
+      rethrow;
     }
   }
 }

@@ -6,6 +6,7 @@ import 'package:fin_ui/app_context.dart';
 import 'package:fin_ui/app_icons.dart';
 import 'package:fin_ui/app_tokens.dart';
 import 'package:flutter/material.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 
 // ignore_for_file: use_build_context_synchronously
 
@@ -24,8 +25,8 @@ class SharedDialog {
     BuildContext context, {
     required String title,
     required String content,
-    String cancelText = '取消',
-    String confirmText = '确定',
+    String? cancelText,
+    String? confirmText,
     SharedDialogVariant variant = SharedDialogVariant.info,
     IconData? icon,
     FUIButtonVariant? cancelButtonVariant,
@@ -36,7 +37,10 @@ class SharedDialog {
     _dismissPrevious();
     _activeContext = context;
 
-    final isSingleAction = cancelText.isEmpty;
+    final l10n = AppLocalizations.of(context)!;
+    final resolvedCancelText = cancelText ?? l10n.commonActionCancel;
+    final resolvedConfirmText = confirmText ?? l10n.commonActionConfirm;
+    final isSingleAction = resolvedCancelText.isEmpty;
 
     final result = await showDialog<bool>(
       context: context,
@@ -123,7 +127,7 @@ class SharedDialog {
                         if (!isSingleAction) ...[
                           Expanded(
                             child: FUIButton(
-                              label: cancelText,
+                              label: resolvedCancelText,
                               variant:
                                   cancelButtonVariant ??
                                   FUIButtonVariant.secondary,
@@ -137,7 +141,7 @@ class SharedDialog {
                         ],
                         Expanded(
                           child: FUIButton(
-                            label: confirmText,
+                            label: resolvedConfirmText,
                             variant:
                                 confirmButtonVariant ??
                                 _defaultConfirmButtonVariant(variant),
@@ -169,8 +173,8 @@ class SharedDialog {
     BuildContext context, {
     required String title,
     required Widget content,
-    String cancelText = '取消',
-    String confirmText = '确定',
+    String? cancelText,
+    String? confirmText,
     SharedDialogVariant variant = SharedDialogVariant.info,
     IconData? icon,
     Function()? cancelAction,
@@ -180,7 +184,10 @@ class SharedDialog {
     _dismissPrevious();
     _activeContext = context;
 
-    final isSingleAction = cancelText.isEmpty;
+    final l10n = AppLocalizations.of(context)!;
+    final resolvedCancelText = cancelText ?? l10n.commonActionCancel;
+    final resolvedConfirmText = confirmText ?? l10n.commonActionConfirm;
+    final isSingleAction = resolvedCancelText.isEmpty;
     final result = await showDialog<bool>(
       context: context,
       useRootNavigator: true,
@@ -254,7 +261,7 @@ class SharedDialog {
                       if (!isSingleAction) ...[
                         Expanded(
                           child: FUIButton(
-                            label: cancelText,
+                            label: resolvedCancelText,
                             variant: FUIButtonVariant.secondary,
                             onPressed: () {
                               if (cancelAction != null) cancelAction();
@@ -266,7 +273,7 @@ class SharedDialog {
                       ],
                       Expanded(
                         child: FUIButton(
-                          label: confirmText,
+                          label: resolvedConfirmText,
                           variant: _defaultConfirmButtonVariant(variant),
                           onPressed: () {
                             if (confirmAction != null) confirmAction();
@@ -306,15 +313,20 @@ class SharedDialog {
     required BuildContext context,
     required String title,
     required String loadingMessage,
-    String cancelText = '取消',
+    String? cancelText,
     String completeMessage = '',
-    String completeButtonText = '打开',
+    String? completeButtonText,
     bool barrierDismissible = false,
     FutureOr<void> Function()? onCancel,
     required Future<bool> Function(SharedProgressController controller) task,
   }) async {
     _dismissPrevious();
     _activeContext = context;
+
+    final l10n = AppLocalizations.of(context)!;
+    final resolvedCancelText = cancelText ?? l10n.commonActionCancel;
+    final resolvedCompleteButtonText =
+        completeButtonText ?? l10n.commonActionOpen;
 
     final controller = SharedProgressController();
     _activeProgressController = controller;
@@ -429,11 +441,11 @@ class SharedDialog {
                         if (isDone || cancelled)
                           Text(
                             cancelled
-                                ? '已取消'
+                                ? l10n.commonOperationCancelled
                                 : success && completeMessage.isNotEmpty
                                 ? completeMessage
                                 : success
-                                ? '操作已完成'
+                                ? l10n.commonOperationCompleted
                                 : message,
                             style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                               color: colors.textSecondary,
@@ -463,7 +475,9 @@ class SharedDialog {
                         const SizedBox(height: FUITokens.gap20),
                         if (isDone)
                           FUIButton(
-                            label: success ? completeButtonText : '关闭',
+                            label: success
+                                ? resolvedCompleteButtonText
+                                : l10n.commonActionClose,
                             variant: success
                                 ? FUIButtonVariant.primary
                                 : FUIButtonVariant.secondary,
@@ -472,14 +486,14 @@ class SharedDialog {
                           )
                         else if (cancelled)
                           FUIButton(
-                            label: '关闭',
+                            label: l10n.commonActionClose,
                             variant: FUIButtonVariant.secondary,
                             fullWidth: true,
                             onPressed: () => Navigator.of(ctx).pop(false),
                           )
                         else
                           FUIButton(
-                            label: cancelText,
+                            label: resolvedCancelText,
                             variant: FUIButtonVariant.secondary,
                             fullWidth: true,
                             onPressed: () {
@@ -585,7 +599,7 @@ class SharedProgressController {
     _notify();
   }
 
-  void cancel({String message = '已取消'}) {
+  void cancel({String? message}) {
     if (_complete || _disposed) return;
     _cancelled = true;
     _message = message;

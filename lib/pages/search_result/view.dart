@@ -14,7 +14,6 @@ import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/widgets/post_card.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
 
 class SearchResultPage extends StatefulWidget {
   const SearchResultPage({
@@ -86,11 +85,11 @@ class _SearchResultPageState extends State<SearchResultPage>
     return Obx(() {
       final showSkeleton =
           controller.isInitialLoading.value && controller.searchItems.isEmpty;
-      return SimpleEasyRefresher(
-        easyRefreshController: controller.refreshController,
+      return FUIRefresh(
+        controller: controller.refreshController,
         onLoad: controller.onLoad,
         onRefresh: controller.onRefresh,
-        autoRefreshOnStart: false,
+        refreshOnStart: false,
         refreshEnabled: !showSkeleton,
         loadEnabled: !showSkeleton,
         childBuilder: (context, physics) {
@@ -123,9 +122,7 @@ class _SearchResultPageState extends State<SearchResultPage>
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => Padding(
                       padding: ForumLayout.listItemPadding,
-                      child: PostCard(
-                        item: controller.searchItems[index].toItem(),
-                      ),
+                      child: PostCard(item: controller.searchItems[index]),
                     ),
                     childCount: controller.searchItems.length,
                   ),
@@ -166,14 +163,11 @@ class _SearchResultPageState extends State<SearchResultPage>
     );
 
     if (widget.embedded) {
-      return SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            header,
-            Expanded(child: _buildList(context)),
-          ],
-        ),
+      return Column(
+        children: [
+          header,
+          Expanded(child: _buildList(context)),
+        ],
       );
     }
     return Scaffold(

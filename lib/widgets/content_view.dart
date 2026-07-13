@@ -4,22 +4,23 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
-import 'dart:collection';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fin_ui/fin_ui.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
 import 'package:star_forum/app/forum_icons.dart';
+import 'package:star_forum/data/perf/perf_log.dart';
 import 'package:star_forum/data/repository/forum_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/widgets/image_view.dart';
 import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/cache_utils.dart';
+import 'package:star_forum/utils/content_hash_key.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
+import 'package:star_forum/utils/weighted_lru_cache.dart';
 import 'package:star_forum/widgets/cached_network_image.dart';
 import 'package:star_forum/widgets/shimmer_skeleton.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -30,9 +31,8 @@ class ContentView extends StatefulWidget {
   final String content;
   static double textSize = 16;
   static const int _syncParseThreshold = 1500;
-  static const int _cacheLimit = 24;
-  static final LinkedHashMap<String, List<_ParsedBlock>> _parsedCache =
-      LinkedHashMap<String, List<_ParsedBlock>>();
+  static final WeightedLruCache<ContentHashKey, List<_ParsedBlock>>
+  _parsedCache = WeightedLruCache(maxEntries: 24, maxWeight: 8 * 1024 * 1024);
 
   const ContentView({super.key, required this.content});
 
@@ -86,41 +86,56 @@ class _ContentViewState extends State<ContentView> {
   }
 
   Future<List<_ParsedBlock>> _loadContent(String content) {
-    final cached = _readCache(content);
+    final cacheKey = ContentHashKey.fromString(content);
+    final cached = ContentView._parsedCache.get(cacheKey);
     if (cached != null) {
+      PerfLog.htmlParse(
+        'contentView',
+        cacheHit: true,
+        inputBytes: content.length * 2,
+      );
       return SynchronousFuture<List<_ParsedBlock>>(cached);
     }
 
+    final stopwatch = Stopwatch()..start();
     if (content.length <= ContentView._syncParseThreshold) {
       final parsed = _decodeParsedBlocks(_parseContentPayload(content));
-      _writeCache(content, parsed);
+      stopwatch.stop();
+      _writeCache(cacheKey, content, parsed);
+      PerfLog.htmlParse(
+        'contentView',
+        cacheHit: false,
+        elapsedUs: stopwatch.elapsedMicroseconds,
+        inputBytes: content.length * 2,
+      );
       return SynchronousFuture<List<_ParsedBlock>>(parsed);
     }
 
     return compute(_parseContentPayload, content).then((payload) {
       final parsed = _decodeParsedBlocks(payload);
-      _writeCache(content, parsed);
+      stopwatch.stop();
+      _writeCache(cacheKey, content, parsed);
+      PerfLog.htmlParse(
+        'contentView',
+        cacheHit: false,
+        elapsedUs: stopwatch.elapsedMicroseconds,
+        inputBytes: content.length * 2,
+        isolated: true,
+      );
       return parsed;
     });
   }
 
-  List<_ParsedBlock>? _readCache(String content) {
-    final cached = ContentView._parsedCache.remove(content);
-    if (cached != null) {
-      ContentView._parsedCache[content] = cached;
-    }
-    return cached;
-  }
-
-  void _writeCache(String content, List<_ParsedBlock> blocks) {
-    if (content.length > 50000) {
-      return;
-    }
-    ContentView._parsedCache.remove(content);
-    ContentView._parsedCache[content] = blocks;
-    while (ContentView._parsedCache.length > ContentView._cacheLimit) {
-      ContentView._parsedCache.remove(ContentView._parsedCache.keys.first);
-    }
+  void _writeCache(
+    ContentHashKey key,
+    String content,
+    List<_ParsedBlock> blocks,
+  ) {
+    ContentView._parsedCache.put(
+      key,
+      blocks,
+      weight: content.length * 3 + blocks.length * 128,
+    );
   }
 }
 

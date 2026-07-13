@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/repository/tag_repo.dart';
 import 'package:star_forum/di/injector.dart';
@@ -121,16 +122,18 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
 
             const SizedBox(height: 12),
 
-            ElevatedButton.icon(
+            FUIButton(
+              label: AppLocalizations.of(context)!.postCreateSubmit,
+              icon: Icons.send_rounded,
+              fullWidth: true,
+              loading: _isSubmitting,
               onPressed: _isSubmitting ? null : _submit,
-              icon: const Icon(Icons.send),
-              label: Text(AppLocalizations.of(context)!.postCreateSubmit),
             ),
 
             if (_isSubmitting)
               const Padding(
                 padding: EdgeInsets.only(top: 8),
-                child: LinearProgressIndicator(minHeight: 2),
+                child: FUIProgressBar(value: null),
               ),
           ],
         ),
@@ -159,28 +162,27 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(AppLocalizations.of(context)!.tagDialogTitle),
+            return FUIDialog(
+              title: AppLocalizations.of(context)!.tagDialogTitle,
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView(
                   shrinkWrap: true,
                   children: [
-                    RadioGroup<TagInfo>(
-                      groupValue: _primaryTag,
-                      onChanged: (v) {
-                        _primaryTag = v;
-                        setDialogState(() {});
-                      },
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: primaryTags.map((tag) {
-                          if (!tag.canStartDiscussion) {
-                            return const SizedBox.shrink();
-                          }
-                          return _buildPrimaryNode(tag);
-                        }).toList(),
-                      ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: primaryTags.map((tag) {
+                        if (!tag.canStartDiscussion) {
+                          return const SizedBox.shrink();
+                        }
+                        return _buildPrimaryNode(
+                          tag,
+                          onChanged: () {
+                            _primaryTag = tag;
+                            setDialogState(() {});
+                          },
+                        );
+                      }).toList(),
                     ),
                     const Divider(),
                     ...secondaryTags.map((tag) {
@@ -193,18 +195,17 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
                       );
                     }),
                     const Divider(),
-                    ListTile(
-                      leading: const Icon(Icons.add),
-                      title: Text(
-                        AppLocalizations.of(context)!.tagDialogCustomTag,
-                      ),
+                    FUITile(
+                      icon: FUIIcons.add,
+                      title: AppLocalizations.of(context)!.tagDialogCustomTag,
                       onTap: _onCustomTag,
                     ),
                   ],
                 ),
               ),
               actions: [
-                TextButton(
+                FUIButton(
+                  label: AppLocalizations.of(context)!.tagDialogClose,
                   onPressed: () {
                     if (_primaryTag == null) {
                       SnackbarUtils.showMessage(
@@ -217,7 +218,6 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
                     setState(() {});
                     Navigator.pop(context);
                   },
-                  child: Text(AppLocalizations.of(context)!.tagDialogClose),
                 ),
               ],
             );
@@ -230,16 +230,11 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
   Widget _buildTagNode(TagInfo tag, {int depth = 0, required VoidCallback cc}) {
     return Padding(
       padding: EdgeInsets.only(left: depth * 16.0),
-      child: CheckboxListTile(
-        dense: true,
-        contentPadding: EdgeInsets.zero,
-        value: _selectedTags.contains(tag),
-        title: Padding(
-          padding: EdgeInsetsGeometry.only(left: 10),
-          child: Text(tag.name),
-        ),
-        onChanged: (v) {
-          if (v == true) {
+      child: FUISelectionTile(
+        selected: _selectedTags.contains(tag),
+        title: tag.name,
+        onChanged: (selected) {
+          if (selected) {
             if (!_selectedTags.contains(tag)) {
               if (_selectedTags.length == 3) _selectedTags.removeAt(0);
               _selectedTags.add(tag);
@@ -253,17 +248,18 @@ class _CreateDiscussWidgetState extends State<CreateDiscussWidget> {
     );
   }
 
-  Widget _buildPrimaryNode(TagInfo tag, {int depth = 0}) {
+  Widget _buildPrimaryNode(
+    TagInfo tag, {
+    int depth = 0,
+    required VoidCallback onChanged,
+  }) {
     return Padding(
       padding: EdgeInsets.only(left: depth * 16.0),
-      child: RadioListTile<TagInfo>(
-        dense: true,
-        contentPadding: EdgeInsets.zero,
-        value: tag,
-        title: Padding(
-          padding: const EdgeInsets.only(left: 10),
-          child: Text(tag.name),
-        ),
+      child: FUISelectionTile(
+        title: tag.name,
+        selected: _primaryTag == tag,
+        type: FUISelectionType.radio,
+        onChanged: (_) => onChanged(),
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:star_forum/widgets/shimmer_skeleton.dart';
 
@@ -9,27 +11,28 @@ class PostListLoadingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final count = (minItems ?? 3).clamp(1, maxItems ?? 3);
-    return ClipRect(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: SkeletonShimmer(
-          duration: const Duration(milliseconds: 1450),
-          highlightStrength: 0.18,
-          builder: (context, palette) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: List<Widget>.generate(
-                count,
-                (index) => _PostListLoadingRow(
-                  pillDecoration: palette.line(),
-                  circleDecoration: palette.circle(),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
+    final resolvedMin = math.max(1, minItems ?? 3);
+    final resolvedMax = math.max(resolvedMin, maxItems ?? 6);
+    final viewportHeight = MediaQuery.sizeOf(context).height;
+    final count = (viewportHeight / _PostListLoadingRow.estimatedExtent)
+        .ceil()
+        .clamp(resolvedMin, resolvedMax);
+
+    return SkeletonShimmer(
+      duration: const Duration(milliseconds: 1450),
+      highlightStrength: 0.18,
+      builder: (context, palette) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: List<Widget>.generate(
+            count,
+            (index) => _PostListLoadingRow(
+              pillDecoration: palette.line(),
+              circleDecoration: palette.circle(),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -42,6 +45,8 @@ class _PostListLoadingRow extends StatelessWidget {
 
   final Decoration pillDecoration;
   final Decoration circleDecoration;
+
+  static const double estimatedExtent = 145;
 
   @override
   Widget build(BuildContext context) {

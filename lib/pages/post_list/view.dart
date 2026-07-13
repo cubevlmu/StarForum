@@ -5,9 +5,8 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
-import 'package:star_forum/data/sync/sync_status.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
@@ -19,7 +18,6 @@ import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/post_card.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:fin_ui/fin_ui.dart';
 import 'package:get/get.dart';
 
@@ -48,7 +46,7 @@ class _PostListPageState extends State<PostListPage> {
     if (controller.items.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        controller.onRefresh();
+        controller.loadInitial();
       });
     }
   }
@@ -85,11 +83,12 @@ class _PostListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SimpleEasyRefresher(
-      easyRefreshController: controller.refreshController,
+    return FUIRefresh(
+      controller: controller.refreshController,
       onRefresh: controller.onRefresh,
       onLoad: controller.onLoad,
-      autoRefreshOnStart: false,
+      refreshOnStart: false,
+      loadTriggerOffset: FUITokens.gap32,
       childBuilder: (context, physics) {
         return CustomScrollView(
           controller: controller.scrollController,
@@ -98,7 +97,6 @@ class _PostListView extends StatelessWidget {
             const SliverToBoxAdapter(
               child: SizedBox(height: ForumLayout.cardGap),
             ),
-            const SliverToBoxAdapter(child: _SyncStatusBanner()),
             Obx(() {
               final showSkeleton =
                   controller.isInitialLoading.value && controller.items.isEmpty;
@@ -139,59 +137,11 @@ class _PostListView extends StatelessWidget {
                 ),
               );
             }),
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            const SliverToBoxAdapter(child: SizedBox(height: FUITokens.gap32)),
           ],
         );
       },
     );
-  }
-}
-
-class _SyncStatusBanner extends StatelessWidget {
-  const _SyncStatusBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final syncStatus = getIt<SyncStatusService>();
-    return Obx(() {
-      if (!syncStatus.isBusy) return const SizedBox.shrink();
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(
-          FUITokens.pagePadding,
-          0,
-          FUITokens.pagePadding,
-          ForumLayout.cardGap,
-        ),
-        child: FUISurface(
-          padding: const EdgeInsets.symmetric(
-            horizontal: FUITokens.gap12,
-            vertical: FUITokens.gap8,
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: context.colors.primary,
-                ),
-              ),
-              const SizedBox(width: FUITokens.gap8),
-              Expanded(
-                child: Text(
-                  syncStatus.message.value,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: context.colors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    });
   }
 }
 
@@ -210,28 +160,17 @@ class _PostListFloatBtn extends StatelessWidget {
         : (bottomInset + 16).clamp(16.0, 40.0).toDouble();
     return Padding(
       padding: EdgeInsets.only(bottom: bottomOffset),
-      child: FloatingActionButton(
+      child: FUIFloatingActionButton(
         heroTag: null,
         onPressed: onPressed,
-        backgroundColor: context.colors.primary,
-        foregroundColor: context.colors.textInverse,
-        focusColor: context.colors.primaryHover,
-        hoverColor: context.colors.primaryHover,
-        splashColor: context.colors.primaryPressed,
-        elevation: 2,
-        hoverElevation: 3,
-        highlightElevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(FUITokens.radiusLg),
-        ),
-        child: const Icon(ForumIcons.compose),
+        icon: ForumIcons.compose,
       ),
     );
   }
 }
 
 class _PostListItem extends StatelessWidget {
-  final DiscussionItem item;
+  final DiscussionSummary item;
 
   const _PostListItem({super.key, required this.item});
 

@@ -20,6 +20,7 @@ class CreateDiscussUtil {
     if (!repo.isLogin) {
       SnackbarUtils.showMessage(
         msg: AppLocalizations.of(context)!.authLoginRequired,
+        context: context,
       );
       return false;
     }
@@ -40,10 +41,11 @@ class CreateDiscussUtil {
     final l10n = AppLocalizations.of(context)!;
 
     final result = await dRepo.createDiscussion(tags, title, content);
+    if (!context.mounted) return false;
 
     if (result.isTokenExpired) {
       repo.logout();
-      SnackbarUtils.showMessage(msg: l10n.authLoginExpired);
+      SnackbarUtils.showMessage(msg: l10n.authLoginExpired, context: context);
       return false;
     }
 
@@ -53,24 +55,28 @@ class CreateDiscussUtil {
         title: l10n.postCreateFailedTitle,
         msg: l10n.postCreateFailedNetwork,
         type: AppNoticeType.error,
+        context: context,
       );
       return false;
     }
 
-    r.user = repo.user;
-    r.firstPost = r.posts.values.first;
-    if (r.firstPost == null) {
+    final discussion = r.copyWith(
+      user: repo.user,
+      firstPost: r.posts.values.firstOrNull,
+    );
+    if (discussion.firstPost == null) {
       LogUtil.error(
         "[PostList] Failed to fetch firstPost for the return from create discussion.",
       );
       SnackbarUtils.showMessage(
         msg: l10n.postCreateDataError,
         type: AppNoticeType.warning,
+        context: context,
       );
       return true;
     }
 
-    dRepo.manuallyInsert(r);
+    dRepo.manuallyInsert(discussion);
     updateWidget?.call();
 
     scrollController?.animateTo(
@@ -82,6 +88,7 @@ class CreateDiscussUtil {
     SnackbarUtils.showMessage(
       msg: l10n.postCreateSuccess,
       type: AppNoticeType.success,
+      context: context,
     );
     return true;
   }

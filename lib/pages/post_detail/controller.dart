@@ -9,7 +9,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/data/repository/post_repo.dart';
@@ -22,18 +22,28 @@ import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:get/get.dart';
 
-enum ReplySort { like, time }
+enum ReplySort { hot, oldest, newest }
+
+int replyCountFromCommentCount(int commentCount) {
+  return commentCount <= 1 ? 0 : commentCount - 1;
+}
+
+int compareReplyHotness(PostInfo left, PostInfo right) {
+  final likesComparison = right.likes.compareTo(left.likes);
+  if (likesComparison != 0) return likesComparison;
+  return left.number.compareTo(right.number);
+}
 
 class PostPageController extends GetxController {
-  PostPageController({required this.discussion});
+  PostPageController({required this.discussion}) {
+    replyCount.value = replyCountFromCommentCount(discussion.commentCount);
+  }
 
-  final DiscussionItem discussion;
+  final DiscussionSummary discussion;
   final RxInt viewCount = 0.obs;
 
   final RxInt replyCount = 0.obs;
-  final RxString sortTypeText = AppLocalizations.of(
-    Get.context!,
-  )!.postSortByHot.obs;
+  final Rx<ReplySort> replySort = ReplySort.hot.obs;
   final RxString content = AppLocalizations.of(
     Get.context!,
   )!.postContentLoadingHtml.obs;
@@ -89,7 +99,10 @@ class PostPageController extends GetxController {
       firstPost.value = r;
       content.value = r.contentHtml;
       replyItems.assignAll(bundle!.replies);
-      replyCount.value = replyItems.length;
+      _sortRepliesByHotness();
+      if (replyCount.value == 0 && replyItems.isNotEmpty) {
+        replyCount.value = replyItems.length;
+      }
       _offset = bundle.replies.length + 1;
       _nextUrl = bundle.nextUrl;
       _hasMore = bundle.hasMore;
@@ -114,6 +127,7 @@ class PostPageController extends GetxController {
     if (info == null || isClosed) return;
     viewCount.value = info.views;
     subscription.value = info.subscription;
+    replyCount.value = replyCountFromCommentCount(info.commentCount);
   }
 
   Future<bool> toggleDiscussionFollow() async {
@@ -146,17 +160,22 @@ class PostPageController extends GetxController {
   bool _hasMore = true;
   bool _loading = false;
 
-  ReplySort _replySort = ReplySort.like;
-
-  void toggleSort() {
-    if (_replySort == ReplySort.like) {
-      _replySort = ReplySort.time;
-      sortTypeText.value = AppLocalizations.of(Get.context!)!.postSortByTime;
-    } else {
-      _replySort = ReplySort.like;
-      sortTypeText.value = AppLocalizations.of(Get.context!)!.postSortByHot;
-    }
-    onReplyRefresh();
+  Future<void> updateReplySort(ReplySort value) async {
+    if (replySort.value == value || _loading) return;
+    replySort.value = value;
+    isReplyLoading.value = true;
+    replyItems.clear();
+    newReplyItems.clear();
+    _offset = 0;
+    _nextUrl = null;
+    _hasMore = true;
+    final ok = await _loadReplies(reset: true);
+    _finishLoadSafely(
+      ok
+          ? (_hasMore ? IndicatorResult.success : IndicatorResult.noMore)
+          : IndicatorResult.fail,
+    );
+    _setReplyLoadingSafely(false);
   }
 
   Future<void> onReplyRefresh() async {
@@ -165,7 +184,14 @@ class PostPageController extends GetxController {
     replyItems.clear();
     newReplyItems.clear();
     await _loadInitialPosts();
-    final ok = firstPost.value != null;
+    var ok = firstPost.value != null;
+    if (ok && replySort.value != ReplySort.hot) {
+      _offset = 0;
+      _nextUrl = null;
+      _hasMore = true;
+      replyItems.clear();
+      ok = await _loadReplies(reset: true);
+    }
 
     _finishRefreshSafely(ok ? IndicatorResult.success : IndicatorResult.fail);
 
@@ -210,9 +236,10 @@ class PostPageController extends GetxController {
         discussionId: discussion.id,
         offset: _offset,
         limit: _pageSize,
-        sort: switch (_replySort) {
-          ReplySort.like => PostPageSort.number,
-          ReplySort.time => PostPageSort.time,
+        sort: switch (replySort.value) {
+          ReplySort.hot => PostPageSort.number,
+          ReplySort.oldest => PostPageSort.timeAscending,
+          ReplySort.newest => PostPageSort.timeDescending,
         },
         nextUrl: reset ? null : _nextUrl,
         cancelToken: _cancelToken,
@@ -235,11 +262,15 @@ class PostPageController extends GetxController {
         return true;
       }
 
-      final existingIds = replyItems.map((e) => e.id).toSet();
+      final existingIds = <int>{
+        ...replyItems.map((e) => e.id),
+        ...newReplyItems.map((e) => e.id),
+        if (firstPost.value != null) firstPost.value!.id,
+      };
       final filtered = list.where((e) => !existingIds.contains(e.id)).toList();
 
       replyItems.addAll(filtered);
-      replyCount.value = replyItems.length;
+      _sortRepliesByHotness();
 
       _offset += list.length;
       _nextUrl = result.nextUrl;
@@ -251,6 +282,12 @@ class PostPageController extends GetxController {
       return false;
     } finally {
       _loading = false;
+    }
+  }
+
+  void _sortRepliesByHotness() {
+    if (replySort.value == ReplySort.hot && replyItems.length > 1) {
+      replyItems.sort(compareReplyHotness);
     }
   }
 
@@ -281,9 +318,13 @@ class PostPageController extends GetxController {
       discussionId: discussion.id,
       replyTargetTitle: discussion.title,
       newReplyItems: newReplyItems,
-      updateWidget: () {},
+      updateWidget: onReplyCreated,
       scrollController: scrollController,
     );
+  }
+
+  void onReplyCreated() {
+    replyCount.value += 1;
   }
 
   @override

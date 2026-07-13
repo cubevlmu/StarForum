@@ -8,7 +8,7 @@ import 'dart:async';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -17,7 +17,7 @@ import 'package:get/get.dart';
 class PostListController extends GetxController {
   final DiscussionRepository repo = getIt<DiscussionRepository>();
 
-  final RxList<DiscussionItem> items = <DiscussionItem>[].obs;
+  final RxList<DiscussionSummary> items = <DiscussionSummary>[].obs;
   final RxBool isInitialLoading = true.obs;
 
   final ScrollController scrollController = ScrollController();
@@ -34,7 +34,7 @@ class PostListController extends GetxController {
   bool _loading = false;
 
   late final Worker _worker;
-  StreamSubscription<List<DiscussionItem>>? _sub;
+  StreamSubscription<List<DiscussionSummary>>? _sub;
   final CancelToken _cancelToken = CancelToken();
 
   @override
@@ -48,7 +48,7 @@ class PostListController extends GetxController {
 
   void _watchItems(int limit) {
     _sub?.cancel();
-    _sub = repo.watchDiscussionItems(limit: limit).listen((cachedItems) {
+    _sub = repo.watchDiscussionSummaries(limit: limit).listen((cachedItems) {
       if (_sameItems(items, cachedItems)) {
         if (cachedItems.isNotEmpty) {
           isInitialLoading.value = false;
@@ -62,7 +62,10 @@ class PostListController extends GetxController {
     });
   }
 
-  bool _sameItems(List<DiscussionItem> current, List<DiscussionItem> next) {
+  bool _sameItems(
+    List<DiscussionSummary> current,
+    List<DiscussionSummary> next,
+  ) {
     if (current.length != next.length) return false;
     for (var i = 0; i < current.length; i += 1) {
       if (current[i] != next[i]) return false;
@@ -94,6 +97,14 @@ class PostListController extends GetxController {
   }
 
   Future<void> onRefresh() async {
+    await _refresh(force: true);
+  }
+
+  Future<void> loadInitial() async {
+    await _refresh(force: false);
+  }
+
+  Future<void> _refresh({required bool force}) async {
     if (_loading) {
       LogUtil.debug("[PostList] Is loading...");
       refreshController.finishRefresh(.fail);
@@ -107,11 +118,16 @@ class PostListController extends GetxController {
 
       _visibleCount.value = _pageSize;
 
-      await repo.syncDiscussionPage(
+      final result = await repo.syncDiscussionPage(
         offset: 0,
         limit: _pageSize,
         cancelToken: _cancelToken,
+        force: force,
       );
+      if (result.isFailure) {
+        refreshController.finishRefresh(IndicatorResult.fail);
+        return;
+      }
       unawaited(
         repo.cleanupDeletedDiscussions().catchError((Object e, StackTrace s) {
           LogUtil.errorE('[PostList] cleanup deleted discussions failed', e, s);
@@ -120,6 +136,7 @@ class PostListController extends GetxController {
 
       _offset = _pageSize;
 
+      _hasMore = result.data ?? true;
       refreshController.finishRefresh(IndicatorResult.success);
     } catch (e, s) {
       LogUtil.errorE('[PostList] refresh failed', e, s);
@@ -149,12 +166,17 @@ class PostListController extends GetxController {
     _loading = true;
 
     try {
-      _hasMore = await repo.syncDiscussionPage(
+      final result = await repo.syncDiscussionPage(
         offset: _offset,
         limit: _pageSize,
         cancelToken: _cancelToken,
         reportStatus: false,
       );
+      if (result.isFailure) {
+        refreshController.finishLoad(IndicatorResult.fail);
+        return;
+      }
+      _hasMore = result.data ?? false;
 
       _offset += _pageSize;
       _visibleCount.value += _pageSize;

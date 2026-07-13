@@ -80,7 +80,6 @@ class LoginController extends GetxController {
         msg: l10n.authLoginSuccess(repo.user?.displayName ?? ""),
       );
       await onLoginSuccess(repo.user!);
-      await repo.refreshCurrentUser();
       Get.forceAppUpdate();
 
       if (!context.mounted) return;
@@ -89,7 +88,7 @@ class LoginController extends GetxController {
       if (closeToRootOnSuccess) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       } else {
-        FuiNavigation.closeCurrent(context);
+        FuiNavigation.closeCurrent(context, force: true);
       }
     } catch (e, st) {
       LogUtil.errorE("[LoginPage] Failed to login.", e, st);

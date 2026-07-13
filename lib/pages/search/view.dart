@@ -71,7 +71,7 @@ class _SearchPageState extends State<SearchPage> {
     );
 
     if (widget.embedded) {
-      return SafeArea(bottom: false, child: body);
+      return body;
     }
     return Scaffold(
       backgroundColor: colors.background,
@@ -106,16 +106,10 @@ class _SearchBar extends StatelessWidget {
         children: [
           SizedBox.square(
             dimension: 44,
-            child: IconButton(
-              icon: const Icon(FUIIcons.chevronLeft),
-              color: colors.textSecondary,
-              style: IconButton.styleFrom(
-                minimumSize: const Size(44, 44),
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(FUITokens.radiusSm),
-                ),
-              ),
+            child: FUIIconButton(
+              icon: FUIIcons.chevronLeft,
+              size: 44,
+              variant: FUIIconButtonVariant.outline,
               onPressed: onClose,
             ),
           ),
@@ -140,8 +134,8 @@ class _SearchBar extends StatelessWidget {
                   ),
                   suffixIcon: Obx(
                     () => controller.showEditDelete.isTrue
-                        ? IconButton(
-                            icon: const Icon(Icons.close_rounded),
+                        ? FUIIconButton(
+                            icon: FUIIcons.close,
                             onPressed: () {
                               controller.textEditingController.clear();
                               controller.showEditDelete.value = false;
@@ -171,18 +165,11 @@ class _SearchBar extends StatelessWidget {
           const SizedBox(width: FUITokens.gap8),
           SizedBox.square(
             dimension: 44,
-            child: IconButton(
-              icon: const Icon(FUIIcons.search),
-              color: colors.primary,
+            child: FUIIconButton(
+              icon: FUIIcons.search,
               tooltip: AppLocalizations.of(context)!.searchStartHint,
-              style: IconButton.styleFrom(
-                minimumSize: const Size(44, 44),
-                padding: EdgeInsets.zero,
-                backgroundColor: colors.primarySoft,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(FUITokens.radiusMd),
-                ),
-              ),
+              size: 44,
+              variant: FUIIconButtonVariant.soft,
               onPressed: () =>
                   controller.search(controller.textEditingController.text),
             ),

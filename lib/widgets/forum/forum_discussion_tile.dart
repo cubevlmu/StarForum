@@ -133,6 +133,8 @@ class ForumDiscussionTile extends StatelessWidget {
                                   ForumMetaItem(label: author!),
                                 ...meta,
                               ],
+                              singleLine: true,
+                              flexibleItemIndex: author == null ? null : 0,
                             ),
                           ),
                           if (replyCount != null) ...[

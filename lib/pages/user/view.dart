@@ -4,6 +4,7 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
@@ -22,17 +23,19 @@ import 'package:star_forum/pages/assets/view.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
 import 'package:star_forum/pages/user/controller.dart';
-import 'package:star_forum/utils/html_utils.dart';
+import 'package:star_forum/pages/user/controllers/user_badges_controller.dart';
+import 'package:star_forum/pages/user/controllers/user_profile_controller.dart';
+import 'package:star_forum/pages/user/controllers/user_replies_controller.dart';
+import 'package:star_forum/pages/user/controllers/user_topics_controller.dart';
 import 'package:star_forum/utils/shared_dialog.dart' as shared;
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/avatar.dart';
-import 'package:star_forum/widgets/forum_button_group.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/shimmer_skeleton.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
 import 'package:star_forum/widgets/two_column_loading_skeleton.dart';
 import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/utils/setting_util.dart';
 import 'package:star_forum/widgets/forum/forum_discussion_tile.dart';
 import 'package:star_forum/widgets/forum/forum_meta_row.dart';
 
@@ -98,7 +101,7 @@ class _UserPageState extends State<UserPage>
       children: [
         if (!widget.isAccountPage || widget.userId <= 0)
           _UserPageHead(
-            controller: controller,
+            controller: controller.profileController,
             isAccountPage: widget.isAccountPage,
           ),
         _UserSectionTabs(controller: controller, tabController: _tabController),
@@ -130,7 +133,7 @@ class _UserPageState extends State<UserPage>
 
     return Scaffold(
       backgroundColor: context.colors.background,
-      body: SafeArea(bottom: false, child: _buildBody(context)),
+      body: _buildBody(context),
     );
   }
 }
@@ -138,7 +141,7 @@ class _UserPageState extends State<UserPage>
 class _UserPageHead extends StatelessWidget {
   const _UserPageHead({required this.controller, required this.isAccountPage});
 
-  final UserPageController controller;
+  final UserProfileController controller;
   final bool isAccountPage;
 
   @override
@@ -187,31 +190,31 @@ class _UserSectionTabs extends StatelessWidget {
       if (tabController.length > 4) UserPageSection.assets,
     ];
 
-    final tabs = <({UserPageSection section, ForumButtonGroupItem item})>[
+    final tabs = <({UserPageSection section, FUIButtonGroupTabItem item})>[
       (
         section: UserPageSection.info,
-        item: ForumButtonGroupItem(
+        item: FUIButtonGroupTabItem(
           icon: FUIIcons.info,
           label: l10n.userSectionInfo,
         ),
       ),
       (
         section: UserPageSection.comments,
-        item: ForumButtonGroupItem(
+        item: FUIButtonGroupTabItem(
           icon: ForumIcons.comments,
           label: l10n.userCommentCountLabel,
         ),
       ),
       (
         section: UserPageSection.topics,
-        item: ForumButtonGroupItem(
+        item: FUIButtonGroupTabItem(
           icon: ForumIcons.forum,
           label: l10n.userDiscussionCountLabel,
         ),
       ),
       (
         section: UserPageSection.badges,
-        item: ForumButtonGroupItem(
+        item: FUIButtonGroupTabItem(
           icon: ForumIcons.badge,
           label: l10n.userSectionBadges,
         ),
@@ -219,14 +222,14 @@ class _UserSectionTabs extends StatelessWidget {
       if (tabController.length > 4)
         (
           section: UserPageSection.assets,
-          item: ForumButtonGroupItem(
+          item: FUIButtonGroupTabItem(
             icon: ForumIcons.folder,
             label: l10n.userSectionAssets,
           ),
         ),
     ];
     return Obx(
-      () => ForumButtonGroup(
+      () => FUIButtonGroupTabBar(
         items: [for (final tab in tabs) tab.item],
         selectedIndex: tabs.indexWhere(
           (tab) => tab.section == controller.currentSection.value,
@@ -235,6 +238,9 @@ class _UserSectionTabs extends StatelessWidget {
           tabController.animateTo(index);
           controller.selectSection(sections[index]);
         },
+        showLabels: !SettingsUtil.buttonGroupIconOnly,
+        alignment: SettingsUtil.buttonGroupAlignment.alignment,
+        padding: const EdgeInsets.symmetric(horizontal: ForumLayout.edge),
       ),
     );
   }
@@ -257,21 +263,21 @@ class _UserSectionBody extends StatelessWidget {
       switch (controller.currentSection.value) {
         case UserPageSection.info:
           return _UserInfoSection(
-            controller: controller,
+            controller: controller.profileController,
             isAccountPage: isAccountPage,
           );
         case UserPageSection.comments:
-          return _UserCommentsSection(controller: controller);
+          return _UserCommentsSection(controller: controller.repliesController);
         case UserPageSection.topics:
-          return _UserTopicsSection(controller: controller);
+          return _UserTopicsSection(controller: controller.topicsController);
         case UserPageSection.badges:
-          return _UserBadgesSection(controller: controller);
+          return _UserBadgesSection(controller: controller.badgesController);
         case UserPageSection.assets:
           if (showAssetsSection) {
             return const AssetsPage(embedded: true);
           }
           return _UserInfoSection(
-            controller: controller,
+            controller: controller.profileController,
             isAccountPage: isAccountPage,
           );
       }

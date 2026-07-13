@@ -5,6 +5,7 @@
  */
 
 import 'package:fin_ui/fin_ui.dart';
+import 'package:flutter/widgets.dart';
 
 enum AppNoticeType { info, success, warning, error }
 
@@ -13,7 +14,17 @@ class SnackbarUtils {
     required String msg,
     String title = "",
     AppNoticeType type = AppNoticeType.info,
+    BuildContext? context,
   }) {
+    if (context != null) {
+      FUIToast.show(
+        context,
+        message: msg,
+        title: title,
+        type: _toastType(type),
+      );
+      return;
+    }
     switch (type) {
       case AppNoticeType.success:
         FUIToast.successGlobal(message: msg, title: title);
@@ -30,15 +41,49 @@ class SnackbarUtils {
     }
   }
 
-  static void showSuccess({required String msg, String title = ""}) {
-    showMessage(msg: msg, title: title, type: AppNoticeType.success);
+  static FUIToastType _toastType(AppNoticeType type) => switch (type) {
+    AppNoticeType.info => FUIToastType.info,
+    AppNoticeType.success => FUIToastType.success,
+    AppNoticeType.warning => FUIToastType.warning,
+    AppNoticeType.error => FUIToastType.error,
+  };
+
+  static void showSuccess({
+    required String msg,
+    String title = "",
+    BuildContext? context,
+  }) {
+    showMessage(
+      msg: msg,
+      title: title,
+      type: AppNoticeType.success,
+      context: context,
+    );
   }
 
-  static void showError({required String msg, String title = ""}) {
-    showMessage(msg: msg, title: title, type: AppNoticeType.error);
+  static void showError({
+    required String msg,
+    String title = "",
+    BuildContext? context,
+  }) {
+    showMessage(
+      msg: msg,
+      title: title,
+      type: AppNoticeType.error,
+      context: context,
+    );
   }
 
-  static void showWarning({required String msg, String title = ""}) {
-    showMessage(msg: msg, title: title, type: AppNoticeType.warning);
+  static void showWarning({
+    required String msg,
+    String title = "",
+    BuildContext? context,
+  }) {
+    showMessage(
+      msg: msg,
+      title: title,
+      type: AppNoticeType.warning,
+      context: context,
+    );
   }
 }

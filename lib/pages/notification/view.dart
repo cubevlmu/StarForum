@@ -14,9 +14,8 @@ import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/app/forum_layout.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:star_forum/widgets/shimmer_skeleton.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
-import 'package:star_forum/widgets/forum_button_group.dart';
 import 'package:star_forum/utils/shared_dialog.dart' as shared;
+import 'package:star_forum/utils/setting_util.dart';
 import 'package:get/get.dart';
 
 class NotificationPage extends StatefulWidget {
@@ -58,135 +57,131 @@ class _NotificationPageState extends State<NotificationPage> {
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: ForumLayout.pageHeadPadding,
-              child: FuiPageHead(
-                showNavigation: false,
-                title: l10n.notificationTitle,
-                subtitle: l10n.notificationSubtitle,
-                actions: [
-                  Obx(() {
-                    final isLogin = controller.isLogin.value;
-                    final isInvoking = controller.isInvoking.value;
-                    final action = controller.activeToolbarAction.value;
-                    if (!isLogin) return const SizedBox.shrink();
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _ActionBtn(
-                          icon: FUIIcons.checkmark,
-                          tooltip: l10n.notificationMarkReadSuccess,
-                          loading: action == NotificationToolbarAction.readAll,
-                          onPressed: isInvoking ? null : controller.readAll,
+      body: Column(
+        children: [
+          // Header
+          Padding(
+            padding: ForumLayout.pageHeadPadding,
+            child: FuiPageHead(
+              showNavigation: false,
+              title: l10n.notificationTitle,
+              subtitle: l10n.notificationSubtitle,
+              actions: [
+                Obx(() {
+                  final isLogin = controller.isLogin.value;
+                  final isInvoking = controller.isInvoking.value;
+                  final action = controller.activeToolbarAction.value;
+                  if (!isLogin) return const SizedBox.shrink();
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _ActionBtn(
+                        icon: FUIIcons.checkmark,
+                        tooltip: l10n.notificationMarkReadSuccess,
+                        loading: action == NotificationToolbarAction.readAll,
+                        onPressed: isInvoking ? null : controller.readAll,
+                      ),
+                      const SizedBox(width: FUITokens.gap4),
+                      _ActionBtn(
+                        icon: FUIIcons.delete,
+                        tooltip: l10n.notificationClearAllSuccess,
+                        loading: action == NotificationToolbarAction.clearAll,
+                        onPressed: isInvoking
+                            ? null
+                            : () => _confirmClearAll(context, l10n),
+                      ),
+                      const SizedBox(width: FUITokens.gap4),
+                      FUIIconButton(
+                        icon: FUIIcons.settings,
+                        tooltip: l10n.commonActionSettings,
+                        variant: FUIIconButtonVariant.ghost,
+                        onPressed: () => FuiNavigation.openDetail(
+                          context,
+                          builder: (_) => const SettingsPage(),
                         ),
-                        const SizedBox(width: FUITokens.gap4),
-                        _ActionBtn(
-                          icon: FUIIcons.delete,
-                          tooltip: l10n.notificationClearAllSuccess,
-                          loading: action == NotificationToolbarAction.clearAll,
-                          onPressed: isInvoking
-                              ? null
-                              : () => _confirmClearAll(context, l10n),
-                        ),
-                        const SizedBox(width: FUITokens.gap4),
-                        FUIIconButton(
-                          icon: FUIIcons.settings,
-                          tooltip: l10n.commonActionSettings,
-                          variant: FUIIconButtonVariant.ghost,
-                          onPressed: () => FuiNavigation.openDetail(
-                            context,
-                            builder: (_) => const SettingsPage(),
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                ],
-              ),
-            ),
-            _NotifButtonGroup(
-              controller: controller,
-              onSelected: _handleTabChanged,
-              l10n: l10n,
-            ),
-            // Body
-            Expanded(
-              child: Obx(() {
-                if (!controller.isLogin.value) {
-                  return NotLoginNotice(
-                    title: l10n.commonNotLoggedInTitle,
-                    tipsText: l10n.notificationNotLoginTips,
+                      ),
+                    ],
                   );
-                }
-                final items = controller.filteredItems;
-                final showSkeleton =
-                    controller.isInitialLoading.value &&
-                    controller.items.isEmpty;
-
-                return SimpleEasyRefresher(
-                  easyRefreshController: controller.refreshController,
-                  onRefresh: controller.onRefresh,
-                  onLoad: controller.onLoad,
-                  autoRefreshOnStart: false,
-                  refreshEnabled: !showSkeleton,
-                  loadEnabled: !showSkeleton,
-                  childBuilder: (context, physics) {
-                    final effectivePhysics = showSkeleton
-                        ? const NeverScrollableScrollPhysics()
-                        : physics;
-                    return CustomScrollView(
-                      controller: controller.scrollController,
-                      physics: effectivePhysics,
-                      slivers: [
-                        if (showSkeleton)
-                          const SliverToBoxAdapter(
-                            child: _NotificationLoadingSkeleton(),
-                          )
-                        else if (items.isEmpty)
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: NoticeWidget(
-                              emoji: '📭',
-                              title: l10n.notificationEmptyTitle,
-                              tips: l10n.notificationEmptyTips,
-                            ),
-                          )
-                        else
-                          SliverMainAxisGroup(
-                            slivers: [
-                              SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) => Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      ForumLayout.edge,
-                                      ForumLayout.cardGap,
-                                      ForumLayout.edge,
-                                      ForumLayout.cardGap,
-                                    ),
-                                    child: NotifyCard(
-                                      item: items[index],
-                                      controller: controller,
-                                    ),
-                                  ),
-                                  childCount: items.length,
-                                ),
-                              ),
-                            ],
-                          ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                      ],
-                    );
-                  },
-                );
-              }),
+                }),
+              ],
             ),
-          ],
-        ),
+          ),
+          _NotifButtonGroup(
+            controller: controller,
+            onSelected: _handleTabChanged,
+            l10n: l10n,
+          ),
+          // Body
+          Expanded(
+            child: Obx(() {
+              if (!controller.isLogin.value) {
+                return NotLoginNotice(
+                  title: l10n.commonNotLoggedInTitle,
+                  tipsText: l10n.notificationNotLoginTips,
+                );
+              }
+              final items = controller.filteredItems;
+              final showSkeleton =
+                  controller.isInitialLoading.value && controller.items.isEmpty;
+
+              return FUIRefresh(
+                controller: controller.refreshController,
+                onRefresh: controller.onRefresh,
+                onLoad: controller.onLoad,
+                refreshOnStart: false,
+                refreshEnabled: !showSkeleton,
+                loadEnabled: !showSkeleton,
+                childBuilder: (context, physics) {
+                  final effectivePhysics = showSkeleton
+                      ? const NeverScrollableScrollPhysics()
+                      : physics;
+                  return CustomScrollView(
+                    controller: controller.scrollController,
+                    physics: effectivePhysics,
+                    slivers: [
+                      if (showSkeleton)
+                        const SliverToBoxAdapter(
+                          child: _NotificationLoadingSkeleton(),
+                        )
+                      else if (items.isEmpty)
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: NoticeWidget(
+                            emoji: '📭',
+                            title: l10n.notificationEmptyTitle,
+                            tips: l10n.notificationEmptyTips,
+                          ),
+                        )
+                      else
+                        SliverMainAxisGroup(
+                          slivers: [
+                            SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) => Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    ForumLayout.edge,
+                                    ForumLayout.cardGap,
+                                    ForumLayout.edge,
+                                    ForumLayout.cardGap,
+                                  ),
+                                  child: NotifyCard(
+                                    item: items[index],
+                                    controller: controller,
+                                  ),
+                                ),
+                                childCount: items.length,
+                              ),
+                            ),
+                          ],
+                        ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                    ],
+                  );
+                },
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
@@ -198,7 +193,7 @@ class _NotificationPageState extends State<NotificationPage> {
     final confirmed = await shared.SharedDialog.showConfirmDialog(
       context,
       title: l10n.dialogConfirmTitle,
-      content: '确定要清空所有通知吗？',
+      content: l10n.notificationClearAllConfirm,
       cancelText: l10n.commonActionCancel,
       confirmText: l10n.commonActionConfirm,
       variant: shared.SharedDialogVariant.danger,
@@ -241,7 +236,7 @@ class _NotifButtonGroup extends StatelessWidget {
       ),
     ];
     return Obx(
-      () => ForumButtonGroup(
+      () => FUIButtonGroupTabBar(
         padding: const EdgeInsets.fromLTRB(
           ForumLayout.edge,
           0,
@@ -250,7 +245,7 @@ class _NotifButtonGroup extends StatelessWidget {
         ),
         items: [
           for (final item in tabs)
-            ForumButtonGroupItem(
+            FUIButtonGroupTabItem(
               icon: item.icon,
               label: item.label,
               tooltip: _tabLabel(
@@ -263,6 +258,8 @@ class _NotifButtonGroup extends StatelessWidget {
           (item) => item.tab == controller.currentTab.value,
         ),
         onSelected: (index) => onSelected(tabs[index].tab),
+        showLabels: !SettingsUtil.buttonGroupIconOnly,
+        alignment: SettingsUtil.buttonGroupAlignment.alignment,
       ),
     );
   }

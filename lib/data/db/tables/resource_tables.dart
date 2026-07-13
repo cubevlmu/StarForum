@@ -24,7 +24,7 @@ class DbPosts extends Table {
   IntColumn get id => integer()();
   IntColumn get discussionId => integer()();
   IntColumn get number => integer().withDefault(const Constant(0))();
-  IntColumn get userId => integer().withDefault(const Constant(-1))();
+  IntColumn get userId => integer().nullable()();
   TextColumn get contentType => text().withDefault(const Constant('comment'))();
   TextColumn get contentHtml => text().withDefault(const Constant(''))();
   DateTimeColumn get createdAt => dateTime().nullable()();

@@ -71,8 +71,7 @@ class ReplyUtil {
       return false;
     }
 
-    r.user = repo.user;
-    newReplyItems.insert(0, r);
+    newReplyItems.insert(0, r.copyWith(user: repo.user));
     updateWidget?.call();
 
     scrollController?.animateTo(
@@ -186,7 +185,7 @@ class ReplyUtil {
     );
   }
 
-  static Future<PostInfo?> addLikeToPost(PostInfo item) async {
+  static Future<PostInfo?> toggleLikeForPost(PostInfo item) async {
     final repo = getIt<UserRepo>();
     if (!repo.isLogin) {
       SnackbarUtils.showMessage(msg: _l10n.authLoginRequired);
@@ -195,7 +194,7 @@ class ReplyUtil {
     final postRepo = getIt<PostRepository>();
 
     try {
-      final result = await postRepo.likePost(item.id.toString(), true);
+      final result = await postRepo.likePost(item.id.toString(), !item.isLiked);
       if (result.isTokenExpired) {
         repo.logout();
         SnackbarUtils.showMessage(msg: _l10n.authLoginExpired);

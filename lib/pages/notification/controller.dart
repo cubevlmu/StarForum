@@ -8,34 +8,41 @@ import 'dart:async';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/model/notifications.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/data/repository/notification_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/data/session/session_state.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
+import 'package:star_forum/pages/notification/notification_actions.dart';
+import 'package:star_forum/pages/notification/notification_state.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:get/get.dart';
 
-enum NotificationTab { likes, replies, notices }
+export 'notification_state.dart';
 
-enum NotificationToolbarAction { none, readAll, clearAll }
-
-enum NotificationItemAction { none, markRead, openDiscussion }
-
-class NotificationPageController extends GetxController {
-  NotificationPageController();
-  int currentPage = 1;
-
+class NotificationListController extends GetxController {
+  NotificationListController() {
+    actions = NotificationActions(
+      repository: notificationRepo,
+      items: items,
+      isInvoking: isInvoking,
+      activeToolbarAction: activeToolbarAction,
+      activeItemAction: activeItemAction,
+      activeItemId: activeItemId,
+      onCleared: _handleCleared,
+    );
+  }
   final items = <NotificationsInfo>[].obs;
   final Rx<NotificationTab> currentTab = NotificationTab.likes.obs;
   final repo = getIt<UserRepo>();
+  final sessionState = getIt<SessionState>();
   final notificationRepo = getIt<NotificationRepository>();
   final discussionRepo = getIt<DiscussionRepository>();
   String? nextUrl;
-  bool loading = false;
   bool isFirstSync = true;
   final RxBool isInvoking = false.obs;
   final RxBool isInitialLoading = true.obs;
@@ -44,9 +51,11 @@ class NotificationPageController extends GetxController {
   final Rx<NotificationItemAction> activeItemAction =
       NotificationItemAction.none.obs;
   final RxnInt activeItemId = RxnInt();
+  late final NotificationActions actions;
 
   bool _loading = false;
   bool _hasMore = true;
+  bool? _lastSessionLogin;
 
   void animateToTop() {
     scrollController.animateTo(
@@ -125,9 +134,19 @@ class NotificationPageController extends GetxController {
 
   @override
   void onInit() {
-    isLogin.value = repo.isLogin;
     super.onInit();
+    final loggedIn = sessionState.current.isAuthenticated;
+    _lastSessionLogin = loggedIn;
+    isLogin.value = loggedIn;
+    sessionState.state.addListener(_handleSessionChanged);
     _restoreCachedNotifications();
+  }
+
+  void _handleSessionChanged() {
+    final loggedIn = sessionState.current.isAuthenticated;
+    if (_lastSessionLogin == loggedIn) return;
+    _lastSessionLogin = loggedIn;
+    unawaited(handleLoginStateChanged(loggedIn));
   }
 
   Future<void> _restoreCachedNotifications() async {
@@ -143,6 +162,7 @@ class NotificationPageController extends GetxController {
 
   @override
   void onClose() {
+    sessionState.state.removeListener(_handleSessionChanged);
     scrollController.dispose();
     refreshController.dispose();
     super.onClose();
@@ -334,134 +354,23 @@ class NotificationPageController extends GetxController {
   }
 
   Future<bool> checkAsRead(int id) async {
-    if (isInvoking.value) return false;
-    isInvoking.value = true;
-    activeItemId.value = id;
-    activeItemAction.value = NotificationItemAction.markRead;
-    try {
-      final result = await notificationRepo.markRead(id.toString());
-      final r = result.data;
-      if (r == null) {
-        LogUtil.error("[NotifyPage] Failed to check as read for $id");
-        SnackbarUtils.showMessage(
-          msg: AppLocalizations.of(Get.context!)!.notificationMarkReadFailed,
-        );
-        return false;
-      }
-
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.notificationMarkReadSuccess,
-      );
-      final item = items.firstWhere((i) {
-        return i.id == id;
-      });
-      var idx = items.indexOf(item);
-      items.remove(item);
-      item.isRead = true;
-      items.insert(idx, item);
-
-      return true;
-    } catch (e, s) {
-      LogUtil.errorE(
-        "[NotifyPage] Failed to check as read for $id with error.",
-        e,
-        s,
-      );
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.notificationMarkReadFailed,
-      );
-      return false;
-    } finally {
-      activeItemId.value = null;
-      activeItemAction.value = NotificationItemAction.none;
-      isInvoking.value = false;
-    }
+    return actions.markRead(id);
   }
 
-  void readAll() async {
-    if (isInvoking.value) return;
+  Future<void> readAll() => actions.readAll();
 
-    final isAllRead = items.isNotEmpty && items.every((item) => item.isRead);
-    if (isAllRead) {
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.notificationMarkAllReadNoNeed,
-      );
-      return;
-    }
+  Future<void> clearAll() => actions.clearAll();
 
-    isInvoking.value = true;
-    activeToolbarAction.value = NotificationToolbarAction.readAll;
-
-    try {
-      final result = await notificationRepo.readAll();
-      if (result.isFailure) {
-        SnackbarUtils.showMessage(
-          msg: AppLocalizations.of(Get.context!)!.notificationMarkAllReadFailed,
-        );
-        return;
-      }
-
-      for (var item in items) {
-        item.isRead = true;
-      }
-      items.refresh();
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.notificationMarkReadSuccess,
-      );
-    } catch (e, s) {
-      LogUtil.errorE("[NotifyPage] Failed to make all read with error:", e, s);
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.notificationMarkAllReadFailed,
-      );
-    } finally {
-      activeToolbarAction.value = NotificationToolbarAction.none;
-      isInvoking.value = false;
-    }
+  void _handleCleared() {
+    nextUrl = null;
+    _hasMore = false;
   }
 
-  void clearAll() async {
-    if (isInvoking.value) return;
-    isInvoking.value = true;
-    activeToolbarAction.value = NotificationToolbarAction.clearAll;
-
-    try {
-      final result = await notificationRepo.clearAll();
-      if (result.isFailure) {
-        SnackbarUtils.showMessage(
-          msg: AppLocalizations.of(Get.context!)!.notificationClearAllFailed,
-        );
-        LogUtil.error("[NotifyPage] Failed to clear all notifications");
-        return;
-      }
-
-      items.clear();
-
-      nextUrl = null;
-      loading = false;
-      LogUtil.debug("[NotifyPage] Cleared.");
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.notificationClearAllSuccess,
-      );
-    } catch (e, s) {
-      LogUtil.errorE(
-        "[NotifyPage] Failed to clear all notifications with error:",
-        e,
-        s,
-      );
-      SnackbarUtils.showMessage(
-        msg: AppLocalizations.of(Get.context!)!.notificationClearAllFailed,
-      );
-    } finally {
-      activeToolbarAction.value = NotificationToolbarAction.none;
-      isInvoking.value = false;
-    }
-  }
-
-  Future<DiscussionItem?> naviToDisPage(int discussion) async {
+  Future<DiscussionSummary?> naviToDisPage(int discussion) async {
     return naviToDisPageByItem(discussion: discussion, itemId: null);
   }
 
-  Future<DiscussionItem?> naviToDisPageByItem({
+  Future<DiscussionSummary?> naviToDisPageByItem({
     required int discussion,
     required int? itemId,
   }) async {
@@ -488,7 +397,7 @@ class NotificationPageController extends GetxController {
         );
         return null;
       }
-      return r.toItem();
+      return r.toSummary();
     } catch (e, s) {
       LogUtil.errorE(
         "[UserPage] Failed to fetch discussion information with id: $discussion with error:",
@@ -508,3 +417,5 @@ class NotificationPageController extends GetxController {
     }
   }
 }
+
+class NotificationPageController extends NotificationListController {}

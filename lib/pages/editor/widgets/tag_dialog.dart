@@ -27,12 +27,14 @@ class EditorTagDialog extends StatefulWidget {
     required this.normalTags,
     this.initialPrimaryTag,
     this.initialSecondaryTags = const [],
+    this.compact = false,
   });
 
   final List<TagInfo> rootTags;
   final List<TagInfo> normalTags;
   final TagInfo? initialPrimaryTag;
   final List<TagInfo> initialSecondaryTags;
+  final bool compact;
 
   static Future<EditorTagSelection?> show(
     BuildContext context, {
@@ -41,14 +43,27 @@ class EditorTagDialog extends StatefulWidget {
     TagInfo? initialPrimaryTag,
     List<TagInfo> initialSecondaryTags = const [],
   }) {
+    final compact = MediaQuery.sizeOf(context).width < 700;
+    final dialog = EditorTagDialog(
+      rootTags: rootTags,
+      normalTags: normalTags,
+      initialPrimaryTag: initialPrimaryTag,
+      initialSecondaryTags: initialSecondaryTags,
+      compact: compact,
+    );
+    if (compact) {
+      return showModalBottomSheet<EditorTagSelection>(
+        context: context,
+        useRootNavigator: true,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => dialog,
+      );
+    }
     return showDialog<EditorTagSelection>(
       context: context,
-      builder: (context) => EditorTagDialog(
-        rootTags: rootTags,
-        normalTags: normalTags,
-        initialPrimaryTag: initialPrimaryTag,
-        initialSecondaryTags: initialSecondaryTags,
-      ),
+      builder: (_) => dialog,
     );
   }
 
@@ -74,6 +89,133 @@ class _EditorTagDialogState extends State<EditorTagDialog> {
     final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
 
+    final content = Column(
+      mainAxisSize: widget.compact ? MainAxisSize.max : MainAxisSize.min,
+      children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 16, 12, 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.tagDialogTitle,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              FUIIconButton(
+                icon: FUIIcons.close,
+                variant: FUIIconButtonVariant.outline,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        ),
+        Divider(height: 1, color: colors.border),
+        // Selection preview + confirm
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _TagSelectionPreview(
+                  primaryTag: _selectedPrimaryTag,
+                  secondaryTags: _selectedSecondaryTags,
+                  placeholder: l10n.editorTagPrimaryPlaceholder,
+                ),
+              ),
+              const SizedBox(width: FUITokens.gap10),
+              FUIButton(
+                label: l10n.commonActionConfirm,
+                onPressed: _selectedPrimaryTag == null
+                    ? null
+                    : () => Navigator.of(context).pop(
+                        EditorTagSelection(
+                          primaryTag: _selectedPrimaryTag,
+                          secondaryTags: _selectedSecondaryTags,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+        Divider(height: 1, color: colors.border),
+        // Tag list
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              FUITokens.gap10,
+              FUITokens.gap8,
+              FUITokens.gap10,
+              FUITokens.gap10,
+            ),
+            children: [
+              _SectionLabel(label: l10n.editorPrimaryTagSection),
+              const SizedBox(height: FUITokens.gap6),
+              ..._primaryEntries.map((entry) {
+                final selected = _selectedPrimaryTag?.id == entry.tag.id;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: FUITokens.gap4),
+                  child: _TagTile(
+                    tag: entry.tag,
+                    depth: entry.depth,
+                    selected: selected,
+                    isCheckbox: false,
+                    onTap: () {
+                      setState(() => _selectedPrimaryTag = entry.tag);
+                    },
+                  ),
+                );
+              }),
+              if (widget.normalTags.isNotEmpty) ...[
+                const SizedBox(height: FUITokens.gap10),
+                Divider(height: 1, color: colors.border),
+                const SizedBox(height: FUITokens.gap10),
+                _SectionLabel(label: l10n.editorSecondaryTagSection),
+                const SizedBox(height: FUITokens.gap6),
+                ...widget.normalTags.map((tag) {
+                  final selected = _selectedSecondaryTags.any(
+                    (item) => item.id == tag.id,
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: FUITokens.gap4),
+                    child: _TagTile(
+                      tag: tag,
+                      depth: 0,
+                      selected: selected,
+                      isCheckbox: true,
+                      onTap: () => setState(() => _toggleSecondaryTag(tag)),
+                    ),
+                  );
+                }),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (widget.compact) {
+      return FractionallySizedBox(
+        widthFactor: 1,
+        heightFactor: 0.88,
+        child: Material(
+          color: colors.surface,
+          clipBehavior: Clip.antiAlias,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(FUITokens.radiusXl),
+            ),
+          ),
+          child: content,
+        ),
+      );
+    }
+
     return Dialog(
       backgroundColor: colors.surface,
       surfaceTintColor: Colors.transparent,
@@ -84,115 +226,7 @@ class _EditorTagDialogState extends State<EditorTagDialog> {
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 12, 14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.tagDialogTitle,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: colors.textPrimary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  FUIIconButton(
-                    icon: FUIIcons.close,
-                    variant: FUIIconButtonVariant.outline,
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-            ),
-            Divider(height: 1, color: colors.border),
-            // Selection preview + confirm
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: _TagSelectionPreview(
-                      primaryTag: _selectedPrimaryTag,
-                      secondaryTags: _selectedSecondaryTags,
-                      placeholder: l10n.editorTagPrimaryPlaceholder,
-                    ),
-                  ),
-                  const SizedBox(width: FUITokens.gap10),
-                  FUIButton(
-                    label: l10n.commonActionConfirm,
-                    onPressed: _selectedPrimaryTag == null
-                        ? null
-                        : () => Navigator.of(context).pop(
-                            EditorTagSelection(
-                              primaryTag: _selectedPrimaryTag,
-                              secondaryTags: _selectedSecondaryTags,
-                            ),
-                          ),
-                  ),
-                ],
-              ),
-            ),
-            Divider(height: 1, color: colors.border),
-            // Tag list
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  FUITokens.gap10,
-                  FUITokens.gap8,
-                  FUITokens.gap10,
-                  FUITokens.gap10,
-                ),
-                children: [
-                  _SectionLabel(label: l10n.editorPrimaryTagSection),
-                  const SizedBox(height: FUITokens.gap6),
-                  ..._primaryEntries.map((entry) {
-                    final selected = _selectedPrimaryTag?.id == entry.tag.id;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: FUITokens.gap4),
-                      child: _TagTile(
-                        tag: entry.tag,
-                        depth: entry.depth,
-                        selected: selected,
-                        isCheckbox: false,
-                        onTap: () {
-                          setState(() => _selectedPrimaryTag = entry.tag);
-                        },
-                      ),
-                    );
-                  }),
-                  if (widget.normalTags.isNotEmpty) ...[
-                    const SizedBox(height: FUITokens.gap10),
-                    Divider(height: 1, color: colors.border),
-                    const SizedBox(height: FUITokens.gap10),
-                    _SectionLabel(label: l10n.editorSecondaryTagSection),
-                    const SizedBox(height: FUITokens.gap6),
-                    ...widget.normalTags.map((tag) {
-                      final selected = _selectedSecondaryTags.any(
-                        (item) => item.id == tag.id,
-                      );
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: FUITokens.gap4),
-                        child: _TagTile(
-                          tag: tag,
-                          depth: 0,
-                          selected: selected,
-                          isCheckbox: true,
-                          onTap: () => setState(() => _toggleSecondaryTag(tag)),
-                        ),
-                      );
-                    }),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
+        child: content,
       ),
     );
   }

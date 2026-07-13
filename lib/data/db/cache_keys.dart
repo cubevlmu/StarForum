@@ -23,7 +23,10 @@ abstract final class DiscussionCollectionKey {
 }
 
 abstract final class UserCollectionKey {
-  static String directory(String sort) => 'user:directory:sort=$sort';
+  static String directory(String sort, {int? groupId}) {
+    final groupPart = groupId == null || groupId <= 0 ? 'all' : groupId;
+    return 'user:directory:sort=$sort:group=$groupPart';
+  }
 }
 
 abstract final class PostCollectionKey {

@@ -9,6 +9,29 @@ class CacheCollectionDao extends DatabaseAccessor<AppDatabase>
     with _$CacheCollectionDaoMixin {
   CacheCollectionDao(super.db);
 
+  Future<DbSyncState?> getSyncState(String collectionKey) {
+    return (select(
+      dbSyncStates,
+    )..where((t) => t.collectionKey.equals(collectionKey))).getSingleOrNull();
+  }
+
+  Future<bool> isFresh(String collectionKey, {DateTime? now}) async {
+    return await getFreshSyncState(collectionKey, now: now) != null;
+  }
+
+  Future<DbSyncState?> getFreshSyncState(
+    String collectionKey, {
+    DateTime? now,
+  }) async {
+    final state = await getSyncState(collectionKey);
+    final lastSuccessAt = state?.lastSuccessAt;
+    if (state == null || lastSuccessAt == null) return null;
+    final fresh = (now ?? DateTime.now()).isBefore(
+      lastSuccessAt.add(Duration(seconds: state.ttlSeconds)),
+    );
+    return fresh ? state : null;
+  }
+
   Future<int> count(String collectionKey) async {
     final row = await (customSelect(
       '''
@@ -55,30 +78,78 @@ class CacheCollectionDao extends DatabaseAccessor<AppDatabase>
     required List<DbCacheCollectionItemsCompanion> items,
     int? keepLimit,
   }) async {
-    final upper = offset + windowLimit;
     await transaction(() async {
-      await (delete(dbCacheCollectionItems)..where(
-            (t) =>
-                t.collectionKey.equals(collectionKey) &
-                t.resourceType.equals(resourceType) &
-                t.sortIndex.isBiggerOrEqualValue(offset) &
-                t.sortIndex.isSmallerThanValue(upper),
-          ))
-          .go();
-      if (items.isNotEmpty) {
-        await batch(
-          (batch) =>
-              batch.insertAllOnConflictUpdate(dbCacheCollectionItems, items),
-        );
-      }
-      if (keepLimit != null) {
-        await pruneCollection(
-          collectionKey: collectionKey,
-          resourceType: resourceType,
-          keepLimit: keepLimit,
-        );
-      }
+      await _replaceWindow(
+        collectionKey: collectionKey,
+        resourceType: resourceType,
+        offset: offset,
+        windowLimit: windowLimit,
+        items: items,
+        keepLimit: keepLimit,
+      );
     });
+  }
+
+  Future<void> replaceWindowAndMarkSynced({
+    required String collectionKey,
+    required String resourceType,
+    required int offset,
+    required int windowLimit,
+    required List<DbCacheCollectionItemsCompanion> items,
+    required DateTime syncedAt,
+    String? nextUrl,
+    int ttlSeconds = 60,
+    int? keepLimit,
+  }) async {
+    await transaction(() async {
+      await _replaceWindow(
+        collectionKey: collectionKey,
+        resourceType: resourceType,
+        offset: offset,
+        windowLimit: windowLimit,
+        items: items,
+        keepLimit: keepLimit,
+      );
+      await setSyncState(
+        collectionKey: collectionKey,
+        nextUrl: nextUrl,
+        lastSyncAt: syncedAt,
+        lastSuccessAt: syncedAt,
+        ttlSeconds: ttlSeconds,
+      );
+    });
+  }
+
+  Future<void> _replaceWindow({
+    required String collectionKey,
+    required String resourceType,
+    required int offset,
+    required int windowLimit,
+    required List<DbCacheCollectionItemsCompanion> items,
+    required int? keepLimit,
+  }) async {
+    final upper = offset + windowLimit;
+    await (delete(dbCacheCollectionItems)..where(
+          (t) =>
+              t.collectionKey.equals(collectionKey) &
+              t.resourceType.equals(resourceType) &
+              t.sortIndex.isBiggerOrEqualValue(offset) &
+              t.sortIndex.isSmallerThanValue(upper),
+        ))
+        .go();
+    if (items.isNotEmpty) {
+      await batch(
+        (batch) =>
+            batch.insertAllOnConflictUpdate(dbCacheCollectionItems, items),
+      );
+    }
+    if (keepLimit != null) {
+      await pruneCollection(
+        collectionKey: collectionKey,
+        resourceType: resourceType,
+        keepLimit: keepLimit,
+      );
+    }
   }
 
   Future<int> pruneCollection({

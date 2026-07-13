@@ -90,14 +90,11 @@ class GreetingPage extends StatelessWidget {
                           height: 1.4,
                         ),
                       ),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
+                      FUIButton(
+                        label: l10n.setupViewLicense,
+                        variant: FUIButtonVariant.ghost,
+                        small: true,
                         onPressed: () => _showLicense(context),
-                        child: Text(l10n.setupViewLicense),
                       ),
                     ],
                   ),

@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:star_forum/data/model/forum_info.dart';
 import 'package:star_forum/data/repository/forum_repo.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/data/session/session_state.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -31,15 +32,24 @@ class HomeController extends GetxController {
   final RxString avatarUrl = "".obs;
   final RxBool isLogin = false.obs;
   final userRepo = getIt<UserRepo>();
+  final sessionState = getIt<SessionState>();
   final forumRepo = getIt<ForumRepository>();
 
   @override
   void onInit() {
     super.onInit();
+    sessionState.state.addListener(_handleSessionChanged);
+    _handleSessionChanged();
 
     LogUtil.info("[HomePage] Setting up user repo, checking user login status");
     _restoreInfo();
     _restoreLoginUser();
+  }
+
+  void _handleSessionChanged() {
+    final session = sessionState.current;
+    isLogin.value = session.isAuthenticated;
+    avatarUrl.value = session.avatarUrl;
   }
 
   Future<void> _restoreLoginUser() async {
@@ -54,10 +64,8 @@ class HomeController extends GetxController {
         );
         return;
       case .loggedIn:
-        isLogin.value = true;
         break;
       case .notLogin:
-        isLogin.value = false;
         break;
       case .checkingToken:
         break;
@@ -75,10 +83,16 @@ class HomeController extends GetxController {
       return;
     }
 
-    avatarUrl.value = userRepo.user!.avatarUrl;
     LogUtil.info(
       "[HomePage] Fetched user info, nickname :${userRepo.user!.displayName} avatar url:${avatarUrl.value}",
     );
+  }
+
+  @override
+  void onClose() {
+    sessionState.state.removeListener(_handleSessionChanged);
+    refreshController.dispose();
+    super.onClose();
   }
 
   void _restoreInfo() async {

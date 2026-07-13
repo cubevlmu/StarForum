@@ -15,7 +15,6 @@ import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/home/controller.dart';
-import 'package:star_forum/pages/notification/controller.dart';
 import 'package:star_forum/pages/post_list/controller.dart';
 import 'package:star_forum/pages/theme_list/controller.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -71,13 +70,6 @@ class SetupPageController extends GetxController {
       unawaited(tagC.reloadTags());
     } catch (_) {
       LogUtil.warn("[SetupPage] Tag list controller is not registered.");
-    }
-
-    try {
-      final notificationC = Get.find<NotificationPageController>();
-      unawaited(notificationC.handleLoginStateChanged(userRepo.isLogin));
-    } catch (_) {
-      LogUtil.warn("[SetupPage] Notification controller is not registered.");
     }
 
     LogUtil.info("[SetupPage] Done.");

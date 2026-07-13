@@ -7,7 +7,7 @@
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/data/repository/repo_result.dart';
 import 'package:star_forum/di/injector.dart';
@@ -29,7 +29,7 @@ class SearchResultController extends GetxController
 
   ScrollController scrollController = ScrollController();
 
-  final List<DiscussionInfo> searchItems = [];
+  final List<DiscussionSummary> searchItems = [];
 
   static const int pageSize = 20;
   int offset = 0;
@@ -56,7 +56,7 @@ class SearchResultController extends GetxController
         return false;
       }
 
-      final list = result.data ?? const <DiscussionInfo>[];
+      final list = result.data ?? const <DiscussionSummary>[];
 
       if (list.isEmpty) {
         _hasMore = false;

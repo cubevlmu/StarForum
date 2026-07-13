@@ -5,6 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 
 class ReplyInputSheet extends StatefulWidget {
@@ -51,8 +52,6 @@ class _ReplyInputSheetState extends State<ReplyInputSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -75,7 +74,7 @@ class _ReplyInputSheetState extends State<ReplyInputSheet> {
                     onSubmitted: (_) => _submit(),
                   ),
                 ),
-                IconButton(
+                FUIIconButton(
                   tooltip: l10n.replyOpenEditor,
                   onPressed: _isSubmitting || widget.onOpenEditor == null
                       ? null
@@ -84,19 +83,12 @@ class _ReplyInputSheetState extends State<ReplyInputSheet> {
                           Navigator.of(context).pop();
                           widget.onOpenEditor!(draft);
                         },
-                  icon: const Icon(Icons.open_in_full_rounded),
+                  icon: Icons.open_in_full_rounded,
                 ),
-                IconButton(
-                  icon: _isSubmitting
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            color: colorScheme.primary,
-                          ),
-                        )
-                      : const Icon(Icons.send),
+                FUIIconButton(
+                  icon: Icons.send_rounded,
+                  loading: _isSubmitting,
+                  variant: FUIIconButtonVariant.soft,
                   onPressed: _isSubmitting ? null : _submit,
                 ),
               ],

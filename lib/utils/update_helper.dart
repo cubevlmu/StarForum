@@ -5,8 +5,8 @@
  */
 
 import 'package:flutter/foundation.dart';
-import 'package:star_forum/utils/http_utils.dart';
 import 'package:dio/dio.dart';
+import 'package:star_forum/data/api/forum_http_transport.dart';
 
 const String kGithubUpdateOwner = 'cubevlmu';
 const String kGithubUpdateRepo = 'StarForum';
@@ -59,13 +59,13 @@ class UpdateCheckResult {
 }
 
 class UpdateHelper {
-  static final HttpUtils _http = HttpUtils();
+  static final Dio _http = ForumHttpTransport.create();
 
   static Future<GithubReleaseInfo?> fetchLatestGithubRelease({
     required String owner,
     required String repo,
   }) async {
-    final response = await _http.get(
+    final response = await _http.get<Object?>(
       'https://api.github.com/repos/$owner/$repo/releases/latest',
       options: Options(
         headers: {

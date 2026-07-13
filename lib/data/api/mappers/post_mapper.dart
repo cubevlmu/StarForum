@@ -16,37 +16,40 @@ class PostMapper {
   PostInfo? document(JsonApiDocument document) {
     final resource = documentResource(document);
     if (resource == null || resource.type != 'posts') return null;
-    final post = resourceItem(resource);
     final user = document.includedOne(resource, 'user');
-    if (user != null) post.user = userMapper.resourceItem(user);
-    return post;
+    return resourceItem(
+      resource,
+      user: user == null ? null : userMapper.resourceItem(user),
+    );
   }
 
   Posts documentList(JsonApiDocument document) {
     final posts = <int, PostInfo>{};
     final users = <int, UserInfo>{};
-    final discussions = <int, DiscussionInfo>{};
+    final discussions = <int, DiscussionDetail>{};
 
     for (final user in document.index.ofType('users')) {
       users[user.intId] = userMapper.resourceItem(user, document: document);
     }
     for (final resource in document.index.ofType('discussions')) {
       final attrs = JsonReader(resource.attributes);
-      discussions[resource.intId] = DiscussionInfo.formMaoAndId(
+      discussions[resource.intId] = DiscussionDetail.fromMapAndId(
         attrs.json,
         resource.intId,
       );
     }
     for (final resource in documentResources(document)) {
       if (resource.type != 'posts') continue;
-      final post = resourceItem(resource);
-      post.user = users[post.userId] ?? _placeholderUser(post.userId);
+      final mapped = resourceItem(resource);
+      final post = mapped.copyWith(
+        user: users[mapped.userId] ?? _placeholderUser(mapped.userId),
+      );
       posts[post.id] = post;
     }
     return Posts(posts, users, discussions);
   }
 
-  PostInfo resourceItem(JsonApiResource resource) {
+  PostInfo resourceItem(JsonApiResource resource, {UserInfo? user}) {
     final attrs = JsonReader(resource.attributes);
     return PostInfo(
       resource.intId,
@@ -60,6 +63,7 @@ class PostMapper {
       number: attrs.integer('number'),
       contentType: attrs.string('contentType', 'comment'),
       isLiked: attrs.boolean('isLiked'),
+      user: user,
     );
   }
 

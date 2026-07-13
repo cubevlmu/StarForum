@@ -29,6 +29,9 @@ const languages = [
     ),
     _languageTraditionalChinese,
   ),
+  AppLanguage(Locale('ja'), _languageJapanese),
+  AppLanguage(Locale('ko'), _languageKorean),
+  AppLanguage(Locale('vi'), _languageVietnamese),
 ];
 
 String _languageEnglish(AppLocalizations l10n) => l10n.languageEnglish;
@@ -36,3 +39,6 @@ String _languageSimplifiedChinese(AppLocalizations l10n) =>
     l10n.languageSimplifiedChinese;
 String _languageTraditionalChinese(AppLocalizations l10n) =>
     l10n.languageTraditionalChinese;
+String _languageJapanese(AppLocalizations l10n) => l10n.languageJapanese;
+String _languageKorean(AppLocalizations l10n) => l10n.languageKorean;
+String _languageVietnamese(AppLocalizations l10n) => l10n.languageVietnamese;

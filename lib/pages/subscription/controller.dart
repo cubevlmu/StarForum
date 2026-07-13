@@ -2,13 +2,13 @@ import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
-import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/log_util.dart';
 
 class SubscriptionController extends GetxController {
-  final RxList<DiscussionInfo> items = <DiscussionInfo>[].obs;
+  final RxList<DiscussionSummary> items = <DiscussionSummary>[].obs;
   final RxBool isInitialLoading = true.obs;
   final RxBool isCriteriaLoading = false.obs;
   final Rx<DiscussionFollowingSort> sort = DiscussionFollowingSort.hottest.obs;
@@ -90,7 +90,7 @@ class SubscriptionController extends GetxController {
         _finishRefreshSafe(IndicatorResult.fail);
         return;
       }
-      final list = paged.data ?? const <DiscussionInfo>[];
+      final list = paged.data ?? const <DiscussionSummary>[];
 
       items.assignAll(list);
       _offset = list.length;
@@ -131,7 +131,7 @@ class SubscriptionController extends GetxController {
         _finishLoadSafe(IndicatorResult.fail);
         return;
       }
-      final next = paged.data ?? const <DiscussionInfo>[];
+      final next = paged.data ?? const <DiscussionSummary>[];
 
       if (next.isNotEmpty) {
         items.addAll(next);

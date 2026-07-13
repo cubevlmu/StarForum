@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 class SkeletonShimmer extends StatefulWidget {
   const SkeletonShimmer({
@@ -143,14 +144,101 @@ class SkeletonBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = 220.0 * widthFactor.clamp(0.1, 1.0);
+    final resolvedWidthFactor = widthFactor.clamp(0.1, 1.0);
     return Align(
       alignment: Alignment.centerLeft,
-      child: SizedBox(
-        width: width,
+      child: _SkeletonBarBox(
+        widthFactor: resolvedWidthFactor,
+        fallbackWidth: MediaQuery.sizeOf(context).width,
         height: height,
         child: DecoratedBox(decoration: decoration),
       ),
     );
   }
+}
+
+class _SkeletonBarBox extends SingleChildRenderObjectWidget {
+  const _SkeletonBarBox({
+    required this.widthFactor,
+    required this.fallbackWidth,
+    required this.height,
+    required super.child,
+  });
+
+  final double widthFactor;
+  final double fallbackWidth;
+  final double height;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderSkeletonBarBox(widthFactor, fallbackWidth, height);
+  }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderSkeletonBarBox renderObject,
+  ) {
+    renderObject
+      ..widthFactor = widthFactor
+      ..fallbackWidth = fallbackWidth
+      ..height = height;
+  }
+}
+
+class _RenderSkeletonBarBox extends RenderProxyBox {
+  _RenderSkeletonBarBox(this._widthFactor, this._fallbackWidth, this._height);
+
+  double _widthFactor;
+  double _fallbackWidth;
+  double _height;
+
+  set widthFactor(double value) {
+    if (_widthFactor == value) return;
+    _widthFactor = value;
+    markNeedsLayout();
+  }
+
+  set fallbackWidth(double value) {
+    if (_fallbackWidth == value) return;
+    _fallbackWidth = value;
+    markNeedsLayout();
+  }
+
+  set height(double value) {
+    if (_height == value) return;
+    _height = value;
+    markNeedsLayout();
+  }
+
+  Size _resolvedSize(BoxConstraints constraints) {
+    final availableWidth = constraints.hasBoundedWidth
+        ? constraints.maxWidth
+        : _fallbackWidth;
+    return constraints.constrain(Size(availableWidth * _widthFactor, _height));
+  }
+
+  @override
+  void performLayout() {
+    size = _resolvedSize(constraints);
+    child?.layout(BoxConstraints.tight(size));
+  }
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) =>
+      _resolvedSize(constraints);
+
+  @override
+  double computeMinIntrinsicWidth(double height) =>
+      _fallbackWidth * _widthFactor;
+
+  @override
+  double computeMaxIntrinsicWidth(double height) =>
+      _fallbackWidth * _widthFactor;
+
+  @override
+  double computeMinIntrinsicHeight(double width) => _height;
+
+  @override
+  double computeMaxIntrinsicHeight(double width) => _height;
 }

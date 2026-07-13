@@ -18,7 +18,6 @@ import 'package:star_forum/app/forum_layout.dart';
 import 'package:star_forum/widgets/forum/forum_user_avatar.dart';
 import 'package:star_forum/utils/string_util.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
-import 'package:star_forum/widgets/simple_easy_refresher.dart';
 
 class UserGroupPage extends StatefulWidget {
   const UserGroupPage({super.key});
@@ -66,11 +65,11 @@ class _UserGroupPageState extends State<UserGroupPage> {
               controller.isCriteriaLoading.value) &&
           controller.users.isEmpty;
 
-      return SimpleEasyRefresher(
-        easyRefreshController: controller.refreshController,
+      return FUIRefresh(
+        controller: controller.refreshController,
         onRefresh: controller.onRefresh,
         onLoad: controller.onLoad,
-        autoRefreshOnStart: false,
+        refreshOnStart: false,
         refreshEnabled: !showLoading,
         loadEnabled: !showLoading,
         childBuilder: (context, physics) {
@@ -213,20 +212,11 @@ class _UserToolbarState extends State<_UserToolbar> {
             SizedBox(
               width: FUITokens.inputHeight,
               height: FUITokens.inputHeight,
-              child: IconButton(
-                icon: Icon(_searching ? FUIIcons.close : FUIIcons.search),
-                color: colors.textSecondary,
+              child: FUIIconButton(
+                icon: _searching ? FUIIcons.close : FUIIcons.search,
                 tooltip: l10n.homeUserDirectorySearchHint,
-                style: IconButton.styleFrom(
-                  minimumSize: const Size(
-                    FUITokens.inputHeight,
-                    FUITokens.inputHeight,
-                  ),
-                  padding: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(FUITokens.radiusSm),
-                  ),
-                ),
+                size: FUITokens.inputHeight,
+                variant: FUIIconButtonVariant.outline,
                 onPressed: () {
                   if (_searching) {
                     _searchCtrl.clear();
@@ -249,7 +239,7 @@ class _FilterRow extends StatelessWidget {
   final UserGroupController controller;
   final AppLocalizations l10n;
 
-  static const _allGroupsValue = '__all__';
+  static const _allGroupsValue = 0;
 
   String _sortLabel(UserDirectorySort s) => switch (s) {
     UserDirectorySort.username => l10n.homeUserDirectorySortUsernameAsc,
@@ -267,11 +257,13 @@ class _FilterRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final sort = controller.sort.value;
-      final group = controller.selectedGroup.value;
-      final groups = [_allGroupsValue, ...controller.availableGroups];
-      final groupValue = group == null || group.isEmpty
-          ? _allGroupsValue
-          : group;
+      final selectedGroupId = controller.selectedGroupId.value;
+      final availableGroups = controller.availableGroups;
+      final groupIds = [
+        _allGroupsValue,
+        ...availableGroups.map((group) => group.id),
+      ];
+      final groupValue = selectedGroupId ?? _allGroupsValue;
       return Row(
         children: [
           Expanded(
@@ -286,12 +278,18 @@ class _FilterRow extends StatelessWidget {
           ),
           const SizedBox(width: FUITokens.gap8),
           Expanded(
-            child: _MenuField<String>(
+            child: _MenuField<int>(
               value: groupValue,
-              items: groups,
-              labelOf: (value) => value == _allGroupsValue
-                  ? l10n.homeUserDirectoryFilterAll
-                  : value,
+              items: groupIds,
+              labelOf: (value) {
+                if (value == _allGroupsValue) {
+                  return l10n.homeUserDirectoryFilterAll;
+                }
+                for (final group in availableGroups) {
+                  if (group.id == value) return group.name;
+                }
+                return value.toString();
+              },
               onChanged: (value) {
                 controller.updateGroup(value == _allGroupsValue ? null : value);
               },

@@ -2,6 +2,7 @@ import 'package:fin_ui/fin_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/app/forum_icons.dart';
+import 'package:star_forum/data/perf/perf_interactive_boundary.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/account/view.dart';
 import 'package:star_forum/pages/home/view.dart';
@@ -85,7 +86,11 @@ class _MainPageState extends State<MainPage> {
               selectedIcon: ForumIcons.feedFilled,
               label: l10n.mainHomePage,
             ),
-            page: _HomeRootPage(controller: controller),
+            page: PerfInteractiveBoundary(
+              name: 'home',
+              active: controller.selectedIndex.value == 0,
+              child: _HomeRootPage(controller: controller),
+            ),
           ),
           FuiNavigationItem(
             destination: FuiNavigationDestination(
@@ -93,7 +98,11 @@ class _MainPageState extends State<MainPage> {
               selectedIcon: ForumIcons.tagsFilled,
               label: l10n.mainTagsPage,
             ),
-            page: const TagListPage(),
+            page: PerfInteractiveBoundary(
+              name: 'tags',
+              active: controller.selectedIndex.value == 1,
+              child: const TagListPage(),
+            ),
           ),
           FuiNavigationItem(
             destination: FuiNavigationDestination(
@@ -102,7 +111,11 @@ class _MainPageState extends State<MainPage> {
               label: l10n.mainNotiPage,
               showBadge: hasUnread,
             ),
-            page: const NotificationPage(),
+            page: PerfInteractiveBoundary(
+              name: 'notifications',
+              active: controller.selectedIndex.value == 2,
+              child: const NotificationPage(),
+            ),
           ),
           FuiNavigationItem(
             destination: FuiNavigationDestination(
@@ -110,7 +123,11 @@ class _MainPageState extends State<MainPage> {
               selectedIcon: ForumIcons.profileFilled,
               label: l10n.mainUserPage,
             ),
-            page: const AccountPage(),
+            page: PerfInteractiveBoundary(
+              name: 'account',
+              active: controller.selectedIndex.value == 3,
+              child: const AccountPage(),
+            ),
           ),
         ],
       );

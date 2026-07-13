@@ -16,6 +16,12 @@ class MainController extends GetxController {
     selectedIndex.value = index;
   }
 
+  void resetToHome() {
+    isHomeSearchActive.value = false;
+    homeSearchKeyword.value = null;
+    selectedIndex.value = 0;
+  }
+
   void openHomeSearch() {
     isHomeSearchActive.value = true;
     homeSearchKeyword.value = null;

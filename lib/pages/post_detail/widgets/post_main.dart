@@ -5,7 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:star_forum/data/model/discussion_item.dart';
+import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
@@ -21,7 +21,7 @@ import 'package:star_forum/widgets/forum/forum_meta_row.dart';
 import 'package:star_forum/widgets/forum/forum_user_avatar.dart';
 
 class PostMainWidget extends StatelessWidget {
-  final DiscussionItem content;
+  final DiscussionSummary content;
   final PostPageController controller;
 
   const PostMainWidget({
@@ -94,11 +94,14 @@ class PostMainWidget extends StatelessWidget {
                           onPressed: info == null
                               ? null
                               : () async {
-                                  final r = await ReplyUtil.addLikeToPost(info);
+                                  final r = await ReplyUtil.toggleLikeForPost(
+                                    info,
+                                  );
                                   if (r != null) {
-                                    info.likes = r.likes;
-                                    info.isLiked = r.isLiked;
-                                    controller.firstPost.refresh();
+                                    controller.firstPost.value = info.copyWith(
+                                      likes: r.likes,
+                                      isLiked: r.isLiked,
+                                    );
                                   }
                                 },
                         ),
@@ -119,7 +122,7 @@ class PostMainWidget extends StatelessWidget {
 
 class _UserBox extends StatelessWidget {
   const _UserBox({required this.item, required this.controller});
-  final DiscussionItem item;
+  final DiscussionSummary item;
   final PostPageController controller;
 
   @override
@@ -201,7 +204,7 @@ class _UserBox extends StatelessWidget {
 
 class _MainContent extends StatelessWidget {
   const _MainContent({required this.item, required this.controller});
-  final DiscussionItem item;
+  final DiscussionSummary item;
   final PostPageController controller;
 
   @override

@@ -4,25 +4,29 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 import 'package:star_forum/utils/string_util.dart';
+import 'package:flutter/foundation.dart';
 
 import 'group_info.dart';
 
+const _notProvided = Object();
+
+@immutable
 class UserInfo {
   final int id;
   final String username;
-  String displayName;
-  String avatarUrl;
-  String avatarSrcset;
+  final String displayName;
+  final String avatarUrl;
+  final String avatarSrcset;
   final DateTime joinTime;
-  DateTime lastSeenAt;
-  int discussionCount;
-  int commentCount;
-  String email;
-  String bio;
+  final DateTime lastSeenAt;
+  final int discussionCount;
+  final int commentCount;
+  final String email;
+  final String bio;
   final Groups? groups;
-  ExpInfo? expInfo;
+  final ExpInfo? expInfo;
 
-  UserInfo(
+  const UserInfo(
     this.id,
     this.username,
     this.displayName,
@@ -35,39 +39,71 @@ class UserInfo {
     this.groups,
     this.bio, {
     this.avatarSrcset = '',
+    this.expInfo,
   });
 
-  void update(UserInfo? info) {
-    if (info == null) return;
+  UserInfo copyWith({
+    int? id,
+    String? username,
+    String? displayName,
+    String? avatarUrl,
+    DateTime? joinTime,
+    int? discussionCount,
+    int? commentCount,
+    DateTime? lastSeenAt,
+    String? email,
+    Object? groups = _notProvided,
+    String? bio,
+    String? avatarSrcset,
+    Object? expInfo = _notProvided,
+  }) {
+    return UserInfo(
+      id ?? this.id,
+      username ?? this.username,
+      displayName ?? this.displayName,
+      avatarUrl ?? this.avatarUrl,
+      joinTime ?? this.joinTime,
+      discussionCount ?? this.discussionCount,
+      commentCount ?? this.commentCount,
+      lastSeenAt ?? this.lastSeenAt,
+      email ?? this.email,
+      identical(groups, _notProvided) ? this.groups : groups as Groups?,
+      bio ?? this.bio,
+      avatarSrcset: avatarSrcset ?? this.avatarSrcset,
+      expInfo: identical(expInfo, _notProvided)
+          ? this.expInfo
+          : expInfo as ExpInfo?,
+    );
+  }
+
+  UserInfo mergedWith(UserInfo? info) {
+    if (info == null) return this;
     final nextDisplayName = info.displayName.trim();
     final nextAvatarUrl = info.avatarUrl.trim();
     final nextAvatarSrcset = info.avatarSrcset.trim();
-    if (nextDisplayName.isNotEmpty && displayName != info.displayName) {
-      displayName = info.displayName;
-    }
-    if (nextAvatarUrl.isNotEmpty && avatarUrl != info.avatarUrl) {
-      avatarUrl = info.avatarUrl;
-    }
-    if (nextAvatarSrcset.isNotEmpty && avatarSrcset != info.avatarSrcset) {
-      avatarSrcset = info.avatarSrcset;
-    }
-    if ((info.discussionCount > 0 || discussionCount <= 0) &&
-        discussionCount != info.discussionCount) {
-      discussionCount = info.discussionCount;
-    }
-    if ((info.commentCount > 0 || commentCount <= 0) &&
-        commentCount != info.commentCount) {
-      commentCount = info.commentCount;
-    }
-    if (info.lastSeenAt.isAfter(DateTime.utc(1981)) &&
-        lastSeenAt != info.lastSeenAt) {
-      lastSeenAt = info.lastSeenAt;
-    }
-    if (info.email.trim().isNotEmpty && email != info.email) email = info.email;
-    if (info.bio.trim().isNotEmpty && bio != info.bio) bio = info.bio;
+    return copyWith(
+      displayName: nextDisplayName.isNotEmpty ? info.displayName : displayName,
+      avatarUrl: nextAvatarUrl.isNotEmpty ? info.avatarUrl : avatarUrl,
+      avatarSrcset: nextAvatarSrcset.isNotEmpty
+          ? info.avatarSrcset
+          : avatarSrcset,
+      discussionCount: info.discussionCount > 0 || discussionCount <= 0
+          ? info.discussionCount
+          : discussionCount,
+      commentCount: info.commentCount > 0 || commentCount <= 0
+          ? info.commentCount
+          : commentCount,
+      lastSeenAt: info.lastSeenAt.isAfter(DateTime.utc(1981))
+          ? info.lastSeenAt
+          : lastSeenAt,
+      email: info.email.trim().isNotEmpty ? info.email : email,
+      bio: info.bio.trim().isNotEmpty ? info.bio : bio,
+      groups: info.groups ?? groups,
+      expInfo: info.expInfo ?? expInfo,
+    );
   }
 
-  static UserInfo deletedUser = UserInfo(
+  static final UserInfo deletedUser = UserInfo(
     -1,
     "[deleted]",
     "[deleted]",
@@ -81,7 +117,7 @@ class UserInfo {
     "",
   );
 
-  static UserInfo guestUser = UserInfo(
+  static final UserInfo guestUser = UserInfo(
     -1,
     "[GUEST]",
     "[GUEST]",
@@ -115,6 +151,7 @@ class UserInfo {
   }
 }
 
+@immutable
 class ExpInfo {
   final String expLevel; // "expLevel": "锁链",
   final int expTotal; // "expTotal": 95,
@@ -122,7 +159,7 @@ class ExpInfo {
   final String expNext; //  "expNext": "铁",
   final int expNextNeed; //   "expNextNeed": 55,
 
-  ExpInfo(
+  const ExpInfo(
     this.expLevel,
     this.expTotal,
     this.expPercent,
@@ -130,5 +167,5 @@ class ExpInfo {
     this.expNextNeed,
   );
 
-  static ExpInfo empty = ExpInfo("", 0, 0, "", 0);
+  static final ExpInfo empty = ExpInfo("", 0, 0, "", 0);
 }

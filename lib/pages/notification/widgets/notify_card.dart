@@ -405,7 +405,7 @@ class NotifyCard extends StatelessWidget {
     }
   }
 
-  void naviToPage(BuildContext context) async {
+  Future<void> naviToPage(BuildContext context) async {
     if (item.contentType == "postLiked" ||
         item.contentType == "postMentioned") {
       final s = item.subject as PostSubject;

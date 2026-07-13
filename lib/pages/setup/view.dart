@@ -9,6 +9,7 @@ import 'package:star_forum/data/model/forum_info.dart';
 import 'package:star_forum/data/repository/forum_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/pages/main/view.dart';
+import 'package:star_forum/pages/main/controller.dart';
 import 'package:star_forum/pages/setup/controller.dart';
 import 'package:star_forum/pages/setup/pages/finish_page.dart';
 import 'package:star_forum/pages/setup/pages/greeting_page.dart';
@@ -89,6 +90,9 @@ class _SetupPageState extends State<SetupPage> {
   }
 
   void _onFinishSetup() {
+    if (Get.isRegistered<MainController>()) {
+      Get.find<MainController>().resetToHome();
+    }
     if (widget.onFinish != null) {
       widget.onFinish!();
       return;
