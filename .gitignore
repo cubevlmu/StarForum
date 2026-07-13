@@ -1,20 +1,38 @@
+# Dart and Flutter tooling
+.dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
-pubspec.lock
-Generated*
-flutter_export_environment.sh
-ios/Flutter
-build
+.packages
+.pub/
+build/
+coverage/
+
+# Local development tooling
+.codegraph/
+.codex/
+.claude/settings.local.json
+
+# Platform-generated files
 android/local.properties
-.dart_tool
-.codex
-windows/flutter/generated_**
-linux/flutter/ephemeral/.plugin_symlinks
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+ios/Flutter/.last_build_id
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GeneratedPluginRegistrant.h
+ios/Runner/GeneratedPluginRegistrant.m
+linux/flutter/ephemeral/
 macos/Flutter/GeneratedPluginRegistrant.swift
 macos/Flutter/ephemeral/
-windows/flutter/ephemeral
-windows/flutter/generated_plugins.cmake
-windows/flutter/generated_plugin_registrant.h
+windows/flutter/ephemeral/
 windows/flutter/generated_plugin_registrant.cc
-app_localizations**
+windows/flutter/generated_plugin_registrant.h
+windows/flutter/generated_plugins.cmake
+
+# Generated Dart sources
+lib/data/db/**/*.g.dart
+lib/l10n/app_localizations*.dart
+
+# Build and release artifacts
+symbols/
 *.zip
-.codegraph
