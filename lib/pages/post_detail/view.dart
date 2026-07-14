@@ -35,20 +35,16 @@ class _PostPageState extends State<PostPage>
   _PostPageState();
   @override
   bool get wantKeepAlive => true;
-  late PostPageController controller;
-  late String controllerTag;
+  late final PostPageController controller;
+  late final String controllerTag;
 
   @override
   void initState() {
-    controllerTag = "PostPage:${widget.item.id}:${widget.embedded}";
-    if (Get.isRegistered<PostPageController>(tag: controllerTag)) {
-      controller = Get.find<PostPageController>(tag: controllerTag);
-    } else {
-      controller = Get.put(
-        PostPageController(discussion: widget.item),
-        tag: controllerTag,
-      );
-    }
+    controllerTag = 'PostPage:${widget.item.id}:${identityHashCode(this)}';
+    controller = Get.put(
+      PostPageController(discussion: widget.item),
+      tag: controllerTag,
+    );
     super.initState();
   }
 
@@ -141,7 +137,7 @@ class _SortReplyItemWidget extends StatelessWidget {
                   alignment: AlignmentDirectional.centerStart,
                   items: [
                     FUIButtonGroupTabItem(
-                      icon: ForumIcons.likeFilled,
+                      icon: ForumIcons.hot,
                       label: l10n.postSortByHot,
                       tooltip: l10n.postSortByHot,
                     ),

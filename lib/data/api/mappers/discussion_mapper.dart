@@ -108,6 +108,7 @@ class DiscussionMapper {
           if (id != null && tags[id] != null) tags[id]!,
       ],
       subscription,
+      isSticky: attrs.boolean('isSticky'),
       authorRelationshipLoaded: resource.relationships.containsKey('user'),
     );
   }

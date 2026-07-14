@@ -6,9 +6,8 @@
 
 import 'dart:collection';
 
-import 'package:drift/drift.dart';
-import 'package:star_forum/data/db/app_database.dart';
 import 'package:star_forum/data/db/dao/resource_cache_dao.dart';
+import 'package:star_forum/data/db/mappers/tag_cache_mapper.dart';
 import 'package:star_forum/data/api/services/tag_api.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/utils/log_util.dart';
@@ -142,43 +141,5 @@ class TagRepo {
   void clear() {
     _tags = null;
     _syncTask = null;
-  }
-}
-
-extension on TagInfo {
-  DbTagsCompanion toDbTag() {
-    return DbTagsCompanion.insert(
-      id: Value(id),
-      slug: slug,
-      name: name,
-      color: Value(color),
-      icon: Value(icon),
-      position: Value(position ?? -1),
-      discussionCount: Value(discussionCount),
-      parentId: Value(parentId),
-      syncedAt: DateTime.now(),
-      deletedAt: const Value(null),
-    );
-  }
-}
-
-extension on DbTag {
-  TagInfo toTagInfo() {
-    return TagInfo(
-      name,
-      id,
-      '',
-      slug,
-      discussionCount,
-      position == -1 ? null : position,
-      '',
-      null,
-      -1,
-      parentId != null,
-      parentId,
-      true,
-      icon: icon,
-      color: color,
-    );
   }
 }

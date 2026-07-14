@@ -4,9 +4,11 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
+import 'package:star_forum/data/sync/sync_status.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
@@ -44,6 +46,7 @@ class _PostListPageState extends State<PostListPage> {
     }
 
     if (controller.items.isEmpty) {
+      controller.prepareInitialSync();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         controller.loadInitial();
@@ -83,62 +86,132 @@ class _PostListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FUIRefresh(
-      controller: controller.refreshController,
-      onRefresh: controller.onRefresh,
-      onLoad: controller.onLoad,
-      refreshOnStart: false,
-      loadTriggerOffset: FUITokens.gap32,
-      childBuilder: (context, physics) {
-        return CustomScrollView(
-          controller: controller.scrollController,
-          physics: physics,
-          slivers: [
-            const SliverToBoxAdapter(
-              child: SizedBox(height: ForumLayout.cardGap),
-            ),
-            Obx(() {
-              final showSkeleton =
-                  controller.isInitialLoading.value && controller.items.isEmpty;
-              if (showSkeleton) {
-                return const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: PostListLoadingSkeleton(),
-                );
-              }
-              if (controller.items.isEmpty) {
-                return SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: NoticeWidget(
-                    emoji: '🧐',
-                    title: AppLocalizations.of(context)!.commonEmptyPostsTitle,
-                    tips: AppLocalizations.of(context)!.commonPullToRefreshTips,
+    return Obx(() {
+      final initialSyncing = controller.isInitialSyncing.value;
+      return FUIRefresh(
+        controller: controller.refreshController,
+        onRefresh: controller.onRefresh,
+        onLoad: controller.onLoad,
+        refreshOnStart: false,
+        refreshEnabled: !initialSyncing,
+        loadTriggerOffset: FUITokens.gap32,
+        childBuilder: (context, physics) {
+          return CustomScrollView(
+            controller: controller.scrollController,
+            physics: physics,
+            slivers: [
+              const SliverToBoxAdapter(
+                child: SizedBox(height: ForumLayout.cardGap),
+              ),
+              if (initialSyncing)
+                SliverToBoxAdapter(
+                  child: _InitialSyncBanner(phase: controller.syncStatus.phase),
+                ),
+              Obx(() {
+                final showSkeleton =
+                    controller.isInitialLoading.value &&
+                    controller.items.isEmpty;
+                if (showSkeleton) {
+                  return const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: PostListLoadingSkeleton(),
+                  );
+                }
+                if (controller.items.isEmpty) {
+                  return SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: NoticeWidget(
+                      emoji: '🧐',
+                      title: AppLocalizations.of(
+                        context,
+                      )!.commonEmptyPostsTitle,
+                      tips: AppLocalizations.of(
+                        context,
+                      )!.commonPullToRefreshTips,
+                    ),
+                  );
+                }
+                return const SliverToBoxAdapter(child: SizedBox.shrink());
+              }),
+              Obx(() {
+                final items = controller.items;
+                if (items.isEmpty) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
+
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final item = items[index];
+                      return _PostListItem(key: ValueKey(item.id), item: item);
+                    },
+                    childCount: items.length,
+                    addAutomaticKeepAlives: false,
+                    addRepaintBoundaries: true,
+                    addSemanticIndexes: false,
                   ),
                 );
-              }
-              return const SliverToBoxAdapter(child: SizedBox.shrink());
-            }),
-            Obx(() {
-              final items = controller.items;
-              if (items.isEmpty) {
-                return const SliverToBoxAdapter(child: SizedBox.shrink());
-              }
+              }),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: FUITokens.gap32),
+              ),
+            ],
+          );
+        },
+      );
+    });
+  }
+}
 
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final item = items[index];
-                    return _PostListItem(key: ValueKey(item.id), item: item);
-                  },
-                  childCount: items.length,
-                  addAutomaticKeepAlives: false,
-                  addRepaintBoundaries: true,
-                  addSemanticIndexes: false,
+class _InitialSyncBanner extends StatelessWidget {
+  const _InitialSyncBanner({required this.phase});
+
+  final ValueListenable<SyncPhase> phase;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<SyncPhase>(
+      valueListenable: phase,
+      builder: (context, value, _) {
+        final l10n = AppLocalizations.of(context)!;
+        final message = value == SyncPhase.hydrating
+            ? l10n.homeFeedSyncingExcerpts
+            : l10n.homeFeedSyncingDiscussions;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            ForumLayout.edge,
+            0,
+            ForumLayout.edge,
+            ForumLayout.cardGap,
+          ),
+          child: FUISurface(
+            padding: const EdgeInsets.symmetric(
+              horizontal: FUITokens.gap12,
+              vertical: FUITokens.gap10,
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: context.colors.primary,
+                  ),
                 ),
-              );
-            }),
-            const SliverToBoxAdapter(child: SizedBox(height: FUITokens.gap32)),
-          ],
+                const SizedBox(width: FUITokens.gap10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.colors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

@@ -25,6 +25,7 @@ class PostCard extends StatelessWidget {
       excerpt: excerpt.isEmpty ? null : excerpt,
       author: item.authorName,
       avatarUrl: item.authorAvatar,
+      tags: item.tags.take(3).map((tag) => tag.name).toList(),
       meta: [
         ForumMetaItem(
           icon: FUIIcons.schedule,
@@ -37,6 +38,7 @@ class PostCard extends StatelessWidget {
       ],
       replyCount: item.commentCount > 0 ? item.commentCount - 1 : 0,
       unread: item.subscription == 1,
+      pinned: item.isSticky,
       onTap: () => FuiNavigation.openDetail(
         context,
         builder: (_) => PostPage(item: item, embedded: true),

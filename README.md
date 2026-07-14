@@ -1,11 +1,22 @@
 # StarForum
 
+<div align="center">
+  <img src="./assets/images/logo.svg" alt="StarForum logo" width="112" height="112">
+</div>
+
 [Simplified Chinese](README.zh-CN.md) | English
 
 StarForum is a cross-platform Flutter client for Flarum communities. The 2.0
 development line is currently in public testing and focuses on predictable
 offline-first data access, responsive FinUI interfaces, and consistent behavior
 across mobile and desktop.
+
+## Snapshot
+
+<!-- Replace this reserved path with the final screenshot asset. -->
+<div align="center">
+  <img src="./assets/images/snapshot.png" alt="StarForum application snapshot">
+</div>
 
 ## Status
 
@@ -18,7 +29,7 @@ Supported targets:
 - Android and iOS
 - Windows, macOS, and Linux
 
-Supported interface languages:
+Supported interface languages (initial translations assisted by ChatGPT):
 
 - English
 - Simplified Chinese
@@ -75,6 +86,7 @@ Install dependencies and generate sources:
 ```sh
 flutter pub get
 flutter gen-l10n
+dart run flutter_launcher_icons
 dart run build_runner build --delete-conflicting-outputs
 ```
 
@@ -85,10 +97,9 @@ flutter run -d android
 flutter run -d windows
 ```
 
-The current stabilization branch resolves `fin_ui` from the sibling local
-repository at `../../ClassTool/fui`. Before building on CI or another machine,
-publish the matching FinUI version or replace the path with an accessible
-dependency source.
+The project consumes the published `fin_ui` package. During coordinated FinUI
+development, the dependency can temporarily be changed to the sibling local
+repository at `../../ClassTool/fui`.
 
 ## Quality Checks
 
@@ -108,15 +119,13 @@ reported metrics.
 Android ARM64 APK:
 
 ```sh
-flutter build apk --release --target-platform android-arm64 \
-  --obfuscate --split-debug-info=./symbols --tree-shake-icons
+flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
 Android App Bundle:
 
 ```sh
-flutter build appbundle --release \
-  --obfuscate --split-debug-info=./symbols --tree-shake-icons
+flutter build appbundle --release --obfuscate --split-debug-info=./symbols --tree-shake-icons
 ```
 
 Desktop builds:
@@ -130,8 +139,7 @@ flutter build linux --release --obfuscate --split-debug-info=./symbols
 To lock a build to one forum and hide runtime site reconfiguration:
 
 ```sh
-flutter build apk --release \
-  --dart-define=FIXED_API=https://forum.example.com
+flutter build apk --release --dart-define=FIXED_API=https://forum.example.com
 ```
 
 Keep the generated `symbols/` directory for crash symbolication. Do not commit

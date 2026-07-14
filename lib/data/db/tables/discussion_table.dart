@@ -32,6 +32,7 @@ class DbDiscussions extends Table {
   IntColumn get firstPostId => integer().withDefault(const Constant(-1))();
   IntColumn get posterId => integer().nullable()();
   IntColumn get subscription => integer()();
+  BoolColumn get isSticky => boolean().withDefault(const Constant(false))();
   TextColumn get fingerprint => text().withDefault(const Constant(""))();
 
   @override

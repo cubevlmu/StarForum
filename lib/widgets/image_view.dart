@@ -16,11 +16,13 @@ import 'package:star_forum/widgets/cached_network_image.dart';
 class ImagePreviewWidget extends StatefulWidget {
   final String url;
   final bool embedded;
+  final String? badCertificateHost;
 
   const ImagePreviewWidget({
     super.key,
     required this.url,
     this.embedded = false,
+    this.badCertificateHost,
   });
 
   @override
@@ -66,6 +68,7 @@ class ImagePreviewWidgetState extends State<ImagePreviewWidget> {
                             child: CachedNetworkImage(
                               imageUrl: widget.url,
                               cacheManager: CacheUtils.contentCacheManager,
+                              badCertificateHost: widget.badCertificateHost,
                               fit: BoxFit.contain,
                               cacheWidth: targetWidth,
                               cacheHeight: targetHeight,
@@ -111,9 +114,12 @@ class ImagePreviewWidgetState extends State<ImagePreviewWidget> {
 
   Future<void> _saveImage() async {
     try {
-      final file = await CacheUtils.contentCacheManager.getSingleFile(
-        widget.url,
+      final cacheManager = CachedNetworkImage.cacheManagerFor(
+        url: widget.url,
+        fallback: CacheUtils.contentCacheManager,
+        badCertificateHost: widget.badCertificateHost,
       );
+      final file = await cacheManager.getSingleFile(widget.url);
 
       final savedPath = await _copyToPictures(file);
 

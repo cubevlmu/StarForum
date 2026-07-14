@@ -14,6 +14,8 @@ import 'package:star_forum/data/db/tables/resource_tables.dart';
 import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/model/discussions.dart';
 import 'package:star_forum/data/db/mappers/discussion_cache_mapper.dart';
+import 'package:star_forum/data/db/mappers/tag_cache_mapper.dart';
+import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/utils/log_util.dart';
 
 part 'discussions_dao.g.dart';
@@ -99,7 +101,8 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
              d.comment_count,
              d.like_count,
              d.poster_id,
-             d.subscription
+             d.subscription,
+             d.is_sticky
       FROM db_cache_collection_items c
       INNER JOIN db_discussions d
         ON d.id = c.resource_id
@@ -123,13 +126,47 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
         dbDiscussions,
         dbDiscussionExcerptCache,
         dbUsers,
+        attachedDatabase.dbDiscussionTags,
+        attachedDatabase.dbTags,
       },
-    ).watch().map((rows) {
+    ).watch().asyncMap((rows) async {
+      final tagsByDiscussion = await _tagsByDiscussionIds(
+        rows.map((row) => row.read<String>('id')).toList(growable: false),
+      );
       return [
         for (final row in rows)
-          _discussionItemFromRow(row, showExcerpt: showExcerpt),
+          _discussionItemFromRow(
+            row,
+            showExcerpt: showExcerpt,
+            tags: tagsByDiscussion[row.read<String>('id')] ?? const [],
+          ),
       ];
     });
+  }
+
+  Future<Map<String, List<TagInfo>>> _tagsByDiscussionIds(
+    List<String> discussionIds,
+  ) async {
+    if (discussionIds.isEmpty) return const {};
+    final relations = attachedDatabase.dbDiscussionTags;
+    final tags = attachedDatabase.dbTags;
+    final query = attachedDatabase.select(relations).join([
+      innerJoin(tags, tags.id.equalsExp(relations.tagId)),
+    ]);
+    query
+      ..where(
+        relations.discussionId.isIn(discussionIds) & tags.deletedAt.isNull(),
+      )
+      ..orderBy([
+        OrderingTerm.asc(relations.discussionId),
+        OrderingTerm.asc(relations.sortIndex),
+      ]);
+    final result = <String, List<TagInfo>>{};
+    for (final row in await query.get()) {
+      final discussionId = row.readTable(relations).discussionId;
+      (result[discussionId] ??= []).add(row.readTable(tags).toTagInfo());
+    }
+    return result;
   }
 
   Future<void> upsertAll(List<DbDiscussionsCompanion> list) {
@@ -227,6 +264,7 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
           firstPostId: row.read<int>('first_post_id'),
           posterId: row.readNullable<int>('poster_id'),
           subscription: row.read<int>('subscription'),
+          isSticky: row.read<bool>('is_sticky'),
           fingerprint: row.read<String>('fingerprint'),
         ).toDiscussionDetail(),
     ];
@@ -273,6 +311,7 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
 DiscussionSummary _discussionItemFromRow(
   QueryRow row, {
   required bool showExcerpt,
+  required List<TagInfo> tags,
 }) {
   final posterId = row.readNullable<int>('poster_id');
   final authorName = row.read<String>('author_name').trim();
@@ -295,6 +334,8 @@ DiscussionSummary _discussionItemFromRow(
     likeCount: row.read<int>('like_count'),
     userId: posterId ?? -1,
     subscription: row.read<int>('subscription'),
+    isSticky: row.read<bool>('is_sticky'),
+    tags: tags,
   );
 }
 

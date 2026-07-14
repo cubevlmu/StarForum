@@ -98,6 +98,7 @@ void main() {
         {9: _user()},
         const [],
         1,
+        isSticky: true,
       );
 
       posts.clear();
@@ -110,6 +111,7 @@ void main() {
       expect(summary.viewCount, 42);
       expect(summary.participantCount, 2);
       expect(summary.userId, 9);
+      expect(summary.isSticky, isTrue);
     },
   );
 }

@@ -7,7 +7,10 @@ import 'package:star_forum/data/db/dao/first_posts_dao.dart';
 import 'package:star_forum/data/db/dao/resource_cache_dao.dart';
 import 'package:star_forum/data/db/mappers/user_cache_mapper.dart';
 import 'package:star_forum/data/db/mappers/discussion_cache_mapper.dart';
+import 'package:star_forum/data/db/mappers/tag_cache_mapper.dart';
+import 'package:drift/drift.dart';
 import 'package:star_forum/data/model/discussions.dart';
+import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/utils/html_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/setting_util.dart';
@@ -89,6 +92,7 @@ class DiscussionCacheWriter {
       discussionsDao.upsertAll(discussionRows),
       resourceCacheDao.upsertUsers(userRows),
     ]);
+    await _saveDiscussionTags(remote, syncTime: syncTime);
     await collectionDao.replaceWindowAndMarkSynced(
       collectionKey: collectionKey,
       resourceType: CacheResourceType.discussion,
@@ -111,6 +115,7 @@ class DiscussionCacheWriter {
         fingerprint: fingerprint,
       ),
     );
+    await _saveDiscussionTags([discussion], syncTime: DateTime.now());
     await collectionDao.prependItem(
       collectionKey: DiscussionCollectionKey.feed(),
       resourceType: CacheResourceType.discussion,
@@ -149,6 +154,35 @@ class DiscussionCacheWriter {
     return discussionsDao.updateSubscriptionIfExists(
       discussionId,
       subscription,
+    );
+  }
+
+  Future<void> _saveDiscussionTags(
+    List<DiscussionDetail> discussions, {
+    required DateTime syncTime,
+  }) async {
+    if (discussions.isEmpty) return;
+    final tagsById = <int, TagInfo>{};
+    final relations = <DbDiscussionTagsCompanion>[];
+    for (final discussion in discussions) {
+      for (var index = 0; index < discussion.tags.length; index++) {
+        final tag = discussion.tags[index];
+        tagsById[tag.id] = tag;
+        relations.add(
+          DbDiscussionTagsCompanion.insert(
+            discussionId: discussion.id,
+            tagId: tag.id,
+            sortIndex: Value(index),
+          ),
+        );
+      }
+    }
+    await resourceCacheDao.upsertTags([
+      for (final tag in tagsById.values) tag.toDbTag(syncedAt: syncTime),
+    ]);
+    await resourceCacheDao.replaceDiscussionTagSets(
+      discussionIds: discussions.map((item) => item.id).toList(growable: false),
+      tags: relations,
     );
   }
 }

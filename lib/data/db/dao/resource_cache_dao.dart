@@ -223,6 +223,23 @@ class ResourceCacheDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
+  Future<void> replaceDiscussionTagSets({
+    required List<String> discussionIds,
+    required List<DbDiscussionTagsCompanion> tags,
+  }) async {
+    if (discussionIds.isEmpty) return;
+    await transaction(() async {
+      await (delete(
+        dbDiscussionTags,
+      )..where((t) => t.discussionId.isIn(discussionIds))).go();
+      if (tags.isNotEmpty) {
+        await batch(
+          (batch) => batch.insertAllOnConflictUpdate(dbDiscussionTags, tags),
+        );
+      }
+    });
+  }
+
   Future<void> upsertNotifications(
     List<DbNotificationsCompanion> notifications,
   ) async {

@@ -403,6 +403,8 @@
   
   "settingsAutoCheckUpdateDesc": "Check for updates when the app starts",
   "@settingsAutoCheckUpdateDesc": {},
+  "settingsCheckUpdateDesc": "Check GitHub Releases for a newer StarForum version",
+  "@settingsCheckUpdateDesc": {},
 
   "settingsLanguage": "Language",
   "@settingsLanguage": {},
@@ -1103,8 +1105,10 @@
   "@discussionPublishedAtLabel": {},
   "aboutSubtitle": "Version information, open-source project, and licenses",
   "@aboutSubtitle": {},
-  "aboutDescription": "A cross-platform client for Flarum communities with discussion browsing, replies, notifications, and profile management.",
+  "aboutDescription": "An open-source, cross-platform Flarum client built around incremental synchronization, offline-first access, and a responsive FinUI experience across mobile and desktop.",
   "@aboutDescription": {},
+  "aboutProjectDescriptionTitle": "About StarForum",
+  "@aboutProjectDescriptionTitle": {},
   "aboutProjectSection": "Project",
   "@aboutProjectSection": {},
   "aboutSupportSection": "Support",
@@ -1238,5 +1242,19 @@
   "notificationClearAllConfirm": "Clear all notifications?",
   "@notificationClearAllConfirm": {},
   "editorLinkTextPlaceholder": "text",
-  "@editorLinkTextPlaceholder": {}
+  "@editorLinkTextPlaceholder": {},
+  "homeFeedSyncingDiscussions": "Syncing discussions...",
+  "@homeFeedSyncingDiscussions": {},
+  "homeFeedSyncingExcerpts": "Updating discussion excerpts...",
+  "@homeFeedSyncingExcerpts": {},
+  "discussionPinnedLabel": "Pinned discussion",
+  "@discussionPinnedLabel": {},
+  "discussionUnpinnedLabel": "Unpinned discussion",
+  "@discussionUnpinnedLabel": {},
+  "discussionSuperPinnedLabel": "Super-pinned discussion",
+  "@discussionSuperPinnedLabel": {},
+  "discussionSuperUnpinnedLabel": "Removed super pin",
+  "@discussionSuperUnpinnedLabel": {},
+  "postEventUnsupported": "Unsupported status ({type})",
+  "@postEventUnsupported": {"placeholders": {"type": {}}}
 }

@@ -20,62 +20,64 @@ class StarForumApp extends StatelessWidget {
         ? null
         : _accentFromTheme(theme);
 
-    return FuiDynamicThemeBuilder(
-      useSystemAccent: theme == AppTheme.dynamic,
-      lightAccent: customAccent?.light,
-      darkAccent: customAccent?.dark,
-      builder: (context, lightTheme, darkTheme) {
-        return GetMaterialApp(
-          title: 'StarForum',
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: localeController.locale,
-          localeResolutionCallback: (locale, supportedLocales) {
-            final selectedLocale = localeController.locale;
-            if (selectedLocale != null) {
-              return selectedLocale;
-            }
-            if (locale == null) {
+    return Obx(() {
+      final selectedLocale = localeController.locale;
+      return FuiDynamicThemeBuilder(
+        useSystemAccent: theme == AppTheme.dynamic,
+        lightAccent: customAccent?.light,
+        darkAccent: customAccent?.dark,
+        builder: (context, lightTheme, darkTheme) {
+          return GetMaterialApp(
+            title: 'StarForum',
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: selectedLocale,
+            localeResolutionCallback: (locale, supportedLocales) {
+              if (selectedLocale != null) {
+                return selectedLocale;
+              }
+              if (locale == null) {
+                return const Locale('en');
+              }
+              final normalized = LocaleController.normalizeSupported(locale);
+              if (normalized != null) {
+                return normalized;
+              }
               return const Locale('en');
-            }
-            final normalized = LocaleController.normalizeSupported(locale);
-            if (normalized != null) {
-              return normalized;
-            }
-            return const Locale('en');
-          },
-          scrollBehavior: FuiTheme.scrollBehavior,
-          useInheritedMediaQuery: true,
-          themeMode: SettingsUtil.currentThemeMode,
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          home: const SplashScreen(),
-          builder: (context, child) {
-            if (child == null) {
-              return nil;
-            }
-            final mediaQuery = MediaQuery.of(context);
-            final textScaleFactor = SettingsUtil.getValue(
-              SettingsStorageKeys.textScaleFactor,
-              defaultValue: 1.0,
-            );
-            return MediaQuery(
-              data: mediaQuery.copyWith(
-                textScaler: TextScaler.linear(
-                  mediaQuery.textScaler.scale(textScaleFactor),
+            },
+            scrollBehavior: FuiTheme.scrollBehavior,
+            useInheritedMediaQuery: true,
+            themeMode: SettingsUtil.currentThemeMode,
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            home: const SplashScreen(),
+            builder: (context, child) {
+              if (child == null) {
+                return nil;
+              }
+              final mediaQuery = MediaQuery.of(context);
+              final textScaleFactor = SettingsUtil.getValue(
+                SettingsStorageKeys.textScaleFactor,
+                defaultValue: 1.0,
+              );
+              return MediaQuery(
+                data: mediaQuery.copyWith(
+                  textScaler: TextScaler.linear(
+                    mediaQuery.textScaler.scale(textScaleFactor),
+                  ),
                 ),
-              ),
-              child: child,
-            );
-          },
-        );
-      },
-    );
+                child: child,
+              );
+            },
+          );
+        },
+      );
+    });
   }
 }
 

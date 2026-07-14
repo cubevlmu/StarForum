@@ -16,6 +16,11 @@ class AppLanguage {
   String label(BuildContext context) {
     return labelBuilder(AppLocalizations.of(context)!);
   }
+
+  bool matches(Locale other) =>
+      locale.languageCode == other.languageCode &&
+      locale.scriptCode == other.scriptCode &&
+      locale.countryCode == other.countryCode;
 }
 
 const languages = [
@@ -33,6 +38,13 @@ const languages = [
   AppLanguage(Locale('ko'), _languageKorean),
   AppLanguage(Locale('vi'), _languageVietnamese),
 ];
+
+AppLanguage appLanguageForLocale(Locale locale) {
+  return languages.firstWhere(
+    (language) => language.matches(locale),
+    orElse: () => languages.first,
+  );
+}
 
 String _languageEnglish(AppLocalizations l10n) => l10n.languageEnglish;
 String _languageSimplifiedChinese(AppLocalizations l10n) =>

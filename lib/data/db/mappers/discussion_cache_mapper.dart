@@ -38,6 +38,7 @@ extension DbDiscussionCacheMapper on DbDiscussion {
       posterId == null || author == null ? const {} : {posterId!: author},
       const [],
       subscription,
+      isSticky: isSticky,
       authorRelationshipLoaded: authorResolved,
     );
   }
@@ -61,6 +62,7 @@ extension DiscussionDetailCacheMapper on DiscussionDetail {
       commentCount,
       views,
       subscription,
+      isSticky,
       firstPostId,
       firstPostStamp,
     ].join('|');
@@ -105,6 +107,7 @@ extension DiscussionDetailCacheMapper on DiscussionDetail {
       syncedAt: Value(syncTime),
       deletedAt: const Value(null),
       subscription: subscription,
+      isSticky: Value(isSticky),
       fingerprint: Value(fingerprint),
     );
   }

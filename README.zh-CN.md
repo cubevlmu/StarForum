@@ -1,8 +1,19 @@
 # StarForum
 
+<div align="center">
+  <img src="./assets/images/logo.svg" alt="StarForum Logo" width="112" height="112">
+</div>
+
 简体中文 | [English](README.md)
 
 StarForum 是面向 Flarum 社区的跨平台 Flutter 客户端。当前 2.0 开发线处于公开测试阶段，主要目标是提供行为可预测的本地优先数据访问、统一的 FinUI 界面，以及一致的移动端和桌面端体验。
+
+## 应用截图
+
+<!-- 将最终应用截图放在 assets/images/snapshot.png。 -->
+<div align="center">
+  <img src="./assets/images/snapshot.png" alt="StarForum 应用截图">
+</div>
 
 ## 当前状态
 
@@ -13,7 +24,7 @@ StarForum 是面向 Flarum 社区的跨平台 Flutter 客户端。当前 2.0 开
 - Android、iOS
 - Windows、macOS、Linux
 
-支持的界面语言：
+支持的界面语言（初始翻译由 ChatGPT 辅助完成）：
 
 - 英语
 - 简体中文
@@ -59,6 +70,7 @@ lib/
 ```sh
 flutter pub get
 flutter gen-l10n
+dart run flutter_launcher_icons
 dart run build_runner build --delete-conflicting-outputs
 ```
 
@@ -69,7 +81,7 @@ flutter run -d android
 flutter run -d windows
 ```
 
-当前收尾分支通过 `../../ClassTool/fui` 引用本地 FinUI。用于 CI 或其他机器构建前，需要发布匹配的 FinUI 版本，或将该路径替换为可访问的依赖源。
+项目默认使用 Pub 发布的 `fin_ui`。联调 FinUI 源码时，可以临时将依赖切换到同级本地仓库 `../../ClassTool/fui`。
 
 ## 质量检查
 

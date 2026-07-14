@@ -18,6 +18,7 @@ import 'package:star_forum/widgets/image_view.dart';
 import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/content_hash_key.dart';
+import 'package:star_forum/utils/html_utils.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/weighted_lru_cache.dart';
@@ -27,10 +28,13 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 enum ContentLikeType { kUnknown, kLink, kUserMention, kReply }
 
+final RegExp _inlineWhitespace = RegExp(r'\s+');
+
 class ContentView extends StatefulWidget {
   final String content;
   static double textSize = 16;
   static const int _syncParseThreshold = 1500;
+  static const int _parserVersion = 3;
   static final WeightedLruCache<ContentHashKey, List<_ParsedBlock>>
   _parsedCache = WeightedLruCache(maxEntries: 24, maxWeight: 8 * 1024 * 1024);
 
@@ -86,7 +90,9 @@ class _ContentViewState extends State<ContentView> {
   }
 
   Future<List<_ParsedBlock>> _loadContent(String content) {
-    final cacheKey = ContentHashKey.fromString(content);
+    final cacheKey = ContentHashKey.fromString(
+      '${ContentView._parserVersion}:$content',
+    );
     final cached = ContentView._parsedCache.get(cacheKey);
     if (cached != null) {
       PerfLog.htmlParse(
@@ -420,24 +426,29 @@ class _ContentInlineImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final dpr = MediaQuery.devicePixelRatioOf(context);
     final maxWidth = MediaQuery.sizeOf(context).width.clamp(180.0, 420.0);
+    final resolvedUrl = _resolveUrl(url);
+    final mediaHost = Uri.tryParse(resolvedUrl)?.host;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
-        onTap: () => _previewImage(context),
+        onTap: () => _previewImage(context, resolvedUrl),
         borderRadius: BorderRadius.circular(12),
         child: Hero(
-          tag: "img:$url",
+          tag: 'img:$resolvedUrl',
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: CachedNetworkImage(
-              imageUrl: url,
-              cacheManager: CacheUtils.contentCacheManager,
-              width: maxWidth,
-              fit: BoxFit.cover,
-              cacheWidth: (maxWidth * dpr).round(),
-              placeholder: () => const _ImageLoadingPlaceholder(),
-              errorWidget: () => const _ImageErrorPlaceholder(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: CachedNetworkImage(
+                imageUrl: resolvedUrl,
+                cacheManager: CacheUtils.contentCacheManager,
+                badCertificateHost: mediaHost,
+                fit: BoxFit.contain,
+                cacheWidth: (maxWidth * dpr).round(),
+                placeholder: () => const _ImageLoadingPlaceholder(),
+                errorWidget: () => const _ImageErrorPlaceholder(),
+              ),
             ),
           ),
         ),
@@ -445,10 +456,31 @@ class _ContentInlineImage extends StatelessWidget {
     );
   }
 
-  void _previewImage(BuildContext context) {
+  String _resolveUrl(String source) {
+    final base = Uri.tryParse(getIt<ForumRepository>().baseUrl);
+    if (source.startsWith('//')) {
+      return '${base?.scheme.isNotEmpty == true ? base!.scheme : 'https'}:$source';
+    }
+    final uri = Uri.tryParse(source);
+    if (uri != null && uri.hasScheme) {
+      if (base?.scheme == 'http' &&
+          uri.scheme == 'https' &&
+          uri.host == base?.host) {
+        return uri.replace(scheme: 'http').toString();
+      }
+      return source;
+    }
+    return base?.resolve(source).toString() ?? source;
+  }
+
+  void _previewImage(BuildContext context, String resolvedUrl) {
     FuiNavigation.openDetail(
       context,
-      builder: (_) => ImagePreviewWidget(url: url, embedded: true),
+      builder: (_) => ImagePreviewWidget(
+        url: resolvedUrl,
+        embedded: true,
+        badCertificateHost: Uri.tryParse(resolvedUrl)?.host,
+      ),
     );
   }
 }
@@ -618,6 +650,7 @@ class _InlinePart {
 
 List<Map<String, Object?>> _parseContentPayload(String content) {
   final doc = parse(content);
+  removeNonContentHtmlElements(doc);
   final children = doc.body?.children ?? const <dom.Element>[];
 
   return [for (final element in children) _parseBlockElement(element)];
@@ -706,16 +739,31 @@ List<Map<String, Object?>> _parseInlineNodes(
       continue;
     }
 
+    if (const {
+      'script',
+      'style',
+      'noscript',
+      'template',
+    }.contains(node.localName)) {
+      continue;
+    }
+
     if (node.localName == 'br') {
       parts.add({'type': 'lineBreak'});
       continue;
     }
 
+    if (node.localName == 'img') {
+      final src = _imageSource(node);
+      if (src.isNotEmpty) parts.add({'type': 'image', 'href': src});
+      continue;
+    }
+
     if (node.localName == 'a') {
       final href = node.attributes['href'] ?? '';
-      final img = node.children.where((element) => element.localName == 'img');
-      if (img.isNotEmpty) {
-        final src = img.first.attributes['src'] ?? '';
+      final img = node.querySelector('img');
+      if (img != null) {
+        final src = _imageSource(img);
         if (src.isNotEmpty) {
           parts.add({'type': 'image', 'href': src});
         }
@@ -749,10 +797,6 @@ List<Map<String, Object?>> _parseInlineNodes(
 List<Map<String, Object?>> _mergeAdjacentTextParts(
   List<Map<String, Object?>> parts,
 ) {
-  if (parts.length < 2) {
-    return parts;
-  }
-
   final merged = <Map<String, Object?>>[];
 
   for (final part in parts) {
@@ -778,7 +822,33 @@ List<Map<String, Object?>> _mergeAdjacentTextParts(
     merged.add(Map<String, Object?>.from(part));
   }
 
-  return merged;
+  final normalized = <Map<String, Object?>>[];
+  for (var index = 0; index < merged.length; index++) {
+    final part = merged[index];
+    if (part['type'] != 'text') {
+      normalized.add(part);
+      continue;
+    }
+
+    var text = (part['text'] as String).replaceAll(_inlineWhitespace, ' ');
+    final followsBreak = index == 0 || merged[index - 1]['type'] == 'lineBreak';
+    final precedesBreak =
+        index == merged.length - 1 || merged[index + 1]['type'] == 'lineBreak';
+    if (followsBreak) text = text.trimLeft();
+    if (precedesBreak) text = text.trimRight();
+    if (text.isEmpty) continue;
+
+    part['text'] = text;
+    normalized.add(part);
+  }
+  return normalized;
+}
+
+String _imageSource(dom.Element image) {
+  final source = image.attributes['src'] ?? image.attributes['data-src'] ?? '';
+  if (source.isNotEmpty) return source;
+  final srcset = image.attributes['srcset'] ?? '';
+  return srcset.split(',').first.trim().split(RegExp(r'\s+')).firstOrNull ?? '';
 }
 
 List<_ParsedBlock> _decodeParsedBlocks(List<Map<String, Object?>> payload) {

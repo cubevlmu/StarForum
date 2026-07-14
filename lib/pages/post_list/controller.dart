@@ -10,15 +10,18 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/sync/sync_status.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:get/get.dart';
 
 class PostListController extends GetxController {
   final DiscussionRepository repo = getIt<DiscussionRepository>();
+  final SyncStatusService syncStatus = getIt<SyncStatusService>();
 
   final RxList<DiscussionSummary> items = <DiscussionSummary>[].obs;
   final RxBool isInitialLoading = true.obs;
+  final RxBool isInitialSyncing = false.obs;
 
   final ScrollController scrollController = ScrollController();
   final EasyRefreshController refreshController = EasyRefreshController(
@@ -97,11 +100,22 @@ class PostListController extends GetxController {
   }
 
   Future<void> onRefresh() async {
+    if (isInitialSyncing.value) return;
     await _refresh(force: true);
   }
 
+  void prepareInitialSync() {
+    if (!_loading) isInitialSyncing.value = true;
+  }
+
   Future<void> loadInitial() async {
-    await _refresh(force: false);
+    if (_loading) return;
+    isInitialSyncing.value = true;
+    try {
+      await _refresh(force: false);
+    } finally {
+      isInitialSyncing.value = false;
+    }
   }
 
   Future<void> _refresh({required bool force}) async {

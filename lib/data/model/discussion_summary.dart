@@ -24,6 +24,7 @@ class DiscussionSummary {
   final int participantCount;
   final int userId;
   final int subscription;
+  final bool isSticky;
   final List<TagInfo> tags;
 
   DiscussionSummary({
@@ -40,6 +41,7 @@ class DiscussionSummary {
     this.participantCount = 0,
     required this.userId,
     required this.subscription,
+    this.isSticky = false,
     List<TagInfo> tags = const <TagInfo>[],
   }) : tags = List.unmodifiable(tags);
 
@@ -59,6 +61,7 @@ class DiscussionSummary {
         other.participantCount == participantCount &&
         other.userId == userId &&
         other.subscription == subscription &&
+        other.isSticky == isSticky &&
         listEquals(other.tags, tags);
   }
 
@@ -77,6 +80,7 @@ class DiscussionSummary {
     participantCount,
     userId,
     subscription,
+    isSticky,
     Object.hashAll(tags),
   );
 }

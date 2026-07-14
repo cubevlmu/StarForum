@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/posts.dart';
 import 'package:star_forum/data/model/users.dart';
+import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/user/view.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
@@ -14,6 +15,7 @@ import 'package:star_forum/pages/post_detail/reply_util.dart';
 import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/widgets/forum/forum_meta_row.dart';
 import 'package:star_forum/widgets/forum/forum_post_card.dart';
+import 'package:star_forum/widgets/forum/forum_post_event_tile.dart';
 import 'package:star_forum/widgets/content_view.dart';
 import 'package:get/get.dart';
 
@@ -59,6 +61,44 @@ class _PostItemWidgetState extends State<PostItemWidget> {
         : _reply.editedAt;
     final canInteract = !widget.isUserPage;
     final canOpenUser = canInteract && _reply.userId > 0;
+
+    if (_reply.event case final event?) {
+      return RepaintBoundary(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            FUITokens.pagePadding,
+            FUITokens.gap4,
+            FUITokens.pagePadding,
+            FUITokens.gap4,
+          ),
+          child: ForumPostEventTile(
+            icon: switch (event.type) {
+              PostEventType.discussionStickyChanged => ForumIcons.sticky,
+              PostEventType.discussionStickiestChanged =>
+                ForumIcons.superSticky,
+              PostEventType.unsupported => ForumIcons.code,
+            },
+            label: switch (event.type) {
+              PostEventType.discussionStickyChanged =>
+                event.sticky
+                    ? l10n.discussionPinnedLabel
+                    : l10n.discussionUnpinnedLabel,
+              PostEventType.discussionStickiestChanged =>
+                event.sticky
+                    ? l10n.discussionSuperPinnedLabel
+                    : l10n.discussionSuperUnpinnedLabel,
+              PostEventType.unsupported => l10n.postEventUnsupported(
+                event.sourceType,
+              ),
+            },
+            meta: [
+              ForumMetaItem(label: author),
+              if (createdAt.isNotEmpty) ForumMetaItem(label: createdAt),
+            ],
+          ),
+        ),
+      );
+    }
 
     return RepaintBoundary(
       child: Padding(

@@ -3,14 +3,11 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:star_forum/data/migration/local_data_migration.dart';
-import 'package:star_forum/utils/cache_utils.dart';
 
 void main() {
   late Directory root;
   late Directory support;
   late Directory temporary;
-  late int secureClearCount;
-  late int fileCacheClearCount;
 
   setUp(() async {
     root = await Directory.systemTemp.createTemp('star_forum_migration_');
@@ -18,8 +15,6 @@ void main() {
     temporary = Directory(p.join(root.path, 'temp'));
     await support.create(recursive: true);
     await temporary.create(recursive: true);
-    secureClearCount = 0;
-    fileCacheClearCount = 0;
   });
 
   tearDown(() async {
@@ -29,41 +24,41 @@ void main() {
   LocalDataMigration createMigration({int targetVersion = 1}) {
     return LocalDataMigration(
       supportDirectory: support,
-      temporaryDirectory: temporary,
       targetVersion: targetVersion,
-      clearSecureStorage: () async => secureClearCount++,
-      clearFileCaches: () async => fileCacheClearCount++,
     );
   }
 
   test(
-    'first data-version run clears old local data and writes marker',
+    'first data-version run deletes only SQLite files and writes marker',
     () async {
-      await File(
-        p.join(support.path, 'forum.db'),
-      ).writeAsString('old database');
-      await Directory(p.join(support.path, 'hive')).create();
-      final cacheDirectory = Directory(
-        p.join(temporary.path, CacheUtils.userAvatar),
-      );
+      for (final suffix in const ['', '-wal', '-shm', '-journal']) {
+        await File(
+          p.join(support.path, 'forum.db$suffix'),
+        ).writeAsString('old database');
+      }
+      final settingsFile = File(p.join(support.path, 'settings.hive'));
+      await settingsFile.writeAsString('settings');
+      final cacheDirectory = Directory(p.join(temporary.path, 'image-cache'));
       await cacheDirectory.create();
-      await File(
-        p.join(cacheDirectory.path, 'avatar.png'),
-      ).writeAsBytes([1, 2]);
+      final cachedImage = File(p.join(cacheDirectory.path, 'avatar.png'));
+      await cachedImage.writeAsBytes([1, 2]);
 
       expect(await createMigration().run(), isTrue);
 
-      expect(await File(p.join(support.path, 'forum.db')).exists(), isFalse);
-      expect(await Directory(p.join(support.path, 'hive')).exists(), isFalse);
-      expect(await cacheDirectory.exists(), isFalse);
+      for (final suffix in const ['', '-wal', '-shm', '-journal']) {
+        expect(
+          await File(p.join(support.path, 'forum.db$suffix')).exists(),
+          isFalse,
+        );
+      }
+      expect(await settingsFile.readAsString(), 'settings');
+      expect(await cachedImage.readAsBytes(), [1, 2]);
       expect(
         await File(
           p.join(support.path, LocalDataMigration.markerFileName),
         ).readAsString(),
         '1\n',
       );
-      expect(secureClearCount, 1);
-      expect(fileCacheClearCount, 1);
     },
   );
 
@@ -77,8 +72,6 @@ void main() {
     expect(await createMigration().run(), isFalse);
 
     expect(await database.readAsString(), 'current database');
-    expect(secureClearCount, 0);
-    expect(fileCacheClearCount, 0);
   });
 
   test('higher target data version runs the migration again', () async {
@@ -86,6 +79,8 @@ void main() {
       p.join(support.path, LocalDataMigration.markerFileName),
     ).writeAsString('1\n');
     await File(p.join(support.path, 'forum.db')).writeAsString('old database');
+    final settings = File(p.join(support.path, 'settings.hive'));
+    await settings.writeAsString('keep');
 
     expect(await createMigration(targetVersion: 2).run(), isTrue);
 
@@ -95,7 +90,6 @@ void main() {
       ).readAsString(),
       '2\n',
     );
-    expect(secureClearCount, 1);
-    expect(fileCacheClearCount, 1);
+    expect(await settings.readAsString(), 'keep');
   });
 }

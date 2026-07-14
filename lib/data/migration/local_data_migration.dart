@@ -2,33 +2,25 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:star_forum/data/auth/app_secure_storage.dart';
-import 'package:star_forum/utils/cache_utils.dart';
+import 'package:star_forum/data/db/app_database.dart';
 
 class LocalDataMigration {
   LocalDataMigration({
     required this.supportDirectory,
-    required this.temporaryDirectory,
-    required this.clearSecureStorage,
-    Future<void> Function()? clearFileCaches,
+    this.databaseFileName = AppDatabase.fileName,
     this.targetVersion = currentDataVersion,
-  }) : _clearFileCaches = clearFileCaches ?? CacheUtils.deleteAllCacheImage;
+  });
 
   static const int currentDataVersion = 1;
   static const String markerFileName = '.local_data_version';
 
   final Directory supportDirectory;
-  final Directory temporaryDirectory;
+  final String databaseFileName;
   final int targetVersion;
-  final Future<void> Function() clearSecureStorage;
-  final Future<void> Function() _clearFileCaches;
 
   static Future<bool> runBeforeBootstrap() async {
-    final secureStorage = createAppSecureStorage();
     return LocalDataMigration(
       supportDirectory: await getApplicationSupportDirectory(),
-      temporaryDirectory: await getTemporaryDirectory(),
-      clearSecureStorage: secureStorage.deleteAll,
     ).run();
   }
 
@@ -38,10 +30,7 @@ class LocalDataMigration {
       return false;
     }
 
-    await clearSecureStorage();
-    await _deleteSupportData();
-    await _deleteTemporaryCaches();
-    await _clearFileCaches();
+    await _deleteDatabaseFiles();
     await _writeInstalledVersion();
     return true;
   }
@@ -54,29 +43,12 @@ class LocalDataMigration {
     return int.tryParse((await marker.readAsString()).trim());
   }
 
-  Future<void> _deleteSupportData() async {
-    if (!await supportDirectory.exists()) return;
-    await for (final entity in supportDirectory.list(followLinks: false)) {
-      await entity.delete(recursive: true);
-    }
-  }
-
-  Future<void> _deleteTemporaryCaches() async {
-    for (final cacheKey in CacheUtils.cacheKeys) {
-      final path = p.join(temporaryDirectory.path, cacheKey);
-      final type = await FileSystemEntity.type(path, followLinks: false);
-      switch (type) {
-        case FileSystemEntityType.directory:
-          await Directory(path).delete(recursive: true);
-        case FileSystemEntityType.file:
-        case FileSystemEntityType.link:
-          await File(path).delete();
-        case FileSystemEntityType.notFound:
-          break;
-        case FileSystemEntityType.pipe:
-        case FileSystemEntityType.unixDomainSock:
-          await File(path).delete();
-      }
+  Future<void> _deleteDatabaseFiles() async {
+    for (final suffix in const ['', '-wal', '-shm', '-journal']) {
+      final file = File(
+        p.join(supportDirectory.path, '$databaseFileName$suffix'),
+      );
+      if (await file.exists()) await file.delete();
     }
   }
 

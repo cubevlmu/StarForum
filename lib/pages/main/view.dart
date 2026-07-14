@@ -11,11 +11,11 @@ import 'package:star_forum/pages/notification/controller.dart';
 import 'package:star_forum/pages/notification/view.dart';
 import 'package:star_forum/pages/search/view.dart';
 import 'package:star_forum/pages/search_result/view.dart';
-import 'package:star_forum/pages/settings/about_page.dart';
 import 'package:star_forum/pages/theme_list/view.dart';
 import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/setting_util.dart';
 import 'package:star_forum/utils/storage_utils.dart';
+import 'package:star_forum/utils/update_check_flow.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});

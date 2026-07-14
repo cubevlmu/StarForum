@@ -10,7 +10,31 @@ coverage/
 # Local development tooling
 .codegraph/
 .codex/
-.claude/settings.local.json
+.claude/
+.idea/
+.vscode/
+.fleet/
+*.iml
+
+# Operating system and editor artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Local runtime data and secrets
+.env
+.env.*
+!.env.example
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
 
 # Platform-generated files
 android/local.properties
@@ -36,3 +60,7 @@ lib/l10n/app_localizations*.dart
 # Build and release artifacts
 symbols/
 *.zip
+*.apk
+*.aab
+*.ipa
+*.msix

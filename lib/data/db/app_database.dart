@@ -57,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   Future<File> exportSnapshot(File destination) async {
     await destination.parent.create(recursive: true);
@@ -117,6 +117,13 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 9) {
           await _createPerformanceIndexes();
+        }
+        if (from < 10) {
+          await _ensureColumn(
+            'db_discussions',
+            'is_sticky',
+            'INTEGER NOT NULL DEFAULT 0',
+          );
         }
       });
     },

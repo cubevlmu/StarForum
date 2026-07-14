@@ -401,6 +401,8 @@
   
   "settingsAutoCheckUpdateDesc": "是否在启动 App 时检查更新",
   "@settingsAutoCheckUpdateDesc": {},
+  "settingsCheckUpdateDesc": "从 GitHub Releases 检查 StarForum 新版本",
+  "@settingsCheckUpdateDesc": {},
 
   "settingsLanguage": "语言",
   "@settingsLanguage": {},
@@ -1096,8 +1098,10 @@
   "@discussionPublishedAtLabel": {},
   "aboutSubtitle": "版本信息、开源项目和许可",
   "@aboutSubtitle": {},
-  "aboutDescription": "面向 Flarum 社区的跨平台客户端，提供讨论浏览、回复、通知和个人资料管理。",
+  "aboutDescription": "开源的 Flarum 跨平台客户端，以增量同步、本地优先访问和响应式 FinUI 体验为核心，覆盖移动端与桌面端。",
   "@aboutDescription": {},
+  "aboutProjectDescriptionTitle": "关于 StarForum",
+  "@aboutProjectDescriptionTitle": {},
   "aboutProjectSection": "项目",
   "@aboutProjectSection": {},
   "aboutSupportSection": "支持",
@@ -1231,5 +1235,19 @@
   "notificationClearAllConfirm": "确定要清空所有通知吗？",
   "@notificationClearAllConfirm": {},
   "editorLinkTextPlaceholder": "文字",
-  "@editorLinkTextPlaceholder": {}
+  "@editorLinkTextPlaceholder": {},
+  "homeFeedSyncingDiscussions": "正在同步主题列表...",
+  "@homeFeedSyncingDiscussions": {},
+  "homeFeedSyncingExcerpts": "正在更新主题简介...",
+  "@homeFeedSyncingExcerpts": {},
+  "discussionPinnedLabel": "置顶主题",
+  "@discussionPinnedLabel": {},
+  "discussionUnpinnedLabel": "主题已取消置顶",
+  "@discussionUnpinnedLabel": {},
+  "discussionSuperPinnedLabel": "主题已超级置顶",
+  "@discussionSuperPinnedLabel": {},
+  "discussionSuperUnpinnedLabel": "主题已取消超级置顶",
+  "@discussionSuperUnpinnedLabel": {},
+  "postEventUnsupported": "未适配（{type}）",
+  "@postEventUnsupported": {"placeholders": {"type": {}}}
 }

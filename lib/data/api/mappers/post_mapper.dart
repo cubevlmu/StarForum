@@ -51,20 +51,56 @@ class PostMapper {
 
   PostInfo resourceItem(JsonApiResource resource, {UserInfo? user}) {
     final attrs = JsonReader(resource.attributes);
+    final contentType = attrs.string('contentType', 'comment');
+    final contentHtml = attrs.string('contentHtml');
     return PostInfo(
       resource.intId,
       attrs.string('createdAt'),
-      attrs.string('contentHtml'),
+      contentHtml,
       attrs.string('editedAt'),
       int.tryParse(resource.relatedId('user') ?? '') ?? -1,
       int.tryParse(resource.relatedId('editedUser') ?? '') ?? -1,
       int.tryParse(resource.relatedId('discussion') ?? '') ?? -1,
       attrs.integer('likesCount', -1),
       number: attrs.integer('number'),
-      contentType: attrs.string('contentType', 'comment'),
+      contentType: contentType,
       isLiked: attrs.boolean('isLiked'),
       user: user,
+      event: _event(contentType, attrs, contentHtml),
     );
+  }
+
+  PostEvent? _event(String contentType, JsonReader attrs, String contentHtml) {
+    final content = JsonReader(attrs.map('content'));
+    return switch (contentType) {
+      'discussionStickied' => PostEvent.discussionStickyChanged(
+        sticky: content.contains('sticky')
+            ? content.boolean('sticky')
+            : content.contains('isSticky')
+            ? content.boolean('isSticky')
+            : attrs.boolean('isSticky', true),
+      ),
+      'discussionStickiest' => PostEvent.discussionStickiestChanged(
+        sticky: _stickiestState(content, attrs),
+      ),
+      _ when contentType != 'comment' && contentHtml.trim().isEmpty =>
+        PostEvent.unsupported(sourceType: contentType),
+      _ => null,
+    };
+  }
+
+  bool _stickiestState(JsonReader content, JsonReader attrs) {
+    for (final key in const [
+      'stickiest',
+      'isStickiest',
+      'sticky',
+      'isSticky',
+      'enabled',
+    ]) {
+      if (content.contains(key)) return content.boolean(key);
+      if (attrs.contains(key)) return attrs.boolean(key);
+    }
+    return true;
   }
 
   UserInfo? _placeholderUser(int userId) {

@@ -32,7 +32,7 @@ class ForumMetaRow extends StatelessWidget {
       if (i != 0) {
         children.add(
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: FUITokens.gap6),
+            padding: const EdgeInsets.symmetric(horizontal: FUITokens.gap4),
             child: Text(
               '·',
               style: TextStyle(color: colors.textTertiary, fontSize: textSize),

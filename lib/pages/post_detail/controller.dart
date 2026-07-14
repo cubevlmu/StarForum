@@ -11,6 +11,7 @@ import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/model/posts.dart';
+import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/data/repository/post_repo.dart';
 import 'package:star_forum/data/repository/repo_result.dart';
@@ -37,10 +38,12 @@ int compareReplyHotness(PostInfo left, PostInfo right) {
 class PostPageController extends GetxController {
   PostPageController({required this.discussion}) {
     replyCount.value = replyCountFromCommentCount(discussion.commentCount);
+    tags.assignAll(discussion.tags);
   }
 
   final DiscussionSummary discussion;
   final RxInt viewCount = 0.obs;
+  final RxList<TagInfo> tags = <TagInfo>[].obs;
 
   final RxInt replyCount = 0.obs;
   final Rx<ReplySort> replySort = ReplySort.hot.obs;
@@ -126,6 +129,7 @@ class PostPageController extends GetxController {
     final info = result.data;
     if (info == null || isClosed) return;
     viewCount.value = info.views;
+    tags.assignAll(info.tags);
     subscription.value = info.subscription;
     replyCount.value = replyCountFromCommentCount(info.commentCount);
   }

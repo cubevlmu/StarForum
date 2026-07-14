@@ -5,7 +5,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:fin_ui/fin_ui.dart';
+import 'package:star_forum/app/forum_icons.dart';
+import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/widgets/forum/forum_meta_row.dart';
+import 'package:star_forum/widgets/forum/forum_discussion_tags.dart';
 import 'package:star_forum/widgets/forum/forum_user_avatar.dart';
 
 class ForumDiscussionTile extends StatelessWidget {
@@ -21,6 +24,7 @@ class ForumDiscussionTile extends StatelessWidget {
     this.replyCount,
     this.lastActivity,
     this.unread = false,
+    this.pinned = false,
     this.compact = false,
     this.onTap,
   });
@@ -35,6 +39,7 @@ class ForumDiscussionTile extends StatelessWidget {
   final int? replyCount;
   final String? lastActivity;
   final bool unread;
+  final bool pinned;
   final bool compact;
   final VoidCallback? onTap;
 
@@ -80,33 +85,46 @@ class ForumDiscussionTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (tags.isNotEmpty) ...[
-                        Wrap(
-                          spacing: FUITokens.gap6,
-                          runSpacing: FUITokens.gap4,
-                          children: [
-                            for (final tag in tags.take(3))
-                              FUITag(
-                                label: tag,
-                                variant: tag == tags.first
-                                    ? FUITagVariant.primary
-                                    : FUITagVariant.neutral,
-                              ),
-                          ],
-                        ),
+                        ForumDiscussionTags(tags: tags),
                         const SizedBox(height: FUITokens.gap8),
                       ],
-                      Text(
-                        title,
-                        maxLines: compact ? 1 : 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontSize: compact ? 13 : 14,
-                          height: 1.3,
-                          fontWeight: unread
-                              ? FontWeight.w700
-                              : FontWeight.w600,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (pinned) ...[
+                            Tooltip(
+                              message:
+                                  AppLocalizations.of(
+                                    context,
+                                  )?.discussionPinnedLabel ??
+                                  'Pinned discussion',
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 1),
+                                child: Icon(
+                                  ForumIcons.sticky,
+                                  size: compact ? 15 : 16,
+                                  color: colors.primary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: FUITokens.gap6),
+                          ],
+                          Expanded(
+                            child: Text(
+                              title,
+                              maxLines: compact ? 1 : 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.textPrimary,
+                                fontSize: compact ? 13 : 14,
+                                height: 1.3,
+                                fontWeight: unread
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       if (excerpt != null &&
                           excerpt!.isNotEmpty &&

@@ -28,6 +28,7 @@ class DiscussionDetail {
   final Map<int, UserInfo> users;
   final List<TagInfo> tags;
   final int subscription;
+  final bool isSticky;
   final bool authorRelationshipLoaded;
 
   DiscussionDetail(
@@ -48,6 +49,7 @@ class DiscussionDetail {
     Map<int, UserInfo> users,
     List<TagInfo> tags,
     this.subscription, {
+    this.isSticky = false,
     this.authorRelationshipLoaded = true,
   }) : postsIdList = List.unmodifiable(postsIdList),
        posts = Map.unmodifiable(posts),
@@ -72,6 +74,7 @@ class DiscussionDetail {
     Map<int, UserInfo>? users,
     List<TagInfo>? tags,
     int? subscription,
+    bool? isSticky,
     bool? authorRelationshipLoaded,
   }) {
     return DiscussionDetail(
@@ -96,6 +99,7 @@ class DiscussionDetail {
       users ?? this.users,
       tags ?? this.tags,
       subscription ?? this.subscription,
+      isSticky: isSticky ?? this.isSticky,
       authorRelationshipLoaded:
           authorRelationshipLoaded ?? this.authorRelationshipLoaded,
     );
@@ -119,6 +123,7 @@ class DiscussionDetail {
       participantCount: participantCount,
       tags: tags,
       subscription: subscription,
+      isSticky: isSticky,
     );
   }
 
@@ -147,6 +152,7 @@ class DiscussionDetail {
           : info.string("subscription") == "ignore"
           ? 2
           : 1,
+      isSticky: info.boolean('isSticky'),
       authorRelationshipLoaded: false,
     );
   }

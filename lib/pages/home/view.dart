@@ -156,23 +156,31 @@ class _HomeHeader extends StatelessWidget {
             },
           ),
           const SizedBox(width: FUITokens.gap8),
-          AvatarWidget(
-            avatarUrl: controller.isLogin.value
-                ? controller.avatarUrl.value
-                : '',
-            radius: 18,
-            placeholder: '',
-            onPressed: () {
-              SheetUtil.newBottomSheet(
-                context: context,
-                widget: UserDialogWidget(
-                  controller: controller,
-                  navigationContext: context,
-                ),
-              );
-            },
-          ),
+          if (controller.isLogin.value)
+            AvatarWidget(
+              avatarUrl: controller.avatarUrl.value,
+              radius: 18,
+              placeholder: '',
+              onPressed: () => _showUserMenu(context),
+            )
+          else
+            FUIIconButton(
+              icon: FUIIcons.person,
+              variant: FUIIconButtonVariant.ghost,
+              tooltip: AppLocalizations.of(context)!.authLogin,
+              onPressed: () => _showUserMenu(context),
+            ),
         ],
+      ),
+    );
+  }
+
+  void _showUserMenu(BuildContext context) {
+    SheetUtil.newBottomSheet(
+      context: context,
+      widget: UserDialogWidget(
+        controller: controller,
+        navigationContext: context,
       ),
     );
   }

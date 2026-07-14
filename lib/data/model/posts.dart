@@ -5,6 +5,31 @@ import 'users.dart';
 
 const _notProvided = Object();
 
+enum PostEventType {
+  discussionStickyChanged,
+  discussionStickiestChanged,
+  unsupported,
+}
+
+@immutable
+class PostEvent {
+  const PostEvent.discussionStickyChanged({required this.sticky})
+    : type = PostEventType.discussionStickyChanged,
+      sourceType = 'discussionStickied';
+
+  const PostEvent.unsupported({required this.sourceType})
+    : type = PostEventType.unsupported,
+      sticky = false;
+
+  const PostEvent.discussionStickiestChanged({required this.sticky})
+    : type = PostEventType.discussionStickiestChanged,
+      sourceType = 'discussionStickiest';
+
+  final PostEventType type;
+  final bool sticky;
+  final String sourceType;
+}
+
 @immutable
 class PostInfo {
   final int id;
@@ -19,6 +44,7 @@ class PostInfo {
   final String contentType;
   final bool isLiked;
   final UserInfo? user;
+  final PostEvent? event;
 
   const PostInfo(
     this.id,
@@ -33,6 +59,7 @@ class PostInfo {
     this.contentType = 'comment',
     this.isLiked = false,
     this.user,
+    this.event,
   });
 
   PostInfo copyWith({
@@ -48,6 +75,7 @@ class PostInfo {
     String? contentType,
     bool? isLiked,
     Object? user = _notProvided,
+    Object? event = _notProvided,
   }) {
     return PostInfo(
       id ?? this.id,
@@ -62,6 +90,7 @@ class PostInfo {
       contentType: contentType ?? this.contentType,
       isLiked: isLiked ?? this.isLiked,
       user: identical(user, _notProvided) ? this.user : user as UserInfo?,
+      event: identical(event, _notProvided) ? this.event : event as PostEvent?,
     );
   }
 }

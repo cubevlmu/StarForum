@@ -1,3 +1,8 @@
+/*
+ * @Author: khfahqp khfahqp@gmail.com
+ * @LastEditors: khfahqp khfahqp@gmail.com
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ */
 import 'package:fin_ui/fin_ui.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/widgets.dart';
@@ -58,4 +63,8 @@ abstract final class ForumIcons {
   static const IconData more = FUIIcons.more;
 
   static const IconData github = FluentIcons.link_24_regular;
+
+  static const IconData hot = FluentIcons.fire_24_regular;
+  static const IconData sticky = FluentIcons.pin_24_filled;
+  static const IconData superSticky = FluentIcons.star_24_filled;
 }

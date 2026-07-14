@@ -15,6 +15,7 @@ import 'package:star_forum/utils/setting_util.dart';
 import 'package:star_forum/utils/shared_dialog.dart' as shared;
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/storage_utils.dart';
+import 'package:star_forum/utils/update_check_flow.dart';
 import 'package:star_forum/widgets/shared_dialog.dart';
 
 class CommonSettingsPage extends StatefulWidget {
@@ -25,6 +26,8 @@ class CommonSettingsPage extends StatefulWidget {
 }
 
 class _CommonSettingsPageState extends State<CommonSettingsPage> {
+  bool _isCheckingUpdate = false;
+
   bool get _autoCheckUpdate => SettingsUtil.getValue(
     SettingsStorageKeys.autoCheckUpdate,
     defaultValue: true,
@@ -61,15 +64,26 @@ class _CommonSettingsPageState extends State<CommonSettingsPage> {
                   if (mounted) setState(() {});
                 },
               ),
+              FUITile(
+                icon: FUIIcons.update,
+                title: l10n.aboutCheckUpdate,
+                subtitle: l10n.settingsCheckUpdateDesc,
+                showChevron: false,
+                trailing: _isCheckingUpdate
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
+                onTap: _isCheckingUpdate ? null : _checkUpdate,
+              ),
               Obx(() {
                 final locale =
                     localeController.locale ??
                     Localizations.maybeLocaleOf(context) ??
                     languages.first.locale;
-                final language = languages.firstWhere(
-                  (item) => _isSameLocale(locale, item.locale),
-                  orElse: () => languages.first,
-                );
+                final language = appLanguageForLocale(locale);
                 return FUITile(
                   icon: FUIIcons.palette,
                   title: l10n.settingsLanguage,
@@ -121,6 +135,16 @@ class _CommonSettingsPageState extends State<CommonSettingsPage> {
     );
   }
 
+  Future<void> _checkUpdate() async {
+    if (_isCheckingUpdate) return;
+    setState(() => _isCheckingUpdate = true);
+    try {
+      await runGithubUpdateCheckFlow(context);
+    } finally {
+      if (mounted) setState(() => _isCheckingUpdate = false);
+    }
+  }
+
   Future<void> _selectLanguage(
     BuildContext context, {
     required Locale current,
@@ -138,11 +162,6 @@ class _CommonSettingsPageState extends State<CommonSettingsPage> {
     if (selected != null) onChanged(selected);
   }
 }
-
-bool _isSameLocale(Locale a, Locale b) =>
-    a.languageCode == b.languageCode &&
-    a.scriptCode == b.scriptCode &&
-    a.countryCode == b.countryCode;
 
 class DataBasePage extends StatefulWidget {
   const DataBasePage({super.key});

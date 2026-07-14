@@ -23,6 +23,7 @@ void main() {
       createdAt: now,
       userId: 1,
       subscription: 0,
+      isSticky: true,
     );
 
     await tester.pumpWidget(
@@ -40,6 +41,7 @@ void main() {
     expect(authorText.overflow, TextOverflow.ellipsis);
     expect(find.byIcon(FUIIcons.visibility), findsOneWidget);
     expect(find.byIcon(ForumIcons.like), findsNothing);
+    expect(find.byIcon(ForumIcons.sticky), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

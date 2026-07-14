@@ -18,6 +18,7 @@ import 'package:fin_ui/fin_ui.dart';
 import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/data/model/users.dart';
 import 'package:star_forum/widgets/forum/forum_meta_row.dart';
+import 'package:star_forum/widgets/forum/forum_discussion_tags.dart';
 import 'package:star_forum/widgets/forum/forum_user_avatar.dart';
 
 class PostMainWidget extends StatelessWidget {
@@ -68,6 +69,19 @@ class PostMainWidget extends StatelessWidget {
                   const SizedBox(height: FUITokens.gap10),
                   // Content
                   _MainContent(item: content, controller: controller),
+                  Obx(() {
+                    if (controller.tags.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: FUITokens.gap12),
+                      child: ForumDiscussionTags(
+                        tags: controller.tags
+                            .map((tag) => tag.name)
+                            .toList(growable: false),
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
