@@ -37,7 +37,7 @@ extension PostInfoCacheMapper on PostInfo {
       contentHtml.length,
       event?.type.name,
       event?.sourceType,
-      event?.sticky,
+      event?.active,
     ].join('|');
   }
 
@@ -66,6 +66,7 @@ String? _encodeEvent(PostEvent? event) {
   return jsonEncode({
     'eventType': event.type.name,
     'sourceType': event.sourceType,
+    'active': event.active,
     'sticky': event.sticky,
   });
 }
@@ -76,11 +77,17 @@ PostEvent? _decodeEvent(String contentType, String? rawJson) {
     final json = asJsonMap(jsonDecode(rawJson));
     return switch (json['eventType']) {
       'discussionStickyChanged' => PostEvent.discussionStickyChanged(
-        sticky: JsonReader(json).boolean('sticky'),
+        sticky: _eventState(json),
       ),
       'discussionStickiestChanged' => PostEvent.discussionStickiestChanged(
-        sticky: JsonReader(json).boolean('sticky'),
+        sticky: _eventState(json),
       ),
+      'discussionLockChanged' => PostEvent.discussionLockChanged(
+        locked: _eventState(json),
+        sourceType: JsonReader(json).string('sourceType', 'discussionLocked'),
+      ),
+      'commentContentUnavailable' =>
+        const PostEvent.commentContentUnavailable(),
       'unsupported' => PostEvent.unsupported(
         sourceType: JsonReader(json).string('sourceType', contentType),
       ),
@@ -92,14 +99,30 @@ PostEvent? _decodeEvent(String contentType, String? rawJson) {
 }
 
 PostEvent? _fallbackEvent(String contentType, String contentHtml) {
+  if (contentType == 'comment' && contentHtml.trim().isEmpty) {
+    return const PostEvent.commentContentUnavailable();
+  }
   if (contentType == 'discussionStickied') {
     return const PostEvent.discussionStickyChanged(sticky: true);
   }
   if (contentType == 'discussionStickiest') {
     return const PostEvent.discussionStickiestChanged(sticky: true);
   }
+  if (contentType == 'discussionLocked' || contentType == 'discussionLock') {
+    return PostEvent.discussionLockChanged(
+      locked: true,
+      sourceType: contentType,
+    );
+  }
   if (contentType != 'comment' && contentHtml.trim().isEmpty) {
     return PostEvent.unsupported(sourceType: contentType);
   }
   return null;
+}
+
+bool _eventState(JsonMap json) {
+  final reader = JsonReader(json);
+  return reader.contains('active')
+      ? reader.boolean('active')
+      : reader.boolean('sticky');
 }

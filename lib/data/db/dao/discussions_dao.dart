@@ -83,6 +83,7 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
     int limit, {
     String collectionKey = 'discussion:feed:sort=default:tag=all',
     bool showExcerpt = true,
+    bool keepStickyOnTop = true,
   }) {
     return customSelect(
       '''
@@ -103,22 +104,31 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
              d.poster_id,
              d.subscription,
              d.is_sticky
-      FROM db_cache_collection_items c
-      INNER JOIN db_discussions d
+      FROM db_discussions d
+      LEFT JOIN db_cache_collection_items c
         ON d.id = c.resource_id
+       AND c.collection_key = ?
+       AND c.resource_type = ?
       LEFT JOIN db_discussion_excerpt_cache e
         ON e.discussion_id = d.id
       LEFT JOIN db_users u
         ON u.id = d.poster_id AND u.deleted_at IS NULL
-      WHERE c.collection_key = ?
-        AND c.resource_type = ?
-        AND d.deleted_at IS NULL
-      ORDER BY c.sort_index ASC
+      WHERE d.deleted_at IS NULL
+        AND (
+          c.resource_id IS NOT NULL
+          OR (? = 1 AND d.is_sticky = 1)
+        )
+      ORDER BY
+        CASE WHEN ? = 1 THEN d.is_sticky ELSE 0 END DESC,
+        COALESCE(c.sort_index, 2147483647) ASC,
+        d.last_posted_at DESC
       LIMIT ?
       ''',
       variables: [
         Variable<String>(collectionKey),
         Variable<String>(CacheResourceType.discussion),
+        Variable<int>(keepStickyOnTop ? 1 : 0),
+        Variable<int>(keepStickyOnTop ? 1 : 0),
         Variable<int>(limit),
       ],
       readsFrom: {
@@ -271,9 +281,12 @@ class DiscussionsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<int> deleteNotSeenSince(DateTime threshold) {
-    return (delete(
-      dbDiscussions,
-    )..where((t) => t.lastSeenAt.isSmallerThanValue(threshold))).go();
+    return (delete(dbDiscussions)..where(
+          (t) =>
+              t.lastSeenAt.isSmallerThanValue(threshold) &
+              t.isSticky.equals(false),
+        ))
+        .go();
   }
 
   Future<void> upsert(DbDiscussionsCompanion dbDiscussionsCompanion) async {

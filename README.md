@@ -6,10 +6,15 @@
 
 [Simplified Chinese](README.zh-CN.md) | English
 
-StarForum is a cross-platform Flutter client for Flarum communities. The 2.0
-development line is currently in public testing and focuses on predictable
-offline-first data access, responsive FinUI interfaces, and consistent behavior
-across mobile and desktop.
+StarForum is an open-source, cross-platform client built specifically for
+Flarum communities. It gives forum members a focused native experience on
+phones and desktops while preserving the structure, permissions, and extension
+capabilities of each connected site.
+
+Instead of rebuilding every screen from a fresh network request, StarForum
+opens useful local data first and incrementally synchronizes what may have
+changed. Its responsive interface keeps navigation and everyday actions
+consistent across Android, iOS, Windows, macOS, and Linux.
 
 ## Snapshot
 
@@ -38,17 +43,18 @@ Supported interface languages (initial translations assisted by ChatGPT):
 - Korean
 - Vietnamese
 
-## Highlights
+## Product Highlights
 
-- Adaptive mobile, rail, and split-pane navigation built with FinUI
-- Incremental Flarum synchronization backed by Drift and SQLite
-- Cache-first screens with explicit freshness windows and background refresh
-- Request coalescing, structured transport errors, and bounded content caches
-- Discussion feeds, tags, search, notifications, profiles, user groups, and
-  asset management
-- Rich post rendering, reply composition, tag selection, reactions, and
-  chronological reply ordering
-- Theme mode, dynamic accent color, localization, and cache controls
+- **Local-first reading:** open cached discussions, profiles, and content
+  immediately, then refresh only data that may have changed.
+- **Adaptive interface:** use consistent navigation and controls across
+  compact mobile layouts, desktop rails, and split-pane views.
+- **Complete community workflows:** browse feeds, tags, search, notifications,
+  profiles, groups, and assets; publish, reply, react, and manage content.
+- **Resilient networking:** request coalescing, structured transport errors,
+  bounded caches, and background hydration reduce unnecessary work.
+- **User-controlled experience:** theme modes, dynamic accent colors,
+  localization, cache controls, diagnostics, and data export remain accessible.
 
 ## Architecture
 
@@ -97,7 +103,7 @@ flutter run -d android
 flutter run -d windows
 ```
 
-The project consumes the published `fin_ui` package. During coordinated FinUI
+The project consumes its published shared UI package. During coordinated UI
 development, the dependency can temporarily be changed to the sibling local
 repository at `../../ClassTool/fui`.
 

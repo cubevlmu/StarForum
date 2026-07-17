@@ -1,3 +1,9 @@
+/*
+ * @Author: khfahqp khfahqp@gmail.com
+ * @LastEditors: khfahqp khfahqp@gmail.com
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ */
+
 part of '../view.dart';
 
 class _UserInfoSection extends StatelessWidget {

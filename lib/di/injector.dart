@@ -19,6 +19,7 @@ import 'package:star_forum/data/api/services/tag_api.dart';
 import 'package:star_forum/data/api/services/user_api.dart';
 import 'package:star_forum/data/repository/badge_repo.dart';
 import 'package:star_forum/data/repository/discussion_repo.dart';
+import 'package:star_forum/data/repository/editor_draft_repository.dart';
 import 'package:star_forum/data/repository/discussion/discussion_cache_writer.dart';
 import 'package:star_forum/data/repository/discussion/discussion_detail_repository.dart';
 import 'package:star_forum/data/repository/discussion/discussion_excerpt_hydrator.dart';
@@ -92,6 +93,9 @@ void setupInjector() {
   );
   getIt.registerLazySingleton<UploadRepository>(
     () => UploadRepository(getIt<FoFUploadApi>()),
+  );
+  getIt.registerLazySingleton<EditorDraftRepository>(
+    () => EditorDraftRepository(getIt<AppDatabase>().editorDraftsDao),
   );
 
   getIt.registerLazySingleton<DiscussionCacheWriter>(

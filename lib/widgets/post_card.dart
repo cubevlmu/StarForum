@@ -20,6 +20,7 @@ class PostCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // excerpt is already plain text from the repo layer
     final excerpt = item.excerpt.trim();
+    final hasValidActivityTime = item.lastPostedAt.isAfter(DateTime.utc(1981));
     return ForumDiscussionTile(
       title: item.title,
       excerpt: excerpt.isEmpty ? null : excerpt,
@@ -27,16 +28,18 @@ class PostCard extends StatelessWidget {
       avatarUrl: item.authorAvatar,
       tags: item.tags.take(3).map((tag) => tag.name).toList(),
       meta: [
-        ForumMetaItem(
-          icon: FUIIcons.schedule,
-          label: StringUtil.dateTimeToAgoDate(item.lastPostedAt),
-        ),
-        ForumMetaItem(
-          icon: FUIIcons.visibility,
-          label: StringUtil.numFormat(item.viewCount),
-        ),
+        if (hasValidActivityTime)
+          ForumMetaItem(
+            icon: FUIIcons.schedule,
+            label: StringUtil.dateTimeToAgoDate(item.lastPostedAt),
+          ),
+        if (item.viewCount >= 0)
+          ForumMetaItem(
+            icon: FUIIcons.visibility,
+            label: StringUtil.numFormat(item.viewCount),
+          ),
       ],
-      replyCount: item.commentCount > 0 ? item.commentCount - 1 : 0,
+      replyCount: item.commentCount > 0 ? item.commentCount - 1 : null,
       unread: item.subscription == 1,
       pinned: item.isSticky,
       onTap: () => FuiNavigation.openDetail(

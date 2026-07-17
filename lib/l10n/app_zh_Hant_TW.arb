@@ -1094,7 +1094,7 @@
   "@discussionPublishedAtLabel": {},
   "aboutSubtitle": "版本資訊、開源專案與授權",
   "@aboutSubtitle": {},
-  "aboutDescription": "開源的 Flarum 跨平台用戶端，以增量同步、本機優先存取及響應式 FinUI 體驗為核心，支援行動與桌面平台。",
+  "aboutDescription": "開源的 Flarum 跨平台用戶端，以增量同步與本機優先存取為核心，為行動與桌面平台提供快速且一致的論壇體驗。",
   "@aboutDescription": {},
   "aboutProjectDescriptionTitle": "關於 StarForum",
   "@aboutProjectDescriptionTitle": {},
@@ -1186,7 +1186,7 @@
   "@settingsCommonPageSubtitle": {},
   "settingsBehaviorSection": "應用程式行為",
   "@settingsBehaviorSection": {},
-  "settingsCacheSubtitle": "檢視並清理圖片、介面及暫存檔案快取",
+  "settingsCacheSubtitle": "檢視儲存空間並管理本機資料、圖片快取與暫存檔案",
   "@settingsCacheSubtitle": {},
   "settingsForumSection": "論壇站點",
   "@settingsForumSection": {},
@@ -1245,5 +1245,13 @@
   "discussionSuperUnpinnedLabel": "主題已取消超級置頂",
   "@discussionSuperUnpinnedLabel": {},
   "postEventUnsupported": "尚未適配（{type}）",
-  "@postEventUnsupported": {"placeholders": {"type": {}}}
+  "@postEventUnsupported": {"placeholders": {"type": {}}},
+  "aboutLatestVersionStatus": "目前已是最新版本",
+  "@aboutLatestVersionStatus": {},
+  "aboutUpdateAvailableStatus": "發現新版本",
+  "@aboutUpdateAvailableStatus": {},
+  "dataStorageTotalSize": "總使用量：{size}",
+  "@dataStorageTotalSize": {"placeholders": {"size": {"type": "String"}}},
+  "dataStorageBreakdown": "應用程式資料 {data}（資料庫 {database}）· 快取與暫存檔案 {cache}",
+  "@dataStorageBreakdown": {"placeholders": {"data": {"type": "String"}, "database": {"type": "String"}, "cache": {"type": "String"}}}
 }

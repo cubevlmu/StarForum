@@ -6,6 +6,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/user_repo.dart';
 import 'package:star_forum/data/sync/sync_status.dart';
@@ -59,7 +60,10 @@ class _PostListPageState extends State<PostListPage> {
     return Scaffold(
       backgroundColor: context.colors.background,
       body: _PostListView(controller: controller),
-      floatingActionButton: _PostListFloatBtn(onPressed: _onCreateDiscussion),
+      floatingActionButton: _PostListFloatBtn(
+        controller: controller,
+        onPressed: _onCreateDiscussion,
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
@@ -99,6 +103,7 @@ class _PostListView extends StatelessWidget {
           return CustomScrollView(
             controller: controller.scrollController,
             physics: physics,
+            scrollCacheExtent: const ScrollCacheExtent.pixels(320),
             slivers: [
               const SliverToBoxAdapter(
                 child: SizedBox(height: ForumLayout.cardGap),
@@ -147,7 +152,7 @@ class _PostListView extends StatelessWidget {
                     },
                     childCount: items.length,
                     addAutomaticKeepAlives: false,
-                    addRepaintBoundaries: true,
+                    addRepaintBoundaries: false,
                     addSemanticIndexes: false,
                   ),
                 );
@@ -219,9 +224,10 @@ class _InitialSyncBanner extends StatelessWidget {
 }
 
 class _PostListFloatBtn extends StatelessWidget {
+  final PostListController controller;
   final VoidCallback? onPressed;
 
-  const _PostListFloatBtn({required this.onPressed});
+  const _PostListFloatBtn({required this.controller, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -233,10 +239,38 @@ class _PostListFloatBtn extends StatelessWidget {
         : (bottomInset + 16).clamp(16.0, 40.0).toDouble();
     return Padding(
       padding: EdgeInsets.only(bottom: bottomOffset),
-      child: FUIFloatingActionButton(
-        heroTag: null,
-        onPressed: onPressed,
-        icon: ForumIcons.compose,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Obx(
+            () => controller.showBackToTop.value
+                ? Padding(
+                    padding: const EdgeInsets.only(bottom: FUITokens.gap10),
+                    child: FUIIconButton(
+                      size: 48,
+                      onPressed: controller.animateToTop,
+                      tooltip: AppLocalizations.of(context)!.backToTopTooltip,
+                      icon: ForumIcons.backToTop,
+                      variant: FUIIconButtonVariant.outline,
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          SizedBox.square(
+            dimension: 48,
+            child: Center(
+              child: Transform.scale(
+                scale: 1.2,
+                child: FUIFloatingActionButton(
+                  heroTag: null,
+                  small: true,
+                  onPressed: onPressed,
+                  icon: ForumIcons.compose,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

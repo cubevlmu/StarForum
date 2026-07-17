@@ -49,8 +49,12 @@ abstract final class ForumIcons {
       FluentIcons.arrow_sort_up_lines_24_regular;
   static const IconData sortDescending =
       FluentIcons.arrow_sort_down_lines_24_regular;
+  static const IconData backToTop = FluentIcons.arrow_up_24_regular;
+  static const IconData locked = FluentIcons.lock_closed_24_filled;
+  static const IconData unlocked = FluentIcons.lock_open_24_regular;
   static const IconData folder = FluentIcons.folder_24_regular;
   static const IconData folderFilled = FluentIcons.folder_24_filled;
+  static const IconData document = FluentIcons.document_24_regular;
 
   static const IconData badge = FluentIcons.ribbon_24_regular;
   static const IconData badgeFilled = FluentIcons.ribbon_24_filled;
@@ -67,4 +71,6 @@ abstract final class ForumIcons {
   static const IconData hot = FluentIcons.fire_24_regular;
   static const IconData sticky = FluentIcons.pin_24_filled;
   static const IconData superSticky = FluentIcons.star_24_filled;
+
+  static const IconData edit = FluentIcons.edit_24_regular;
 }

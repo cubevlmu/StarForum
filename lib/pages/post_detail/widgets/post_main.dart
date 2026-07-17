@@ -156,6 +156,7 @@ class _UserBox extends StatelessWidget {
           ? user!.avatarUrl
           : item.authorAvatar;
       final canOpenUser = userId > 0;
+      final viewCount = controller.viewCount.value;
 
       return GestureDetector(
         onTap: canOpenUser
@@ -195,14 +196,11 @@ class _UserBox extends StatelessWidget {
                             item.lastPostedAt,
                           ),
                         ),
-                        ForumMetaItem(
-                          icon: Icons.visibility_outlined,
-                          label: StringUtil.numFormat(
-                            controller.viewCount.value == 0
-                                ? item.viewCount
-                                : controller.viewCount.value,
+                        if (viewCount >= 0)
+                          ForumMetaItem(
+                            icon: FUIIcons.visibility,
+                            label: StringUtil.numFormat(viewCount),
                           ),
-                        ),
                       ],
                     ),
                   ],

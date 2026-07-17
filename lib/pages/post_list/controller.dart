@@ -13,6 +13,7 @@ import 'package:star_forum/data/repository/discussion_repo.dart';
 import 'package:star_forum/data/sync/sync_status.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/utils/log_util.dart';
+import 'package:star_forum/utils/setting_util.dart';
 import 'package:get/get.dart';
 
 class PostListController extends GetxController {
@@ -22,6 +23,7 @@ class PostListController extends GetxController {
   final RxList<DiscussionSummary> items = <DiscussionSummary>[].obs;
   final RxBool isInitialLoading = true.obs;
   final RxBool isInitialSyncing = false.obs;
+  final RxBool showBackToTop = false.obs;
 
   final ScrollController scrollController = ScrollController();
   final EasyRefreshController refreshController = EasyRefreshController(
@@ -38,11 +40,16 @@ class PostListController extends GetxController {
 
   late final Worker _worker;
   StreamSubscription<List<DiscussionSummary>>? _sub;
+  int _watchGeneration = 0;
   final CancelToken _cancelToken = CancelToken();
 
   @override
   void onInit() {
     super.onInit();
+    scrollController.addListener(_handleScroll);
+    SettingsUtil.keepStickyDiscussionsOnTopListenable.addListener(
+      _handleStickyOrderingChanged,
+    );
 
     _worker = ever<int>(_visibleCount, _watchItems);
     _watchItems(_visibleCount.value);
@@ -50,8 +57,10 @@ class PostListController extends GetxController {
   }
 
   void _watchItems(int limit) {
-    _sub?.cancel();
+    final generation = ++_watchGeneration;
+    unawaited(_sub?.cancel());
     _sub = repo.watchDiscussionSummaries(limit: limit).listen((cachedItems) {
+      if (generation != _watchGeneration) return;
       if (_sameItems(items, cachedItems)) {
         if (cachedItems.isNotEmpty) {
           isInitialLoading.value = false;
@@ -94,6 +103,10 @@ class PostListController extends GetxController {
     }
     _worker.dispose();
     _sub?.cancel();
+    scrollController.removeListener(_handleScroll);
+    SettingsUtil.keepStickyDiscussionsOnTopListenable.removeListener(
+      _handleStickyOrderingChanged,
+    );
     scrollController.dispose();
     refreshController.dispose();
     super.onClose();
@@ -208,10 +221,21 @@ class PostListController extends GetxController {
   }
 
   void animateToTop() {
+    if (!scrollController.hasClients) return;
     scrollController.animateTo(
       0,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );
+  }
+
+  void _handleScroll() {
+    if (!scrollController.hasClients) return;
+    final next = scrollController.offset >= 900;
+    if (showBackToTop.value != next) showBackToTop.value = next;
+  }
+
+  void _handleStickyOrderingChanged() {
+    _watchItems(_visibleCount.value);
   }
 }

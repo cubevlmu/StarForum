@@ -4,12 +4,15 @@
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
  */
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/storage_utils.dart';
 
 class SettingsUtil {
+  static ValueNotifier<bool>? _keepStickyDiscussionsOnTopNotifier;
+
   static dynamic getValue(String key, {dynamic defaultValue}) {
     return StorageUtils.settings.get(key, defaultValue: defaultValue);
   }
@@ -88,6 +91,28 @@ class SettingsUtil {
   static Future<void> changeShowDiscussionExcerpt(bool value) async {
     await setValue(SettingsStorageKeys.showDiscussionExcerpt, value);
     await Get.forceAppUpdate();
+  }
+
+  static bool get keepStickyDiscussionsOnTop {
+    final value = getValue(
+      SettingsStorageKeys.keepStickyDiscussionsOnTop,
+      defaultValue: true,
+    );
+    return value != false;
+  }
+
+  static ValueListenable<bool> get keepStickyDiscussionsOnTopListenable {
+    return _keepStickyDiscussionsOnTopNotifier ??= ValueNotifier(
+      keepStickyDiscussionsOnTop,
+    );
+  }
+
+  static Future<void> changeKeepStickyDiscussionsOnTop(bool value) async {
+    await setValue(SettingsStorageKeys.keepStickyDiscussionsOnTop, value);
+    final notifier = _keepStickyDiscussionsOnTopNotifier;
+    if (notifier != null && notifier.value != value) {
+      notifier.value = value;
+    }
   }
 }
 

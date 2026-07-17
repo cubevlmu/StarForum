@@ -39,6 +39,18 @@ class DiscussionCacheWriter {
     required int ttlSeconds,
   }) async {
     final syncTime = DateTime.now();
+    final remoteIds = remote
+        .map((discussion) => int.tryParse(discussion.id))
+        .whereType<int>()
+        .toList(growable: false);
+    final cachedById = await discussionsDao.getByIds(remoteIds);
+    final normalizedRemote = [
+      for (final discussion in remote)
+        _normalizeDiscussion(
+          discussion,
+          cachedById[int.tryParse(discussion.id)],
+        ),
+    ];
     final localWindow = await collectionDao.getWindow(
       collectionKey: collectionKey,
       resourceType: CacheResourceType.discussion,
@@ -55,11 +67,11 @@ class DiscussionCacheWriter {
     final missingAuthorIds = localWindow.isEmpty
         ? const <String>{}
         : await discussionsDao.findIdsWithMissingAuthor(
-            remote.map((discussion) => discussion.id),
+            normalizedRemote.map((discussion) => discussion.id),
           );
 
-    for (var index = 0; index < remote.length; index += 1) {
-      final discussion = remote[index];
+    for (var index = 0; index < normalizedRemote.length; index += 1) {
+      final discussion = normalizedRemote[index];
       final fingerprint = discussion.fingerprint;
       if (localFingerprints[discussion.id] != fingerprint ||
           missingAuthorIds.contains(discussion.id)) {
@@ -92,7 +104,7 @@ class DiscussionCacheWriter {
       discussionsDao.upsertAll(discussionRows),
       resourceCacheDao.upsertUsers(userRows),
     ]);
-    await _saveDiscussionTags(remote, syncTime: syncTime);
+    await _saveDiscussionTags(normalizedRemote, syncTime: syncTime);
     await collectionDao.replaceWindowAndMarkSynced(
       collectionKey: collectionKey,
       resourceType: CacheResourceType.discussion,
@@ -106,6 +118,63 @@ class DiscussionCacheWriter {
     );
     return changed;
   }
+
+  DiscussionDetail _normalizeDiscussion(
+    DiscussionDetail remote,
+    DiscussionDetail? cached,
+  ) {
+    final firstPostCreatedAt = DateTime.tryParse(
+      remote.firstPost?.createdAt ?? '',
+    );
+    final createdAt = _validDate(remote.createdAt)
+        ? remote.createdAt
+        : cached != null && _validDate(cached.createdAt)
+        ? cached.createdAt
+        : firstPostCreatedAt != null && _validDate(firstPostCreatedAt)
+        ? firstPostCreatedAt
+        : DateTime.utc(1980);
+    final lastPostedAt = _validDate(remote.lastPostedAt)
+        ? remote.lastPostedAt
+        : cached != null && _validDate(cached.lastPostedAt)
+        ? cached.lastPostedAt
+        : createdAt;
+    final commentCount = remote.commentCount > 0
+        ? remote.commentCount
+        : cached != null && cached.commentCount > 0
+        ? cached.commentCount
+        : 1;
+    final cachedViews = cached?.views ?? -1;
+    final views = remote.views >= 0
+        ? remote.views > cachedViews
+              ? remote.views
+              : cachedViews
+        : cachedViews > 0
+        ? cachedViews
+        : -1;
+
+    return remote.copyWith(
+      title: remote.title.trim().isNotEmpty
+          ? remote.title
+          : cached?.title ?? '',
+      createdAt: createdAt,
+      lastPostedAt: lastPostedAt,
+      commentCount: commentCount,
+      participantCount: remote.participantCount > 0
+          ? remote.participantCount
+          : cached?.participantCount ?? 0,
+      views: views,
+      lastPostNumber: remote.lastPostNumber > 0
+          ? remote.lastPostNumber
+          : cached != null && cached.lastPostNumber > 0
+          ? cached.lastPostNumber
+          : commentCount,
+      firstPostId: remote.firstPostId >= 0
+          ? remote.firstPostId
+          : cached?.firstPostId ?? -1,
+    );
+  }
+
+  bool _validDate(DateTime value) => value.isAfter(DateTime.utc(1981));
 
   Future<void> manuallyInsert(DiscussionDetail discussion) async {
     final fingerprint = discussion.fingerprint;

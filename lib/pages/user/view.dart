@@ -99,11 +99,8 @@ class _UserPageState extends State<UserPage>
   Widget _buildBody(BuildContext context) {
     return Column(
       children: [
-        if (!widget.isAccountPage || widget.userId <= 0)
-          _UserPageHead(
-            controller: controller.profileController,
-            isAccountPage: widget.isAccountPage,
-          ),
+        if (!widget.isAccountPage)
+          _UserPageHead(controller: controller.profileController),
         _UserSectionTabs(controller: controller, tabController: _tabController),
         Expanded(
           child: _UserSectionBody(
@@ -139,10 +136,9 @@ class _UserPageState extends State<UserPage>
 }
 
 class _UserPageHead extends StatelessWidget {
-  const _UserPageHead({required this.controller, required this.isAccountPage});
+  const _UserPageHead({required this.controller});
 
   final UserProfileController controller;
-  final bool isAccountPage;
 
   @override
   Widget build(BuildContext context) {
@@ -151,14 +147,13 @@ class _UserPageHead extends StatelessWidget {
       children: [
         Padding(
           padding: ForumLayout.pageHeadPadding,
-          child: Obx(
-            () => FuiPageHead(
-              title:
-                  controller.info?.displayName ??
-                  (isAccountPage ? l10n.userCenter : l10n.userAppBarTitle),
-              subtitle: isAccountPage ? l10n.userCenterSub : l10n.userAppBarSub,
-            ),
-          ),
+          child: Obx(() {
+            final info = controller.info;
+            return FuiPageHead(
+              title: info?.displayName ?? l10n.userAppBarTitle,
+              subtitle: l10n.userAppBarSub,
+            );
+          }),
         ),
         Obx(
           () => controller.isLoading.value

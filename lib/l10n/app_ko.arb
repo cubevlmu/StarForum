@@ -966,7 +966,7 @@
   "@discussionPublishedAtLabel": {},
   "aboutSubtitle": "버전 정보, 오픈 소스 프로젝트 및 라이선스",
   "@aboutSubtitle": {},
-  "aboutDescription": "증분 동기화, 오프라인 우선 접근, 모바일과 데스크톱을 아우르는 반응형 FinUI를 중심으로 설계된 오픈 소스 Flarum 클라이언트입니다.",
+  "aboutDescription": "증분 동기화와 오프라인 우선 접근을 중심으로 모바일과 데스크톱에서 일관된 경험을 제공하는 오픈 소스 Flarum 클라이언트입니다.",
   "@aboutDescription": {},
   "aboutProjectDescriptionTitle": "StarForum 소개",
   "@aboutProjectDescriptionTitle": {},
@@ -1058,7 +1058,7 @@
   "@settingsCommonPageSubtitle": {},
   "settingsBehaviorSection": "앱 동작",
   "@settingsBehaviorSection": {},
-  "settingsCacheSubtitle": "이미지, API 및 임시 파일 캐시 보기 및 지우기",
+  "settingsCacheSubtitle": "저장 공간 사용량을 확인하고 로컬 데이터, 이미지 캐시 및 임시 파일을 관리합니다",
   "@settingsCacheSubtitle": {},
   "settingsForumSection": "포럼 사이트",
   "@settingsForumSection": {},
@@ -1134,5 +1134,13 @@
   "discussionSuperUnpinnedLabel": "최상단 고정 해제",
   "@discussionSuperUnpinnedLabel": {},
   "postEventUnsupported": "미지원 상태 ({type})",
-  "@postEventUnsupported": {"placeholders": {"type": {}}}
+  "@postEventUnsupported": {"placeholders": {"type": {}}},
+  "aboutLatestVersionStatus": "현재 최신 버전입니다",
+  "@aboutLatestVersionStatus": {},
+  "aboutUpdateAvailableStatus": "새 버전을 사용할 수 있습니다",
+  "@aboutUpdateAvailableStatus": {},
+  "dataStorageTotalSize": "총 사용량: {size}",
+  "@dataStorageTotalSize": {"placeholders": {"size": {"type": "String"}}},
+  "dataStorageBreakdown": "앱 데이터 {data}(데이터베이스 {database}) · 캐시 및 임시 파일 {cache}",
+  "@dataStorageBreakdown": {"placeholders": {"data": {"type": "String"}, "database": {"type": "String"}, "cache": {"type": "String"}}}
 }

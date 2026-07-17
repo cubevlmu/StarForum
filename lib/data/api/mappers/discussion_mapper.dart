@@ -83,13 +83,15 @@ class DiscussionMapper {
       _ => 0,
     };
     final rawViews =
-        resource.attributes['viewCount'] ?? resource.attributes['views'];
+        resource.attributes['viewCount'] ??
+        resource.attributes['views'] ??
+        resource.attributes['viewsCount'];
     return DiscussionDetail(
       resource.id,
       attrs.string('title'),
       attrs.integer('commentCount'),
       attrs.integer('participantCount'),
-      JsonValue.asInt(rawViews),
+      JsonValue.asInt(rawViews, -1),
       attrs.dateTime('createdAt'),
       attrs.dateTime('lastPostedAt'),
       attrs.integer('lastPostNumber'),
@@ -108,7 +110,7 @@ class DiscussionMapper {
           if (id != null && tags[id] != null) tags[id]!,
       ],
       subscription,
-      isSticky: attrs.boolean('isSticky'),
+      isSticky: attrs.boolean('isSticky') || attrs.boolean('isStickiest'),
       authorRelationshipLoaded: resource.relationships.containsKey('user'),
     );
   }

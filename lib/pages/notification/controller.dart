@@ -82,6 +82,7 @@ class NotificationListController extends GetxController {
             .where(
               (item) =>
                   item.contentType == "postMentioned" ||
+                  item.contentType == "newPost" ||
                   item.contentType == "newPostByUser",
             )
             .toList();
@@ -91,6 +92,7 @@ class NotificationListController extends GetxController {
               (item) =>
                   item.contentType != "postLiked" &&
                   item.contentType != "postMentioned" &&
+                  item.contentType != "newPost" &&
                   item.contentType != "newPostByUser",
             )
             .toList();
@@ -108,6 +110,7 @@ class NotificationListController extends GetxController {
             .where(
               (item) =>
                   (item.contentType == "postMentioned" ||
+                      item.contentType == "newPost" ||
                       item.contentType == "newPostByUser") &&
                   !item.isRead,
             )
@@ -118,6 +121,7 @@ class NotificationListController extends GetxController {
               (item) =>
                   item.contentType != "postLiked" &&
                   item.contentType != "postMentioned" &&
+                  item.contentType != "newPost" &&
                   item.contentType != "newPostByUser" &&
                   !item.isRead,
             )

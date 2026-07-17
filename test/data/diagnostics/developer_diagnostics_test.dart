@@ -84,13 +84,22 @@ void main() {
         p.join(support.path, AppDatabase.fileName),
       ).writeAsBytes(List<int>.filled(10, 1));
       await File(
-        p.join(support.path, 'settings.hive'),
+        p.join(support.path, 'hive', 'settings.hive'),
+      ).create(recursive: true);
+      await File(
+        p.join(support.path, 'hive', 'settings.hive'),
       ).writeAsBytes(List<int>.filled(5, 1));
       final cache = Directory(p.join(temporary.path, CacheUtils.contentImage));
       await cache.create(recursive: true);
       await File(
         p.join(cache.path, 'image'),
       ).writeAsBytes(List<int>.filled(7, 1));
+      await File(
+        p.join(support.path, 'unrelated-app-data.bin'),
+      ).writeAsBytes(List<int>.filled(100, 1));
+      await File(
+        p.join(temporary.path, 'unrelated-temp-data.bin'),
+      ).writeAsBytes(List<int>.filled(100, 1));
 
       final snapshot = await createService().load();
 

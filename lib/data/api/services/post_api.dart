@@ -53,12 +53,8 @@ class PostApi {
     int offset = 0,
     int limit = 20,
     PostSort sort = PostSort.number,
-    String? nextUrl,
     CancelToken? cancelToken,
   }) async {
-    if (nextUrl != null && nextUrl.isNotEmpty) {
-      return _list(nextUrl, null, cancelToken: cancelToken);
-    }
     final query = FlarumQuery()
         .filter('discussion', discussionId)
         .sort(switch (sort) {

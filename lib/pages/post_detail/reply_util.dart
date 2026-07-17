@@ -101,6 +101,7 @@ class ReplyUtil {
         onOpenEditor: (draft) {
           _openReplyEditor(
             context: context,
+            discussionId: discussionId,
             title: _l10n.editorReplyToTitle(
               replyTargetTitle ?? _l10n.postActionComment,
             ),
@@ -144,6 +145,7 @@ class ReplyUtil {
           final initialContent = replyInitialContent(pi, draft);
           _openReplyEditor(
             context: context,
+            discussionId: discussionId,
             title: _l10n.editorReplyToTitle(pi.user?.displayName ?? ""),
             initialContent: initialContent,
             onSubmitReply: (content) => submitReplyContent(
@@ -170,6 +172,7 @@ class ReplyUtil {
 
   static void _openReplyEditor({
     required BuildContext context,
+    required String discussionId,
     required String title,
     required String initialContent,
     required Future<bool> Function(String content) onSubmitReply,
@@ -178,6 +181,7 @@ class ReplyUtil {
       context,
       builder: (_) => EditorPage.reply(
         title: title,
+        discussionId: discussionId,
         initialContent: initialContent,
         onSubmitReply: onSubmitReply,
         embedded: true,

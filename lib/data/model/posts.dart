@@ -8,26 +8,44 @@ const _notProvided = Object();
 enum PostEventType {
   discussionStickyChanged,
   discussionStickiestChanged,
+  discussionLockChanged,
+  commentContentUnavailable,
   unsupported,
 }
 
 @immutable
 class PostEvent {
-  const PostEvent.discussionStickyChanged({required this.sticky})
+  const PostEvent.discussionStickyChanged({required bool sticky})
     : type = PostEventType.discussionStickyChanged,
-      sourceType = 'discussionStickied';
+      sourceType = 'discussionStickied',
+      active = sticky;
 
   const PostEvent.unsupported({required this.sourceType})
     : type = PostEventType.unsupported,
-      sticky = false;
+      active = false;
 
-  const PostEvent.discussionStickiestChanged({required this.sticky})
+  const PostEvent.discussionStickiestChanged({required bool sticky})
     : type = PostEventType.discussionStickiestChanged,
-      sourceType = 'discussionStickiest';
+      sourceType = 'discussionStickiest',
+      active = sticky;
+
+  const PostEvent.discussionLockChanged({
+    required bool locked,
+    this.sourceType = 'discussionLocked',
+  }) : type = PostEventType.discussionLockChanged,
+       active = locked;
+
+  const PostEvent.commentContentUnavailable()
+    : type = PostEventType.commentContentUnavailable,
+      sourceType = 'comment',
+      active = false;
 
   final PostEventType type;
-  final bool sticky;
+  final bool active;
   final String sourceType;
+
+  bool get sticky => active;
+  bool get locked => active;
 }
 
 @immutable

@@ -6,9 +6,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:star_forum/data/db/app_database.dart';
+import 'package:star_forum/data/diagnostics/app_storage_usage.dart';
 import 'package:star_forum/data/migration/local_data_migration.dart';
 import 'package:star_forum/utils/app_info.dart';
-import 'package:star_forum/utils/cache_utils.dart';
 import 'package:star_forum/utils/storage_utils.dart';
 
 @immutable
@@ -30,6 +30,7 @@ class DeveloperDiagnosticsSnapshot {
     required this.databaseBytes,
     required this.supportBytes,
     required this.cacheBytes,
+    required this.totalBytes,
   });
 
   final String appName;
@@ -48,8 +49,7 @@ class DeveloperDiagnosticsSnapshot {
   final int databaseBytes;
   final int supportBytes;
   final int cacheBytes;
-
-  int get totalBytes => supportBytes + cacheBytes;
+  final int totalBytes;
 
   String get versionLabel =>
       buildNumber.isEmpty ? version : '$version+$buildNumber';
@@ -75,18 +75,14 @@ class DeveloperDiagnosticsService {
 
   Future<DeveloperDiagnosticsSnapshot> load() async {
     final results = await Future.wait<Object>([
-      _supportDirectory(),
-      _temporaryDirectory(),
       _packageInfo(),
+      AppStorageUsageService(
+        supportDirectory: _supportDirectory,
+        temporaryDirectory: _temporaryDirectory,
+      ).load(),
     ]);
-    final support = results[0] as Directory;
-    final temporary = results[1] as Directory;
-    final info = results[2] as PackageInfo;
-    final sizes = await Future.wait<int>([
-      _databaseSize(support),
-      directorySize(support),
-      _cacheSize(temporary),
-    ]);
+    final info = results[0] as PackageInfo;
+    final storage = results[1] as AppStorageUsageSnapshot;
     final exportedSettings = _exportableSettings();
 
     return DeveloperDiagnosticsSnapshot(
@@ -107,9 +103,10 @@ class DeveloperDiagnosticsService {
       databaseSchemaVersion: database.schemaVersion,
       dataVersion: LocalDataMigration.currentDataVersion,
       settingsCount: exportedSettings.length,
-      databaseBytes: sizes[0],
-      supportBytes: sizes[1],
-      cacheBytes: sizes[2],
+      databaseBytes: storage.databaseBytes,
+      supportBytes: storage.supportBytes,
+      cacheBytes: storage.cacheBytes,
+      totalBytes: storage.totalBytes,
     );
   }
 
@@ -173,43 +170,6 @@ class DeveloperDiagnosticsService {
     final directory = Directory(p.join(temporary.path, 'star_forum_exports'));
     await directory.create(recursive: true);
     return directory;
-  }
-
-  Future<int> _databaseSize(Directory support) async {
-    var total = 0;
-    for (final suffix in const ['', '-wal', '-shm']) {
-      final file = File(p.join(support.path, '${AppDatabase.fileName}$suffix'));
-      if (await file.exists()) total += await file.length();
-    }
-    return total;
-  }
-
-  Future<int> _cacheSize(Directory temporary) async {
-    final paths = <String>{
-      for (final key in CacheUtils.cacheKeys) p.join(temporary.path, key),
-      for (final key in CacheUtils.cacheKeys)
-        p.join(temporary.path, 'libCachedImageData', key),
-    };
-    var total = 0;
-    for (final path in paths) {
-      total += await directorySize(Directory(path));
-    }
-    return total;
-  }
-
-  static Future<int> directorySize(Directory directory) async {
-    if (!await directory.exists()) return 0;
-    var total = 0;
-    await for (final entity in directory.list(
-      recursive: true,
-      followLinks: false,
-    )) {
-      if (entity is! File) continue;
-      try {
-        total += await entity.length();
-      } catch (_) {}
-    }
-    return total;
   }
 
   static Object? jsonSafe(Object? value) {

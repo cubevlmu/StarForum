@@ -53,6 +53,7 @@ class _AccountPageState extends State<AccountPage>
             child: FuiPageHead(
               showNavigation: false,
               title: l10n.accountAppBarTitle,
+              subtitle: l10n.userCenterSub,
               actions: [
                 Obx(() {
                   if (!controller.isLogin.value) {
