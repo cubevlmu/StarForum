@@ -78,6 +78,30 @@ class _AboutPageState extends State<AboutPage> {
           ),
           const SizedBox(height: FUITokens.gap16),
           FUISection(
+            title: l10n.aboutFeaturesSection,
+            children: [
+              FUITile(
+                icon: ForumIcons.cache,
+                title: l10n.aboutFeatureSyncTitle,
+                subtitle: l10n.aboutFeatureSyncDescription,
+                showChevron: false,
+              ),
+              FUITile(
+                icon: FUIIcons.palette,
+                title: l10n.aboutFeatureInterfaceTitle,
+                subtitle: l10n.aboutFeatureInterfaceDescription,
+                showChevron: false,
+              ),
+              FUITile(
+                icon: ForumIcons.forum,
+                title: l10n.aboutFeatureCommunityTitle,
+                subtitle: l10n.aboutFeatureCommunityDescription,
+                showChevron: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: FUITokens.gap16),
+          FUISection(
             title: l10n.aboutProjectSection,
             children: [
               FUITile(

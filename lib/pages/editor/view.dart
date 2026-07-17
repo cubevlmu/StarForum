@@ -1,6 +1,6 @@
 /*
  * @Author: cubevlmu khfahqp@gmail.com
- * @LastEditors: cubevlmu khfahqp@gmail.com
+ * @LastEditors: khfahqp khfahqp@gmail.com
  * Copyright (c) 2026 by FlybirdGames, All Rights Reserved.
  */
 
@@ -9,11 +9,13 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:get/get.dart';
 import 'package:star_forum/data/model/tags.dart';
 import 'package:star_forum/data/model/uploads.dart';
+import 'package:star_forum/data/repository/forum_repo.dart';
 import 'package:star_forum/data/session/session_state.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/assets/view.dart';
 import 'package:star_forum/pages/editor/controller.dart';
+import 'package:star_forum/pages/editor/widgets/draft_dialog.dart';
 import 'package:star_forum/pages/editor/widgets/tag_dialog.dart';
 import 'package:star_forum/pages/post_list/create_discuss_util.dart';
 import 'package:fin_ui/fin_ui.dart';
@@ -25,11 +27,13 @@ class EditorPage extends StatefulWidget {
   const EditorPage({super.key, this.embedded = false})
     : title = null,
       initialContent = null,
+      discussionId = null,
       onSubmitReply = null;
 
   const EditorPage.reply({
     super.key,
     required this.title,
+    required this.discussionId,
     required this.initialContent,
     required this.onSubmitReply,
     this.embedded = false,
@@ -37,6 +41,7 @@ class EditorPage extends StatefulWidget {
 
   final bool embedded;
   final String? title;
+  final String? discussionId;
   final String? initialContent;
   final Future<bool> Function(String content)? onSubmitReply;
 
@@ -49,20 +54,26 @@ class EditorPage extends StatefulWidget {
 class _EditorPageState extends State<EditorPage> {
   late final EditorController controller;
   late final String _controllerTag;
+  late final Future<void> _draftMigration;
 
   @override
   void initState() {
-    _controllerTag = 'EditorPage:${identityHashCode(this)}';
-    controller = Get.put(EditorController(), tag: _controllerTag);
-    controller.contentFocusNode.addListener(_handleContentFocusChanged);
-    final initialContent = widget.initialContent;
-    if (initialContent != null && initialContent.isNotEmpty) {
-      controller.contentController.text = initialContent;
-      controller.contentController.selection = TextSelection.collapsed(
-        offset: initialContent.length,
-      );
-    }
     super.initState();
+    _controllerTag = 'EditorPage:${identityHashCode(this)}';
+    final draftTarget = widget.isReplyMode
+        ? 'reply:${widget.discussionId}'
+        : 'discussion';
+    controller = Get.put(
+      EditorController(
+        forumUrl: getIt<ForumRepository>().baseUrl,
+        userId: getIt<SessionState>().current.userId,
+        draftTarget: draftTarget,
+        initialContent: widget.initialContent,
+      ),
+      tag: _controllerTag,
+    );
+    controller.contentFocusNode.addListener(_handleContentFocusChanged);
+    _draftMigration = controller.migrateLegacyDraft();
   }
 
   @override
@@ -133,6 +144,21 @@ class _EditorPageState extends State<EditorPage> {
                   ),
                   child: FuiPageHead(
                     title: widget.title ?? l10n.editorPageTitle,
+                    actions: [
+                      FUIIconButton(
+                        icon: ForumIcons.folder,
+                        tooltip: l10n.editorBrowseDrafts,
+                        variant: FUIIconButtonVariant.ghost,
+                        onPressed: _showDraftPicker,
+                      ),
+                      const SizedBox(width: FUITokens.gap6),
+                      FUIIconButton(
+                        icon: FluentIcons.save_24_regular,
+                        tooltip: l10n.editorSaveDraft,
+                        variant: FUIIconButtonVariant.ghost,
+                        onPressed: _saveDraft,
+                      ),
+                    ],
                   ),
                 ),
 
@@ -210,6 +236,7 @@ class _EditorPageState extends State<EditorPage> {
     controller.isSelectingTags.value = true;
     try {
       await repo.syncTags();
+      controller.resolveDraftTags();
     } finally {
       controller.isSelectingTags.value = false;
     }
@@ -283,7 +310,9 @@ class _EditorPageState extends State<EditorPage> {
       controller.isSubmitting.value = true;
       try {
         final ok = await widget.onSubmitReply!(content);
-        if (!mounted || !ok) return;
+        if (!ok) return;
+        await controller.deleteActiveDraft();
+        if (!mounted) return;
         if (widget.embedded) {
           FuiNavigation.closeCurrent(this.context);
           return;
@@ -317,7 +346,9 @@ class _EditorPageState extends State<EditorPage> {
         title: title,
         content: content,
       );
-      if (!mounted || !ok) return;
+      if (!ok) return;
+      await controller.deleteActiveDraft();
+      if (!mounted) return;
       if (widget.embedded) {
         FuiNavigation.closeCurrent(this.context);
         return;
@@ -325,6 +356,64 @@ class _EditorPageState extends State<EditorPage> {
       Navigator.of(this.context).pop();
     } finally {
       controller.isSubmitting.value = false;
+    }
+  }
+
+  Future<void> _showDraftPicker() async {
+    try {
+      FocusManager.instance.primaryFocus?.unfocus();
+      await _draftMigration;
+      final drafts = await controller.listDrafts();
+      if (!mounted) return;
+      if (drafts.isEmpty) {
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(context)!.editorNoDrafts,
+          context: context,
+        );
+        return;
+      }
+      final selected = await EditorDraftDialog.show(
+        context,
+        drafts: drafts,
+        onDelete: controller.deleteDraft,
+      );
+      if (!mounted || selected == null) return;
+      controller.loadDraft(selected);
+      SnackbarUtils.showMessage(
+        msg: AppLocalizations.of(context)!.editorDraftRestored,
+        context: context,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      SnackbarUtils.showError(
+        msg: AppLocalizations.of(context)!.editorDraftLoadFailed,
+        context: context,
+      );
+    }
+  }
+
+  Future<void> _saveDraft() async {
+    if (controller.isSubmitting.value) return;
+    try {
+      final draft = await controller.saveDraft();
+      if (!mounted) return;
+      if (draft == null) {
+        SnackbarUtils.showMessage(
+          msg: AppLocalizations.of(context)!.editorDraftEmpty,
+          context: context,
+        );
+        return;
+      }
+      SnackbarUtils.showSuccess(
+        msg: AppLocalizations.of(context)!.editorDraftSaved,
+        context: context,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      SnackbarUtils.showError(
+        msg: AppLocalizations.of(context)!.editorDraftSaveFailed,
+        context: context,
+      );
     }
   }
 }

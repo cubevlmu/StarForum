@@ -76,6 +76,9 @@ class _PostItemWidgetState extends State<PostItemWidget> {
               PostEventType.discussionStickyChanged => ForumIcons.sticky,
               PostEventType.discussionStickiestChanged =>
                 ForumIcons.superSticky,
+              PostEventType.discussionLockChanged =>
+                event.locked ? ForumIcons.locked : ForumIcons.unlocked,
+              PostEventType.commentContentUnavailable => FUIIcons.warning,
               PostEventType.unsupported => ForumIcons.code,
             },
             label: switch (event.type) {
@@ -87,6 +90,12 @@ class _PostItemWidgetState extends State<PostItemWidget> {
                 event.sticky
                     ? l10n.discussionSuperPinnedLabel
                     : l10n.discussionSuperUnpinnedLabel,
+              PostEventType.discussionLockChanged =>
+                event.locked
+                    ? l10n.discussionLockedLabel
+                    : l10n.discussionUnlockedLabel,
+              PostEventType.commentContentUnavailable =>
+                l10n.postReplyContentUnavailable,
               PostEventType.unsupported => l10n.postEventUnsupported(
                 event.sourceType,
               ),

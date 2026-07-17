@@ -14,19 +14,25 @@ const String kGithubLatestReleaseUrl =
     'https://github.com/$kGithubUpdateOwner/$kGithubUpdateRepo/releases/latest';
 
 String _normalizeVersion(String input) {
-  return input.trim();
+  final trimmed = input.trim();
+  if (trimmed.startsWith('v') || trimmed.startsWith('V')) {
+    return trimmed.substring(1);
+  }
+  return trimmed;
 }
 
 List<int> _parseVersionParts(String version) {
   final normalized = _normalizeVersion(version);
-  final match = RegExp(r'^\d+\.\d+\.\d+$').firstMatch(normalized);
+  final match = RegExp(
+    r'^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$',
+  ).firstMatch(normalized);
   if (match == null) {
     return const <int>[];
   }
-  return normalized
-      .split('.')
-      .map((segment) => int.tryParse(segment) ?? 0)
-      .toList(growable: false);
+  return [
+    for (var index = 1; index <= 3; index++)
+      int.tryParse(match.group(index) ?? '') ?? 0,
+  ];
 }
 
 @immutable

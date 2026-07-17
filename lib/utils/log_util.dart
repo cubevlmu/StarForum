@@ -69,6 +69,20 @@ class LogUtil {
 
   static File get logFile => _logFile;
 
+  static Future<void> clearLogs() async {
+    if (!await _logDir.exists()) return;
+    await for (final entity in _logDir.list(followLinks: false)) {
+      if (entity is! File) continue;
+      try {
+        if (entity.path == _logFile.path) {
+          await entity.writeAsString('', flush: true);
+        } else {
+          await entity.delete();
+        }
+      } catch (_) {}
+    }
+  }
+
   // Build log file's name.
   static String _todayFileName() {
     return _fileNameByDate(DateTime.now());

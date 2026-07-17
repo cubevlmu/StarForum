@@ -49,6 +49,7 @@ class SettingsStorageKeys {
   static const String buttonGroupIconOnly = 'buttonGroupIconOnly';
   static const String buttonGroupAlignment = 'buttonGroupAlignment';
   static const String showDiscussionExcerpt = 'showDiscussionExcerpt';
+  static const String keepStickyDiscussionsOnTop = 'keepStickyDiscussionsOnTop';
   static const String apiBaseUrl = 'apiBaseUrl';
   static const String forumInfoCache = 'forumInfoCache';
 }

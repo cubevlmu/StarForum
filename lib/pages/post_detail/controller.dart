@@ -42,7 +42,7 @@ class PostPageController extends GetxController {
   }
 
   final DiscussionSummary discussion;
-  final RxInt viewCount = 0.obs;
+  final RxInt viewCount = (-1).obs;
   final RxList<TagInfo> tags = <TagInfo>[].obs;
 
   final RxInt replyCount = 0.obs;
@@ -56,6 +56,7 @@ class PostPageController extends GetxController {
   final RxBool isReplyLoading = true.obs;
   final RxInt subscription = 0.obs;
   final RxBool isFollowUpdating = false.obs;
+  final RxBool showBackToTop = false.obs;
 
   final EasyRefreshController refreshController = EasyRefreshController(
     controlFinishLoad: true,
@@ -73,6 +74,7 @@ class PostPageController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    scrollController.addListener(_handleScroll);
     viewCount.value = discussion.viewCount;
     subscription.value = discussion.subscription;
     unawaited(_loadInitialPosts());
@@ -100,14 +102,15 @@ class PostPageController extends GetxController {
         return;
       }
       firstPost.value = r;
-      content.value = r.contentHtml;
+      content.value = r.contentHtml.trim().isEmpty
+          ? AppLocalizations.of(Get.context!)!.postContentUnavailableHtml
+          : r.contentHtml;
       replyItems.assignAll(bundle!.replies);
       _sortRepliesByHotness();
       if (replyCount.value == 0 && replyItems.isNotEmpty) {
         replyCount.value = replyItems.length;
       }
       _offset = bundle.replies.length + 1;
-      _nextUrl = bundle.nextUrl;
       _hasMore = bundle.hasMore;
     } catch (e, s) {
       LogUtil.errorE(
@@ -160,7 +163,6 @@ class PostPageController extends GetxController {
 
   static const int _pageSize = 10;
   int _offset = 1;
-  String? _nextUrl;
   bool _hasMore = true;
   bool _loading = false;
 
@@ -171,7 +173,6 @@ class PostPageController extends GetxController {
     replyItems.clear();
     newReplyItems.clear();
     _offset = 0;
-    _nextUrl = null;
     _hasMore = true;
     final ok = await _loadReplies(reset: true);
     _finishLoadSafely(
@@ -191,7 +192,6 @@ class PostPageController extends GetxController {
     var ok = firstPost.value != null;
     if (ok && replySort.value != ReplySort.hot) {
       _offset = 0;
-      _nextUrl = null;
       _hasMore = true;
       replyItems.clear();
       ok = await _loadReplies(reset: true);
@@ -245,7 +245,6 @@ class PostPageController extends GetxController {
           ReplySort.oldest => PostPageSort.timeAscending,
           ReplySort.newest => PostPageSort.timeDescending,
         },
-        nextUrl: reset ? null : _nextUrl,
         cancelToken: _cancelToken,
       );
       if (result.error?.type == RepoErrorType.cancelled) return false;
@@ -273,11 +272,12 @@ class PostPageController extends GetxController {
       };
       final filtered = list.where((e) => !existingIds.contains(e.id)).toList();
 
+      if (replySort.value == ReplySort.hot && filtered.length > 1) {
+        filtered.sort(compareReplyHotness);
+      }
       replyItems.addAll(filtered);
-      _sortRepliesByHotness();
 
       _offset += list.length;
-      _nextUrl = result.nextUrl;
       _hasMore = result.hasMore;
 
       return true;
@@ -293,6 +293,21 @@ class PostPageController extends GetxController {
     if (replySort.value == ReplySort.hot && replyItems.length > 1) {
       replyItems.sort(compareReplyHotness);
     }
+  }
+
+  void _handleScroll() {
+    if (!scrollController.hasClients) return;
+    final next = scrollController.offset >= 900;
+    if (showBackToTop.value != next) showBackToTop.value = next;
+  }
+
+  Future<void> animateToTop() async {
+    if (!scrollController.hasClients) return;
+    await scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _finishRefreshSafely(IndicatorResult result) {
@@ -337,6 +352,7 @@ class PostPageController extends GetxController {
       _cancelToken.cancel('Post detail closed.');
     }
     refreshController.dispose();
+    scrollController.removeListener(_handleScroll);
     scrollController.dispose();
     super.onClose();
   }

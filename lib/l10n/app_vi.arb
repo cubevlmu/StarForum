@@ -966,7 +966,7 @@
   "@discussionPublishedAtLabel": {},
   "aboutSubtitle": "Thông tin phiên bản, dự án nguồn mở và giấy phép",
   "@aboutSubtitle": {},
-  "aboutDescription": "Ứng dụng Flarum mã nguồn mở, đa nền tảng, tập trung vào đồng bộ gia tăng, truy cập ưu tiên ngoại tuyến và giao diện FinUI thích ứng trên thiết bị di động lẫn máy tính.",
+  "aboutDescription": "Ứng dụng Flarum mã nguồn mở, đa nền tảng, tập trung vào đồng bộ gia tăng và truy cập ưu tiên ngoại tuyến để mang lại trải nghiệm nhất quán trên thiết bị di động lẫn máy tính.",
   "@aboutDescription": {},
   "aboutProjectDescriptionTitle": "Giới thiệu StarForum",
   "@aboutProjectDescriptionTitle": {},
@@ -1058,7 +1058,7 @@
   "@settingsCommonPageSubtitle": {},
   "settingsBehaviorSection": "Hành vi ứng dụng",
   "@settingsBehaviorSection": {},
-  "settingsCacheSubtitle": "Xem và xóa bộ nhớ đệm hình ảnh, API và tệp tạm thời",
+  "settingsCacheSubtitle": "Xem dung lượng và quản lý dữ liệu cục bộ, bộ nhớ đệm hình ảnh cùng tệp tạm thời",
   "@settingsCacheSubtitle": {},
   "settingsForumSection": "Trang diễn đàn",
   "@settingsForumSection": {},
@@ -1134,5 +1134,13 @@
   "discussionSuperUnpinnedLabel": "Đã bỏ siêu ghim",
   "@discussionSuperUnpinnedLabel": {},
   "postEventUnsupported": "Trạng thái chưa được hỗ trợ ({type})",
-  "@postEventUnsupported": {"placeholders": {"type": {}}}
+  "@postEventUnsupported": {"placeholders": {"type": {}}},
+  "aboutLatestVersionStatus": "Bạn đang dùng phiên bản mới nhất",
+  "@aboutLatestVersionStatus": {},
+  "aboutUpdateAvailableStatus": "Đã có phiên bản mới",
+  "@aboutUpdateAvailableStatus": {},
+  "dataStorageTotalSize": "Tổng dung lượng: {size}",
+  "@dataStorageTotalSize": {"placeholders": {"size": {"type": "String"}}},
+  "dataStorageBreakdown": "Dữ liệu ứng dụng {data} (cơ sở dữ liệu {database}) · bộ nhớ đệm và tệp tạm {cache}",
+  "@dataStorageBreakdown": {"placeholders": {"data": {"type": "String"}, "database": {"type": "String"}, "cache": {"type": "String"}}}
 }

@@ -89,12 +89,9 @@ class PostRepository {
     int offset = 0,
     int limit = 20,
     PostPageSort sort = PostPageSort.number,
-    String? nextUrl,
     CancelToken? cancelToken,
   }) {
-    final pageKey = nextUrl == null || nextUrl.isEmpty
-        ? '$offset:$limit:${sort.name}'
-        : nextUrl;
+    final pageKey = '$offset:$limit:${sort.name}';
     return _requests.run(
       'postPage:$discussionId:$pageKey',
       () => _getPostPage(
@@ -102,7 +99,6 @@ class PostRepository {
         offset: offset,
         limit: limit,
         sort: sort,
-        nextUrl: nextUrl,
         cancelToken: cancelToken,
       ),
       coalesce: cancelToken == null,
@@ -114,7 +110,6 @@ class PostRepository {
     required int offset,
     required int limit,
     required PostPageSort sort,
-    required String? nextUrl,
     required CancelToken? cancelToken,
   }) async {
     try {
@@ -127,7 +122,6 @@ class PostRepository {
           PostPageSort.timeDescending => api.PostSort.timeDescending,
           PostPageSort.number => api.PostSort.number,
         },
-        nextUrl: nextUrl,
         cancelToken: cancelToken,
       );
       if (page == null) {

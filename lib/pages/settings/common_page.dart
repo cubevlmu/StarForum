@@ -64,6 +64,16 @@ class _CommonSettingsPageState extends State<CommonSettingsPage> {
                   if (mounted) setState(() {});
                 },
               ),
+              SettingsToggleTile(
+                icon: ForumIcons.sticky,
+                title: l10n.settingsKeepStickyDiscussionsOnTop,
+                subtitle: l10n.settingsKeepStickyDiscussionsOnTopDesc,
+                value: SettingsUtil.keepStickyDiscussionsOnTop,
+                onChanged: (value) async {
+                  await SettingsUtil.changeKeepStickyDiscussionsOnTop(value);
+                  if (mounted) setState(() {});
+                },
+              ),
               FUITile(
                 icon: FUIIcons.update,
                 title: l10n.aboutCheckUpdate,
@@ -103,7 +113,7 @@ class _CommonSettingsPageState extends State<CommonSettingsPage> {
             children: [
               FUITile(
                 icon: ForumIcons.cache,
-                title: l10n.settingsCacheManagement,
+                title: l10n.settingsDataManagement,
                 subtitle: l10n.settingsCacheSubtitle,
                 onTap: () => FuiNavigation.openDetail(
                   context,

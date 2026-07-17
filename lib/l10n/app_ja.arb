@@ -966,7 +966,7 @@
   "@discussionPublishedAtLabel": {},
   "aboutSubtitle": "バージョン情報、オープンソースプロジェクト、ライセンス",
   "@aboutSubtitle": {},
-  "aboutDescription": "増分同期、オフライン優先のアクセス、モバイルとデスクトップに対応するレスポンシブなFinUIを中心に設計された、オープンソースのFlarumクライアントです。",
+  "aboutDescription": "増分同期とオフライン優先のアクセスを中心に、モバイルとデスクトップで一貫した体験を提供するオープンソースのFlarumクライアントです。",
   "@aboutDescription": {},
   "aboutProjectDescriptionTitle": "StarForumについて",
   "@aboutProjectDescriptionTitle": {},
@@ -1058,7 +1058,7 @@
   "@settingsCommonPageSubtitle": {},
   "settingsBehaviorSection": "アプリの動作",
   "@settingsBehaviorSection": {},
-  "settingsCacheSubtitle": "画像、API、一時ファイルのキャッシュを確認・消去します",
+  "settingsCacheSubtitle": "ストレージ使用量を確認し、ローカルデータ、画像キャッシュ、一時ファイルを管理します",
   "@settingsCacheSubtitle": {},
   "settingsForumSection": "フォーラムサイト",
   "@settingsForumSection": {},
@@ -1134,5 +1134,13 @@
   "discussionSuperUnpinnedLabel": "最上部への固定を解除",
   "@discussionSuperUnpinnedLabel": {},
   "postEventUnsupported": "未対応（{type}）",
-  "@postEventUnsupported": {"placeholders": {"type": {}}}
+  "@postEventUnsupported": {"placeholders": {"type": {}}},
+  "aboutLatestVersionStatus": "最新バージョンです",
+  "@aboutLatestVersionStatus": {},
+  "aboutUpdateAvailableStatus": "新しいバージョンがあります",
+  "@aboutUpdateAvailableStatus": {},
+  "dataStorageTotalSize": "合計使用量：{size}",
+  "@dataStorageTotalSize": {"placeholders": {"size": {"type": "String"}}},
+  "dataStorageBreakdown": "アプリデータ {data}（データベース {database}）・キャッシュと一時ファイル {cache}",
+  "@dataStorageBreakdown": {"placeholders": {"data": {"type": "String"}, "database": {"type": "String"}, "cache": {"type": "String"}}}
 }

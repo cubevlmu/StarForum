@@ -35,7 +35,7 @@ class DiscussionSummary {
     required this.createdAt,
     this.authorAvatar = "",
     this.authorName = "",
-    this.viewCount = 0,
+    this.viewCount = -1,
     this.likeCount = -1,
     this.commentCount = -1,
     this.participantCount = 0,

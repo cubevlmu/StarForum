@@ -101,11 +101,12 @@ class DiscussionListItemCard extends StatelessWidget {
                       label: l10n.discussionPublishedAtLabel,
                       value: _formatDate(discussion.createdAt),
                     ),
-                    _TopicMetaText(
-                      icon: FUIIcons.visibility,
-                      label: null,
-                      value: '${discussion.viewCount}',
-                    ),
+                    if (discussion.viewCount >= 0)
+                      _TopicMetaText(
+                        icon: FUIIcons.visibility,
+                        label: null,
+                        value: '${discussion.viewCount}',
+                      ),
                   ],
                 ),
                 if (excerpt.isNotEmpty) ...[

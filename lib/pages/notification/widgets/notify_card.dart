@@ -19,7 +19,9 @@ import 'package:get/get.dart';
 import 'package:fin_ui/fin_ui.dart';
 
 (String, String) buildMsg(BuildContext context, NotificationsInfo info) {
-  if (info.cachedTitle != null && info.cachedDesc != null) {
+  if (info.contentType != 'newPost' &&
+      info.cachedTitle != null &&
+      info.cachedDesc != null) {
     return (info.cachedTitle!, info.cachedDesc!);
   }
 
@@ -46,6 +48,24 @@ import 'package:fin_ui/fin_ui.dart';
               ? real!.discussion.title
               : AppLocalizations.of(context)!.notificationDiscussionFallback,
         ),
+      );
+    }(),
+    "newPost" => () {
+      final subject = info.subject;
+      final description = switch (subject) {
+        PostSubject(:final post) => AppLocalizations.of(
+          context,
+        )!.notificationNewPostDesc(_postExcerpt(post.contentHtml)),
+        DiscussionSubject(:final discussion) => AppLocalizations.of(
+          context,
+        )!.notificationNewPostByUserDesc(discussion.title),
+        _ => AppLocalizations.of(context)!.notificationDiscussionFallback,
+      };
+      return (
+        AppLocalizations.of(
+          context,
+        )!.notificationNewPostByUserTitle(info.fromUser?.displayName ?? ""),
+        description,
       );
     }(),
     "newDiscussionByUser" => () {
@@ -128,6 +148,12 @@ import 'package:fin_ui/fin_ui.dart';
   return result;
 }
 
+String _postExcerpt(String contentHtml) {
+  final text = htmlToPlainText(contentHtml).trim();
+  if (text.isEmpty) return '';
+  return text.substring(0, text.length > 60 ? 60 : text.length);
+}
+
 class NotifyCard extends StatelessWidget {
   final NotificationsInfo item;
   final NotificationPageController controller;
@@ -144,6 +170,7 @@ class NotifyCard extends StatelessWidget {
     final canOpenDiscussion =
         item.contentType == "postLiked" ||
         item.contentType == "postMentioned" ||
+        item.contentType == "newPost" ||
         item.contentType == "newPostByUser" ||
         item.contentType == "newDiscussionByUser";
     final canOpenUser = item.contentType == "newFollower";
@@ -373,6 +400,7 @@ class NotifyCard extends StatelessWidget {
           color: colorScheme.error,
         );
       case "newPostByUser":
+      case "newPost":
         return _NotifyTypeMeta(
           icon: ForumIcons.reply,
           color: colorScheme.primary,
@@ -407,8 +435,10 @@ class NotifyCard extends StatelessWidget {
 
   Future<void> naviToPage(BuildContext context) async {
     if (item.contentType == "postLiked" ||
-        item.contentType == "postMentioned") {
-      final s = item.subject as PostSubject;
+        item.contentType == "postMentioned" ||
+        (item.contentType == "newPost" && item.subject is PostSubject)) {
+      final s = item.subject as PostSubject?;
+      if (s == null) return;
       final r = await controller.naviToDisPageByItem(
         discussion: s.post.discussion,
         itemId: item.id,
@@ -425,6 +455,7 @@ class NotifyCard extends StatelessWidget {
     }
 
     if (item.contentType == "newPostByUser" ||
+        item.contentType == "newPost" ||
         item.contentType == "newDiscussionByUser") {
       final s = item.subject as DiscussionSubject?;
       if (s == null) {

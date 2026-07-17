@@ -83,6 +83,12 @@ class PostMapper {
       'discussionStickiest' => PostEvent.discussionStickiestChanged(
         sticky: _stickiestState(content, attrs),
       ),
+      'discussionLocked' || 'discussionLock' => PostEvent.discussionLockChanged(
+        locked: _lockState(content, attrs),
+        sourceType: contentType,
+      ),
+      'comment' when contentHtml.trim().isEmpty =>
+        const PostEvent.commentContentUnavailable(),
       _ when contentType != 'comment' && contentHtml.trim().isEmpty =>
         PostEvent.unsupported(sourceType: contentType),
       _ => null,
@@ -97,6 +103,14 @@ class PostMapper {
       'isSticky',
       'enabled',
     ]) {
+      if (content.contains(key)) return content.boolean(key);
+      if (attrs.contains(key)) return attrs.boolean(key);
+    }
+    return true;
+  }
+
+  bool _lockState(JsonReader content, JsonReader attrs) {
+    for (final key in const ['locked', 'isLocked', 'enabled']) {
       if (content.contains(key)) return content.boolean(key);
       if (attrs.contains(key)) return attrs.boolean(key);
     }

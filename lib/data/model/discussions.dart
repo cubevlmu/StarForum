@@ -129,13 +129,14 @@ class DiscussionDetail {
 
   factory DiscussionDetail.fromMapAndId(Map m, int id) {
     final info = JsonReader(asJsonMap(m));
-    final rawViewCount = info["viewCount"] ?? info["views"];
+    final rawViewCount =
+        info["viewCount"] ?? info["views"] ?? info["viewsCount"];
     return DiscussionDetail(
       id.toString(),
       info.string("title"),
       info.integer("commentCount"),
       info.integer("participantCount"),
-      JsonValue.asInt(rawViewCount),
+      JsonValue.asInt(rawViewCount, -1),
       info.dateTime("createdAt"),
       info.dateTime("lastPostedAt"),
       info.integer("lastPostNumber"),

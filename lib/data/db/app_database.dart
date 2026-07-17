@@ -11,6 +11,7 @@ import 'package:drift/native.dart';
 import 'package:star_forum/data/db/perf_query_interceptor.dart';
 import 'package:star_forum/data/perf/perf_log.dart';
 import 'package:star_forum/data/db/tables/discussion_table.dart';
+import 'package:star_forum/data/db/tables/editor_draft_table.dart';
 import 'package:star_forum/data/db/tables/first_table.dart';
 import 'package:star_forum/data/db/tables/cache_collection_table.dart';
 import 'package:star_forum/data/db/tables/resource_tables.dart';
@@ -25,6 +26,7 @@ import 'dao/first_posts_dao.dart';
 import 'dao/excerpt_dao.dart';
 import 'dao/cache_collection_dao.dart';
 import 'dao/resource_cache_dao.dart';
+import 'dao/editor_drafts_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -40,6 +42,7 @@ part 'app_database.g.dart';
     DbTags,
     DbDiscussionTags,
     DbNotifications,
+    DbEditorDrafts,
   ],
   daos: [
     DiscussionsDao,
@@ -47,6 +50,7 @@ part 'app_database.g.dart';
     ExcerptDao,
     CacheCollectionDao,
     ResourceCacheDao,
+    EditorDraftsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -57,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   Future<File> exportSnapshot(File destination) async {
     await destination.parent.create(recursive: true);
@@ -124,6 +128,10 @@ class AppDatabase extends _$AppDatabase {
             'is_sticky',
             'INTEGER NOT NULL DEFAULT 0',
           );
+        }
+        if (from < 11) {
+          await m.createTable(dbEditorDrafts);
+          await _createEditorDraftIndex();
         }
       });
     },
@@ -237,6 +245,14 @@ class AppDatabase extends _$AppDatabase {
     await customStatement('''
       CREATE INDEX IF NOT EXISTS idx_notifications_active_created
       ON db_notifications (deleted_at, created_at DESC)
+    ''');
+    await _createEditorDraftIndex();
+  }
+
+  Future<void> _createEditorDraftIndex() async {
+    await customStatement('''
+      CREATE INDEX IF NOT EXISTS idx_editor_drafts_scope_updated
+      ON db_editor_drafts (forum_url, user_id, target, updated_at DESC)
     ''');
   }
 

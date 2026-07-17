@@ -1,12 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:star_forum/app/forum_icons.dart';
+import 'package:star_forum/data/db/app_database.dart';
+import 'package:star_forum/data/diagnostics/app_storage_usage.dart';
 import 'package:star_forum/data/repository/local_cache_repo.dart';
 import 'package:star_forum/di/injector.dart';
 import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/utils/cache_utils.dart';
+import 'package:star_forum/utils/log_util.dart';
 import 'package:star_forum/utils/shared_dialog.dart' as shared;
 import 'package:star_forum/utils/snackbar_utils.dart';
 import 'package:star_forum/utils/string_util.dart';
@@ -21,6 +21,7 @@ class CacheManagementPage extends StatefulWidget {
 
 class _CacheManagementPageState extends State<CacheManagementPage> {
   final LocalCacheRepository _localCacheRepo = getIt<LocalCacheRepository>();
+  final AppStorageUsageService _storageUsage = AppStorageUsageService();
   late Future<_CacheSnapshot> _snapshot;
   bool _initialized = false;
 
@@ -38,30 +39,12 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
 
   Future<_CacheSnapshot> _loadSnapshot() async {
     final l10n = AppLocalizations.of(context)!;
-    final summaries = await _localCacheRepo.summaries();
-    final imageItems = await Future.wait([
-      _imageCacheItem(
-        label: l10n.cacheAvatarImageTitle,
-        description: l10n.cacheAvatarImageDesc,
-        key: CacheUtils.userAvatar,
-        icon: ForumIcons.profile,
-        clear: () => CacheUtils.avatarCacheManager.store.emptyCache(),
-      ),
-      _imageCacheItem(
-        label: l10n.cacheContentImageTitle,
-        description: l10n.cacheContentImageDesc,
-        key: CacheUtils.contentImage,
-        icon: ForumIcons.image,
-        clear: () => CacheUtils.contentCacheManager.store.emptyCache(),
-      ),
-      _imageCacheItem(
-        label: l10n.cacheAssetThumbTitle,
-        description: l10n.cacheAssetThumbDesc,
-        key: CacheUtils.assetThumb,
-        icon: ForumIcons.attachment,
-        clear: () => CacheUtils.assetThumbCacheManager.store.emptyCache(),
-      ),
+    final results = await Future.wait<Object>([
+      _localCacheRepo.summaries(),
+      _storageUsage.load(),
     ]);
+    final summaries = results[0] as List<LocalCacheSummary>;
+    final storage = results[1] as AppStorageUsageSnapshot;
 
     return _CacheSnapshot(
       dataItems: [
@@ -71,52 +54,62 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
             description: summary.category.description(l10n),
             icon: summary.category.icon,
             count: summary.count,
-            clear: () => _localCacheRepo.clear(summary.category),
+            clear: () => _clearLocalCategory(summary.category),
           ),
       ],
-      imageItems: imageItems,
+      appDataItems: [
+        _CacheItem.files(
+          label: l10n.dataStorageDatabaseTitle,
+          description: l10n.dataStorageDatabaseDescription,
+          icon: ForumIcons.forum,
+          bytes: storage.databaseBytes,
+        ),
+        _CacheItem.files(
+          label: l10n.dataStorageSettingsTitle,
+          description: l10n.dataStorageSettingsDescription,
+          icon: FUIIcons.settings,
+          bytes: storage.settingsBytes,
+        ),
+        _CacheItem.files(
+          label: l10n.dataStorageLogsTitle,
+          description: l10n.dataStorageLogsDescription,
+          icon: ForumIcons.document,
+          bytes: storage.logBytes,
+          clear: LogUtil.clearLogs,
+        ),
+        _CacheItem.files(
+          label: l10n.dataStorageExportsTitle,
+          description: l10n.dataStorageExportsDescription,
+          icon: ForumIcons.share,
+          bytes: storage.exportBytes,
+          clear: _storageUsage.clearExports,
+        ),
+      ],
+      imageItems: [
+        _CacheItem.files(
+          label: l10n.cacheAvatarImageTitle,
+          description: l10n.cacheAvatarImageDesc,
+          icon: ForumIcons.profile,
+          bytes: storage.imageBytesFor(CacheUtils.userAvatar),
+          clear: () => CacheUtils.avatarCacheManager.store.emptyCache(),
+        ),
+        _CacheItem.files(
+          label: l10n.cacheContentImageTitle,
+          description: l10n.cacheContentImageDesc,
+          icon: ForumIcons.image,
+          bytes: storage.imageBytesFor(CacheUtils.contentImage),
+          clear: () => CacheUtils.contentCacheManager.store.emptyCache(),
+        ),
+        _CacheItem.files(
+          label: l10n.cacheAssetThumbTitle,
+          description: l10n.cacheAssetThumbDesc,
+          icon: ForumIcons.attachment,
+          bytes: storage.imageBytesFor(CacheUtils.assetThumb),
+          clear: () => CacheUtils.assetThumbCacheManager.store.emptyCache(),
+        ),
+      ],
+      storage: storage,
     );
-  }
-
-  Future<_CacheItem> _imageCacheItem({
-    required String label,
-    required String description,
-    required String key,
-    required IconData icon,
-    required Future<void> Function() clear,
-  }) async {
-    final dir = await _cacheDirForKey(key);
-    final size = dir == null ? 0 : await _directorySize(dir);
-    return _CacheItem.files(
-      label: label,
-      description: description,
-      icon: icon,
-      bytes: size,
-      clear: clear,
-    );
-  }
-
-  Future<Directory?> _cacheDirForKey(String key) async {
-    final temp = await getTemporaryDirectory();
-    final candidates = <Directory>[
-      Directory('${temp.path}/$key'),
-      Directory('${temp.path}/libCachedImageData/$key'),
-    ];
-    for (final dir in candidates) {
-      if (await dir.exists()) return dir;
-    }
-    return null;
-  }
-
-  Future<int> _directorySize(Directory dir) async {
-    var total = 0;
-    await for (final entity in dir.list(recursive: true, followLinks: false)) {
-      if (entity is! File) continue;
-      try {
-        total += await entity.length();
-      } catch (_) {}
-    }
-    return total;
   }
 
   @override
@@ -127,8 +120,8 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
       body: FUIPage(
         children: [
           FuiPageHead(
-            title: l10n.settingsCacheManagement,
-            subtitle: l10n.cacheManagementSafeSubtitle,
+            title: l10n.settingsDataManagement,
+            subtitle: l10n.settingsCacheSubtitle,
             trailing: FUIIconButton(
               icon: FUIIcons.refresh,
               tooltip: l10n.commonActionRefresh,
@@ -151,10 +144,30 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
                     children: [
                       FUITile(
                         icon: ForumIcons.cache,
+                        title: l10n.dataStorageTotalSize(
+                          StringUtil.byteNumToFileSize(
+                            data.storage.totalBytes.toDouble(),
+                          ),
+                        ),
+                        subtitle: l10n.dataStorageBreakdown(
+                          StringUtil.byteNumToFileSize(
+                            data.storage.supportBytes.toDouble(),
+                          ),
+                          StringUtil.byteNumToFileSize(
+                            data.storage.databaseBytes.toDouble(),
+                          ),
+                          StringUtil.byteNumToFileSize(
+                            data.storage.cacheBytes.toDouble(),
+                          ),
+                        ),
+                        showChevron: false,
+                      ),
+                      FUITile(
+                        icon: ForumIcons.forum,
                         title: l10n.cacheRecordsCount(data.totalRecords),
                         subtitle: l10n.cacheImagesSize(
                           StringUtil.byteNumToFileSize(
-                            data.totalBytes.toDouble(),
+                            data.storage.imageBytes.toDouble(),
                           ),
                         ),
                         showChevron: false,
@@ -165,6 +178,12 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
                   _CacheSection(
                     title: l10n.cacheLocalDataSectionTitle,
                     items: data.dataItems,
+                    onClear: _clearItem,
+                  ),
+                  const SizedBox(height: FUITokens.gap16),
+                  _CacheSection(
+                    title: l10n.dataStorageAppFilesSection,
+                    items: data.appDataItems,
                     onClear: _clearItem,
                   ),
                   const SizedBox(height: FUITokens.gap16),
@@ -195,6 +214,8 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
   }
 
   Future<void> _clearItem(_CacheItem item) async {
+    final clear = item.clear;
+    if (clear == null) return;
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await shared.SharedDialog.showConfirmDialog(
       context,
@@ -206,7 +227,7 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
     );
     if (!confirmed) return;
     try {
-      await item.clear();
+      await clear();
       CacheUtils.clearAllCacheImageMem();
       if (mounted) setState(_reload);
     } catch (_) {
@@ -227,14 +248,21 @@ class _CacheManagementPageState extends State<CacheManagementPage> {
     if (!confirmed) return;
     try {
       await _localCacheRepo.clearAll();
+      await getIt<AppDatabase>().customStatement('VACUUM');
       for (final manager in CacheUtils.cacheMangerList) {
         await manager.store.emptyCache();
       }
+      await Future.wait([LogUtil.clearLogs(), _storageUsage.clearExports()]);
       CacheUtils.clearAllCacheImageMem();
       if (mounted) setState(_reload);
     } catch (_) {
       SnackbarUtils.showMessage(msg: l10n.commonNoticeDeleteFailed);
     }
+  }
+
+  Future<void> _clearLocalCategory(LocalCacheCategory category) async {
+    await _localCacheRepo.clear(category);
+    await getIt<AppDatabase>().customStatement('VACUUM');
   }
 }
 
@@ -259,8 +287,8 @@ class _CacheSection extends StatelessWidget {
             icon: item.icon,
             title: item.label,
             subtitle: item.subtitle,
-            showChevron: item.hasContent,
-            onTap: item.hasContent ? () => onClear(item) : null,
+            showChevron: item.canClear,
+            onTap: item.canClear ? () => onClear(item) : null,
           ),
       ],
     );
@@ -268,14 +296,30 @@ class _CacheSection extends StatelessWidget {
 }
 
 class _CacheSnapshot {
-  const _CacheSnapshot({required this.dataItems, required this.imageItems});
-  const _CacheSnapshot.empty() : dataItems = const [], imageItems = const [];
+  const _CacheSnapshot({
+    required this.dataItems,
+    required this.appDataItems,
+    required this.imageItems,
+    required this.storage,
+  });
+  const _CacheSnapshot.empty()
+    : dataItems = const [],
+      appDataItems = const [],
+      imageItems = const [],
+      storage = const AppStorageUsageSnapshot(
+        databaseBytes: 0,
+        settingsBytes: 0,
+        logBytes: 0,
+        exportBytes: 0,
+        imageCacheBytes: {},
+      );
 
   final List<_CacheItem> dataItems;
+  final List<_CacheItem> appDataItems;
   final List<_CacheItem> imageItems;
+  final AppStorageUsageSnapshot storage;
 
   int get totalRecords => dataItems.fold(0, (sum, item) => sum + item.count);
-  int get totalBytes => imageItems.fold(0, (sum, item) => sum + item.bytes);
 }
 
 class _CacheItem {
@@ -310,7 +354,7 @@ class _CacheItem {
     required String description,
     required IconData icon,
     required int bytes,
-    required Future<void> Function() clear,
+    Future<void> Function()? clear,
   }) {
     return _CacheItem._(
       label: label,
@@ -327,9 +371,10 @@ class _CacheItem {
   final IconData icon;
   final int count;
   final int bytes;
-  final Future<void> Function() clear;
+  final Future<void> Function()? clear;
 
   bool get hasContent => count > 0 || bytes > 0;
+  bool get canClear => hasContent && clear != null;
 
   String get subtitle {
     if (bytes > 0) {

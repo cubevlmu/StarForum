@@ -1,3 +1,9 @@
+/*
+ * @Author: khfahqp khfahqp@gmail.com
+ * @LastEditors: khfahqp khfahqp@gmail.com
+ * Copyright (c) 2026 by FlybirdGames, All Rights Reserved. 
+ */
+
 part of '../view.dart';
 
 // ── Identity card ─────────────────────────────────────────────────────────────
@@ -85,7 +91,7 @@ class _UserHeadline extends StatelessWidget {
                     Obx(() {
                       final updating = controller.isNicknameUpdating.value;
                       return FUIIconButton(
-                        icon: FUIIcons.settings,
+                        icon: ForumIcons.edit,
                         variant: FUIIconButtonVariant.ghost,
                         tooltip: l10n.userNicknameEditTitle,
                         onPressed: updating
@@ -351,7 +357,7 @@ class _UserBioCard extends StatelessWidget {
                 Obx(() {
                   final updating = controller.isBioUpdating.value;
                   return FUIIconButton(
-                    icon: FUIIcons.settings,
+                    icon: ForumIcons.edit,
                     variant: FUIIconButtonVariant.ghost,
                     tooltip: AppLocalizations.of(context)!.userBioEditTitle,
                     onPressed: updating ? null : () => _editBio(context),

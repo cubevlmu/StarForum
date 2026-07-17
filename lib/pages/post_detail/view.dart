@@ -7,6 +7,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:star_forum/app/forum_icons.dart';
 import 'package:star_forum/data/model/discussion_summary.dart';
 import 'package:star_forum/data/repository/forum_repo.dart';
@@ -15,6 +16,7 @@ import 'package:star_forum/l10n/app_localizations.dart';
 import 'package:star_forum/pages/post_detail/controller.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_item.dart';
 import 'package:star_forum/pages/post_detail/widgets/post_main.dart';
+import 'package:star_forum/widgets/desktop_scroll_accelerator.dart';
 import 'package:star_forum/widgets/post_list_loading_skeleton.dart';
 import 'package:star_forum/widgets/shared_notice.dart';
 import 'package:get/get.dart';
@@ -81,11 +83,40 @@ class _ReplyFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FUIFloatingActionButton(
-      heroTag: null,
-      onPressed: () => controller.showAddReplySheet(context),
-      tooltip: AppLocalizations.of(context)!.postActionComment,
-      icon: ForumIcons.reply,
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Obx(
+          () => controller.showBackToTop.value
+              ? Padding(
+                  padding: const EdgeInsets.only(bottom: FUITokens.gap10),
+                  child: FUIIconButton(
+                    size: 48,
+                    onPressed: controller.animateToTop,
+                    tooltip: l10n.backToTopTooltip,
+                    icon: ForumIcons.backToTop,
+                    variant: FUIIconButtonVariant.outline,
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+        SizedBox.square(
+          dimension: 48,
+          child: Center(
+            child: Transform.scale(
+              scale: 1.2,
+              child: FUIFloatingActionButton(
+                heroTag: null,
+                small: true,
+                onPressed: () => controller.showAddReplySheet(context),
+                tooltip: l10n.postActionComment,
+                icon: ForumIcons.reply,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -106,10 +137,7 @@ class _SortReplyItemWidget extends StatelessWidget {
         FUITokens.gap4,
       ),
       child: FUISurface(
-        padding: const EdgeInsets.symmetric(
-          horizontal: FUITokens.gap14,
-          vertical: FUITokens.gap8,
-        ),
+        padding: const EdgeInsets.all(FUITokens.gap8),
         child: Row(
           children: [
             Expanded(
@@ -244,6 +272,12 @@ class _DetailPageReplies extends StatelessWidget {
       final newReplyItems = controller.newReplyItems;
       final hasReply = replyItems.isNotEmpty || newReplyItems.isNotEmpty;
       final showReplySkeleton = controller.isReplyLoading.value && !hasReply;
+      final replyIndexes = <int, int>{
+        for (var i = 0; i < newReplyItems.length; i += 1)
+          newReplyItems[i].id: i,
+        for (var i = 0; i < replyItems.length; i += 1)
+          replyItems[i].id: newReplyItems.length + i,
+      };
 
       return FUIRefresh(
         onLoad: controller.onReplyLoad,
@@ -257,60 +291,67 @@ class _DetailPageReplies extends StatelessWidget {
               ? const ClampingScrollPhysics()
               : physics;
 
-          return CustomScrollView(
+          return DesktopScrollAccelerator(
             controller: controller.scrollController,
-            physics: effectivePhysics,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Obx(
-                  () => _PostDetailHeader(
-                    item: item,
-                    replyCount: controller.replyCount.value,
-                    onReply: onReply,
+            child: CustomScrollView(
+              controller: controller.scrollController,
+              physics: effectivePhysics,
+              scrollCacheExtent: const ScrollCacheExtent.pixels(320),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Obx(
+                    () => _PostDetailHeader(
+                      item: item,
+                      replyCount: controller.replyCount.value,
+                      onReply: onReply,
+                    ),
                   ),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: PostMainWidget(content: item, controller: controller),
-              ),
-
-              SliverToBoxAdapter(
-                child: _SortReplyItemWidget(replyController: controller),
-              ),
-
-              if (showReplySkeleton)
-                const SliverToBoxAdapter(
-                  child: PostListLoadingSkeleton(minItems: 3, maxItems: 6),
-                )
-              else if (!hasReply)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: NoticeWidget(
-                    emoji: "💬",
-                    title: AppLocalizations.of(context)!.postNoReplyTitle,
-                    tips: AppLocalizations.of(context)!.postNoReplyTips,
-                  ),
-                )
-              else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final totalNew = newReplyItems.length;
-
-                    if (index < totalNew) {
-                      return PostItemWidget(
-                        reply: newReplyItems[index],
-                        controllerTag: controllerTag,
-                      );
-                    }
-
-                    final i = index - totalNew;
-                    return PostItemWidget(
-                      reply: replyItems[i],
-                      controllerTag: controllerTag,
-                    );
-                  }, childCount: newReplyItems.length + replyItems.length),
+                SliverToBoxAdapter(
+                  child: PostMainWidget(content: item, controller: controller),
                 ),
-            ],
+
+                SliverToBoxAdapter(
+                  child: _SortReplyItemWidget(replyController: controller),
+                ),
+
+                if (showReplySkeleton)
+                  const SliverToBoxAdapter(
+                    child: PostListLoadingSkeleton(minItems: 3, maxItems: 6),
+                  )
+                else if (!hasReply)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: NoticeWidget(
+                      emoji: "💬",
+                      title: AppLocalizations.of(context)!.postNoReplyTitle,
+                      tips: AppLocalizations.of(context)!.postNoReplyTips,
+                    ),
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final totalNew = newReplyItems.length;
+                        final reply = index < totalNew
+                            ? newReplyItems[index]
+                            : replyItems[index - totalNew];
+                        return PostItemWidget(
+                          key: ValueKey(reply.id),
+                          reply: reply,
+                          controllerTag: controllerTag,
+                        );
+                      },
+                      childCount: newReplyItems.length + replyItems.length,
+                      addAutomaticKeepAlives: false,
+                      addRepaintBoundaries: false,
+                      addSemanticIndexes: false,
+                      findChildIndexCallback: (key) =>
+                          key is ValueKey<int> ? replyIndexes[key.value] : null,
+                    ),
+                  ),
+              ],
+            ),
           );
         },
       );

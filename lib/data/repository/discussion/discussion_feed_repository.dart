@@ -41,6 +41,7 @@ class DiscussionFeedRepository {
       limit,
       collectionKey: DiscussionCollectionKey.feed(),
       showExcerpt: SettingsUtil.showDiscussionExcerpt,
+      keepStickyOnTop: SettingsUtil.keepStickyDiscussionsOnTop,
     );
   }
 
@@ -132,18 +133,13 @@ class DiscussionFeedRepository {
       );
       final targets = await excerptHydrator.targets(page.items, changed);
       if (targets.isNotEmpty) {
-        if (reportStatus) syncStatus.start(SyncPhase.hydrating);
         final hydration = backgroundTasks.run(
           name: 'discussion-excerpt',
           dedupeKey: _hydrationKey(targets),
           task: (token) =>
               excerptHydrator.hydrate(targets, cancellationToken: token),
         );
-        if (reportStatus) {
-          await hydration;
-        } else {
-          unawaited(hydration);
-        }
+        unawaited(hydration);
       }
       return RepoResult.success(page.hasMore || page.items.length >= limit);
     } finally {
